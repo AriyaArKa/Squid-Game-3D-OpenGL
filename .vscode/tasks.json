@@ -1,0 +1,48 @@
+{
+    "tasks": [
+        {
+            "label": "copy-freeglut-dll",
+            "type": "shell",
+            "command": "cmd",
+            "args": [
+                "/c",
+                "copy",
+                "/Y",
+                "C:\\msys64\\mingw64\\bin\\libfreeglut.dll",
+                "${workspaceFolder}\\bin\\libfreeglut.dll"
+            ],
+            "presentation": { "reveal": "silent" },
+            "problemMatcher": []
+        },
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/Audio.cpp",
+                "${workspaceFolder}/src/Renderer.cpp",
+                "${workspaceFolder}/src/Doll.cpp",
+                "${workspaceFolder}/src/Guards.cpp",
+                "${workspaceFolder}/src/Contestants.cpp",
+                "${workspaceFolder}/src/Environment.cpp",
+                "${workspaceFolder}/src/UI.cpp",
+                "${workspaceFolder}/src/Camera.cpp",
+                "-o",
+                "${workspaceFolder}/bin/game.exe",
+                "-lfreeglut",
+                "-lopengl32",
+                "-lglu32",
+                "-lwinmm",
+                "-lgdi32"
+            ],
+            "dependsOn": ["copy-freeglut-dll"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ],
+    "version": "2.0.0"
+}
