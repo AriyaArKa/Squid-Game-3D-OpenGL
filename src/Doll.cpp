@@ -377,43 +377,37 @@ namespace {
         Renderer::drawBox(0.11f, 0.016f, 0.016f);
         glPopMatrix();
 
-        // 8. HAIR SCULPTURE: Sleek Raven Black Bob with Signature Straight Bangs (Image 2)
+        // 8. HAIR SCULPTURE: Sleek Raven Black Bob with Signature Straight Bangs
         Renderer::setMaterial(0.07f, 0.06f, 0.06f, 40.0f, 0.45f);
 
         // Hair Skull Dome (covers top and back smoothly)
         glPushMatrix();
-        glTranslatef(0.0f, 0.05f, -0.06f);
-        glScalef(0.46f, 0.49f, 0.44f);
+        glTranslatef(0.0f, 0.06f, -0.05f);
+        glScalef(0.455f, 0.495f, 0.435f);
         glutSolidSphere(1.0, 32, 32);
         glPopMatrix();
 
-        // Side Hair Locks (Framing forehead and temples, tucked neatly around ears)
-        for (int s = -1; s <= 1; s += 2) {
-            glPushMatrix();
-            glTranslatef(s * 0.38f, 0.04f, 0.08f);
-            glScalef(0.075f, 0.28f, 0.22f);
-            glutSolidSphere(1.0, 16, 16);
-            glPopMatrix();
-        }
-
-        // Sculpted Porcelain Ears on both sides (Prominently visible in close-up shot!)
-        drawDollEar(true);  // Left ear (seen in Episode 1 shot next to tree)
+        // Ears on both sides
+        drawDollEar(true);  // Left ear
         drawDollEar(false); // Right ear
 
-        // Front Bangs Fringe (Clean straight horizontal cut across upper forehead)
+        // RE-APPLY RAVEN BLACK HAIR MATERIAL (drawDollEar sets skin material!)
+        Renderer::setMaterial(0.07f, 0.06f, 0.06f, 40.0f, 0.45f);
+
+        // Front Bangs Fringe (Clean straight horizontal cut across upper forehead - NO PROTRUDING BULGE!)
         glPushMatrix();
-        glTranslatef(0.0f, 0.22f, 0.32f);
-        glRotatef(16.0f, 1.0f, 0.0f, 0.0f);
-        glScalef(0.40f, 0.16f, 0.18f);
-        glutSolidSphere(1.0, 24, 24);
+        glTranslatef(0.0f, 0.23f, 0.32f);
+        glRotatef(12.0f, 1.0f, 0.0f, 0.0f);
+        glScalef(0.38f, 0.065f, 0.11f);
+        glutSolidCube(1.0);
         glPopMatrix();
 
         // 9. Purple Hair Barrette Clip (Clearly visible on right bangs, Reference Image 2, 3, 4)
         Renderer::setMaterial(0.68f, 0.22f, 0.88f, 80.0f);
         glPushMatrix();
-        glTranslatef(0.19f, 0.24f, 0.405f);
-        glRotatef(16.0f, 0.0f, 0.0f, 1.0f);
-        Renderer::drawBox(0.12f, 0.042f, 0.020f);
+        glTranslatef(0.18f, 0.25f, 0.36f);
+        glRotatef(14.0f, 0.0f, 0.0f, 1.0f);
+        Renderer::drawBox(0.10f, 0.035f, 0.016f);
         glPopMatrix();
 
         // 10. Low-set Pigtails with Royal Purple Beads behind Ears
@@ -497,182 +491,120 @@ namespace {
     }
 
     void drawArticulatedArm(bool isLeft) {
+        float side = isLeft ? -1.0f : 1.0f;
         glPushMatrix();
-        if (isLeft) {
-            // =================================================================
-            // LEFT ARM: RESTING ON THE TREE TRUNK (Iconic Shot from Episode 1!)
-            // =================================================================
-            glTranslatef(-0.44f, 1.72f, 0.0f); // Left shoulder
+        glTranslatef(side * 0.44f, 1.72f, 0.0f); // Shoulder
 
-            // 1. Yellow Shirt Sleeve
-            Renderer::setMaterial(0.98f, 0.84f, 0.12f, 25.0f);
+        // 1. Yellow Shirt Sleeve
+        Renderer::setMaterial(0.98f, 0.84f, 0.12f, 25.0f);
+        glPushMatrix();
+        glScalef(0.14f, 0.15f, 0.14f);
+        glutSolidSphere(1.0, 14, 14);
+        glPopMatrix();
+
+        // Flared Yellow Sleeve Opening Cuff Ring
+        glPushMatrix();
+        glTranslatef(side * 0.02f, -0.09f, 0.01f);
+        glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+        Renderer::drawDisk(0.08f, 0.135f, 16);
+        glPopMatrix();
+
+        // 2. Upper Arm (Angled forward toward tree (+Z) and curving around trunk)
+        glRotatef(-46.0f, 1.0f, 0.0f, 0.0f);
+        glRotatef(side * 16.0f, 0.0f, 1.0f, 0.0f);
+        glRotatef(side * 6.0f, 0.0f, 0.0f, 1.0f);
+
+        // Porcelain Upper Arm
+        Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
+        glPushMatrix();
+        glTranslatef(0.0f, -0.15f, 0.0f);
+        glScalef(0.12f, 0.30f, 0.12f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        // 3. Ball-Joint Elbow (Mechanical doll hinge)
+        glTranslatef(0.0f, -0.30f, 0.0f);
+        Renderer::setMaterial(0.92f, 0.80f, 0.70f, 30.0f);
+        glutSolidSphere(0.078, 14, 14);
+        Renderer::setMaterial(0.35f, 0.35f, 0.35f, 50.0f);
+        glPushMatrix();
+        glScalef(0.082f, 0.02f, 0.082f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        // 4. Forearm: Bends forward and wraps inward around the circular tree trunk!
+        glRotatef(58.0f, 1.0f, 0.0f, 0.0f);
+        glRotatef(side * 34.0f, 0.0f, 1.0f, 0.0f);
+        glRotatef(side * -8.0f, 0.0f, 0.0f, 1.0f);
+
+        // Porcelain Forearm
+        Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
+        glPushMatrix();
+        glTranslatef(0.0f, -0.15f, 0.0f);
+        glScalef(0.115f, 0.29f, 0.115f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        // 5. Forearm Cuff & Mechanical Wrist Joint
+        glTranslatef(0.0f, -0.29f, 0.0f);
+        
+        // Forearm cuff rim
+        Renderer::setMaterial(0.92f, 0.80f, 0.72f, 30.0f);
+        glPushMatrix();
+        glScalef(0.12f, 0.035f, 0.12f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        // Cylindrical Wrist Pin Joint
+        Renderer::setMaterial(0.88f, 0.76f, 0.68f, 30.0f);
+        glPushMatrix();
+        glTranslatef(0.0f, -0.025f, 0.0f);
+        glutSolidSphere(0.052, 12, 12);
+        glPopMatrix();
+
+        // The iconic black wrist socket hole on outer side
+        Renderer::setMaterial(0.05f, 0.05f, 0.05f, 90.0f);
+        glPushMatrix();
+        glTranslatef(side * 0.060f, 0.0f, 0.0f);
+        glRotatef(side * -90.0f, 0.0f, 1.0f, 0.0f);
+        Renderer::drawDisk(0.0f, 0.024f, 16);
+        glPopMatrix();
+
+        // 6. Porcelain Hand Gripping / Holding the Tree Trunk Bark
+        Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
+        glPushMatrix();
+        glTranslatef(0.0f, -0.08f, 0.015f);
+        // Align palm with tree trunk curvature
+        glRotatef(side * -24.0f, 0.0f, 1.0f, 0.0f);
+        glRotatef(12.0f, 1.0f, 0.0f, 0.0f);
+
+        // Palm block
+        glPushMatrix();
+        glScalef(0.11f, 0.085f, 0.045f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+
+        // 4 Distinct Fingers gripping the tree bark
+        for (int f = 0; f < 4; ++f) {
+            float fx = -0.038f + f * 0.025f;
             glPushMatrix();
-            glScalef(0.14f, 0.15f, 0.14f);
-            glutSolidSphere(1.0, 14, 14);
-            glPopMatrix();
-
-            // Flared Yellow Sleeve Opening Cuff Ring
-            glPushMatrix();
-            glTranslatef(-0.02f, -0.09f, 0.01f);
-            glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-            Renderer::drawDisk(0.08f, 0.135f, 16);
-            glPopMatrix();
-
-            // 2. Upper Arm (Angled downward and forward toward tree)
-            glRotatef(-42.0f, 1.0f, 0.0f, 0.0f);
-            glRotatef(-22.0f, 0.0f, 1.0f, 0.0f);
-            glRotatef(-10.0f, 0.0f, 0.0f, 1.0f);
-
-            // Porcelain Upper Arm
-            Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -0.15f, 0.0f);
-            glScalef(0.12f, 0.30f, 0.12f);
+            glTranslatef(fx, -0.070f, 0.008f);
+            glRotatef(side * (-10.0f - f * 3.0f), 0.0f, 1.0f, 0.0f);
+            glScalef(0.020f, 0.065f, 0.025f);
             glutSolidCube(1.0);
-            glPopMatrix();
-
-            // 3. Ball-Joint Elbow (Mechanical doll hinge)
-            glTranslatef(0.0f, -0.30f, 0.0f);
-            Renderer::setMaterial(0.92f, 0.80f, 0.70f, 30.0f);
-            glutSolidSphere(0.078, 14, 14);
-            Renderer::setMaterial(0.35f, 0.35f, 0.35f, 50.0f);
-            glPushMatrix();
-            glScalef(0.082f, 0.02f, 0.082f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // 4. Forearm Bends Upward and Forward to lean palm against tree bark!
-            // Sharp bend upward at elbow: ~104 degrees from upper arm
-            glRotatef(104.0f, 1.0f, 0.0f, 0.0f);
-            glRotatef(14.0f, 0.0f, 1.0f, 0.0f);
-            glRotatef(-18.0f, 0.0f, 0.0f, 1.0f);
-
-            // Porcelain Forearm
-            Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -0.15f, 0.0f);
-            glScalef(0.115f, 0.29f, 0.115f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // 5. Forearm Cuff & Mechanical Wrist Socket with Black Hole (Reference Screenshot!)
-            glTranslatef(0.0f, -0.29f, 0.0f);
-            
-            // Forearm cuff rim
-            Renderer::setMaterial(0.92f, 0.80f, 0.72f, 30.0f);
-            glPushMatrix();
-            glScalef(0.12f, 0.035f, 0.12f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // Cylindrical Wrist Pin Joint
-            Renderer::setMaterial(0.88f, 0.76f, 0.68f, 30.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -0.025f, 0.0f);
-            glutSolidSphere(0.052, 12, 12);
-            glPopMatrix();
-
-            // THE ICONIC BLACK WRIST SOCKET HOLE (clearly visible in reference photo!)
-            Renderer::setMaterial(0.05f, 0.05f, 0.05f, 90.0f);
-            glPushMatrix();
-            glTranslatef(-0.062f, 0.0f, 0.0f); // Lateral/outer side facing camera
-            glRotatef(-90.0f, 0.0f, 1.0f, 0.0f);
-            Renderer::drawDisk(0.0f, 0.024f, 16);
-            glPopMatrix();
-
-            // 6. Porcelain Hand Pressed Flat Against the Tree Trunk Bark
-            Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -0.08f, 0.015f);
-            // Tilt palm to conform to the curvature of the trunk bark
-            glRotatef(-16.0f, 0.0f, 1.0f, 0.0f);
-            glRotatef(8.0f, 1.0f, 0.0f, 0.0f);
-
-            // Palm block
-            glPushMatrix();
-            glScalef(0.11f, 0.085f, 0.045f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // Distinct Fingers resting along the bark surface
-            for (int f = 0; f < 4; ++f) {
-                float fx = -0.038f + f * 0.025f;
-                glPushMatrix();
-                glTranslatef(fx, -0.070f, 0.008f);
-                // Curve slightly to wrap against trunk surface
-                glRotatef(-8.0f - f * 2.0f, 0.0f, 1.0f, 0.0f);
-                glScalef(0.020f, 0.065f, 0.025f);
-                glutSolidCube(1.0);
-                glPopMatrix();
-            }
-
-            // Thumb resting on upper edge of palm against bark
-            glPushMatrix();
-            glTranslatef(0.045f, -0.020f, 0.012f);
-            glRotatef(28.0f, 0.0f, 0.0f, 1.0f);
-            glScalef(0.022f, 0.045f, 0.025f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            glPopMatrix(); // End Hand
-
-        } else {
-            // =================================================================
-            // RIGHT ARM: NATURAL RELAXED HANGING AT SIDE
-            // =================================================================
-            glTranslatef(0.44f, 1.72f, 0.0f); // Right shoulder
-
-            // 1. Yellow Shirt Sleeve
-            Renderer::setMaterial(0.98f, 0.84f, 0.12f, 25.0f);
-            glPushMatrix();
-            glScalef(0.14f, 0.15f, 0.14f);
-            glutSolidSphere(1.0, 14, 14);
-            glPopMatrix();
-
-            // Upper Arm hanging naturally
-            glRotatef(8.0f, 0.0f, 0.0f, 1.0f);
-            glRotatef(5.0f, 1.0f, 0.0f, 0.0f);
-
-            // 2. Porcelain Upper Arm
-            Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
-            glPushMatrix();
-            glTranslatef(0.03f, -0.22f, 0.0f);
-            glScalef(0.13f, 0.30f, 0.13f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // 3. Ball-Joint Elbow
-            glTranslatef(0.03f, -0.38f, 0.0f);
-            Renderer::setMaterial(0.92f, 0.80f, 0.70f, 30.0f);
-            glutSolidSphere(0.085, 12, 12);
-            Renderer::setMaterial(0.35f, 0.35f, 0.35f, 50.0f);
-            glPushMatrix();
-            glScalef(0.090f, 0.02f, 0.090f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // Forearm
-            glRotatef(-6.0f, 0.0f, 0.0f, 1.0f);
-            glRotatef(12.0f, 1.0f, 0.0f, 0.0f);
-
-            // 4. Porcelain Forearm
-            Renderer::setMaterial(0.957f, 0.847f, 0.804f, 25.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -0.18f, 0.03f);
-            glScalef(0.11f, 0.28f, 0.11f);
-            glutSolidCube(1.0);
-            glPopMatrix();
-
-            // 5. Doll Hand
-            glPushMatrix();
-            glTranslatef(0.0f, -0.34f, 0.03f);
-            glScalef(1.1f, 1.0f, 0.5f);
-            glutSolidSphere(0.075, 12, 12);
-            glTranslatef(0.0f, -0.05f, 0.0f);
-            Renderer::drawBox(0.09f, 0.07f, 0.03f);
             glPopMatrix();
         }
+
+        // Thumb resting on upper bark
+        glPushMatrix();
+        glTranslatef(side * -0.045f, -0.020f, 0.012f);
+        glRotatef(side * -28.0f, 0.0f, 0.0f, 1.0f);
+        glScalef(0.022f, 0.045f, 0.025f);
+        glutSolidCube(1.0);
         glPopMatrix();
+
+        glPopMatrix(); // End Hand
+        glPopMatrix(); // End Arm
     }
 
     void drawDollBody() {
@@ -853,10 +785,10 @@ void DollManager::draw(const Doll& doll) {
 
     glPopMatrix();
 
-    // 2. Draw the Real, Seamless Colossal Dead Tree right beside the doll's hand
-    // Positioned at (doll.x - 2.70f, doll.y, doll.z + 0.96f) so the doll's left palm
-    // rests directly against the rough tree trunk bark, perfectly matching the iconic Episode 1 shot!
-    drawDeadTree(doll.x - 2.70f, doll.y, doll.z + 0.96f);
+    // 2. Draw the Real, Seamless Colossal Dead Tree directly in front of the doll
+    // Positioned at (doll.x, doll.y, doll.z + 1.85f) so the doll hugs the trunk with both hands.
+    // When Red Light comes, ONLY her face/head rotates 180° to look back at the players!
+    drawDeadTree(doll.x, doll.y, doll.z + 1.85f);
 }
 
 void DollManager::drawDeadTree(float x, float y, float z) {
@@ -879,19 +811,6 @@ void DollManager::drawDeadTree(float x, float y, float z) {
     // 2. Continuous Lower Trunk (glRotatef -90 on X so Z points straight UP!)
     glPushMatrix();
     glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-
-    // Realistic vertical bark furrows & fibrous ridges (characteristic of ancient dead hardwoods)
-    for (int r = 0; r < 14; ++r) {
-        float rAngle = r * (2.0f * PI / 14.0f);
-        float tone = 0.78f + 0.38f * sinf(r * 2.3f);
-        Renderer::setMaterial(barkR * tone, barkG * tone, barkB * tone, 12.0f);
-        glPushMatrix();
-        glRotatef(rAngle * 180.0f / PI, 0.0f, 0.0f, 1.0f);
-        glTranslatef(1.16f, 0.0f, 0.1f);
-        Renderer::drawCylinder(0.045f, 0.024f, 5.8f, 6);
-        glPopMatrix();
-    }
-    Renderer::setMaterial(barkR, barkG, barkB, 15.0f);
 
     // Trunk Segment 1: Base to 2.2m
     drawBranchSegment(1.45f, 1.25f, 2.2f);

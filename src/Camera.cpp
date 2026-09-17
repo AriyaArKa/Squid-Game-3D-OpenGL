@@ -44,8 +44,8 @@ void CameraManager::init() {
 
 void CameraManager::resetAnglesForMode(CameraMode mode) {
     if (mode == CAM_DOLL_CLOSEUP) {
-        camYaw = -52.0f; // Frames the iconic tree, resting arm, and doll face profile
-        camPitch = 6.0f;
+        camYaw = 0.0f; // Looks directly at the doll hugging the tree from the arena side
+        camPitch = 8.0f;
     } else if (mode == CAM_OVERHEAD) {
         camYaw = 0.0f;
         camPitch = 38.0f;
@@ -268,15 +268,16 @@ void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode
 }
 
 void CameraManager::applyDollCloseupView(const Doll& doll) {
-    // Iconic Episode 1 Tree-Side Close-up (matching the reference photo)
-    // Looking past the tree trunk at the Doll's face, left arm touching the bark, and arena
-    float eyeX = doll.x - 3.4f;
-    float eyeY = doll.y + 5.5f;
-    float eyeZ = doll.z + 3.0f;
+    // Corner PiP CCTV Angle looking from arena side at Doll hugging tree
+    // When Green Light: shows doll holding tree with two hands from back
+    // When Red Light: head rotates 180° so face looks straight at camera/players!
+    float eyeX = doll.x + 1.8f;
+    float eyeY = doll.y + 6.0f;
+    float eyeZ = doll.z - 4.5f;
 
-    float lookX = doll.x - 0.4f;
-    float lookY = doll.y + 5.3f;
-    float lookZ = doll.z + 0.3f;
+    float lookX = doll.x;
+    float lookY = doll.y + 5.5f;
+    float lookZ = doll.z + 0.8f;
 
     gluLookAt(eyeX, eyeY, eyeZ,
               lookX, lookY, lookZ,
