@@ -1,11 +1,12 @@
 #include "engine/Mesh.h"
 #include <cstddef>
 
-Mesh::Mesh(const std::vector<Vertex>& vertices_, const std::vector<GLuint>& indices_)
-    : vertices(vertices_), indices(indices_), ebo(indices_) {
+Mesh::Mesh(const std::vector<Vertex>& vertices_, const std::vector<GLuint>& indices_, GLenum drawMode_)
+    : vertices(vertices_), indices(indices_), ebo(indices_), drawMode(drawMode_) {
     vao.Bind();
 
     VBO vbo(vertices);
+    vboID = vbo.ID;
     ebo.Bind(); // re-associate with the now-bound VAO (must happen after vao.Bind())
 
     vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, position));
@@ -19,14 +20,26 @@ Mesh::Mesh(const std::vector<Vertex>& vertices_, const std::vector<GLuint>& indi
 }
 
 void Mesh::Draw(Shader& shader, const glm::mat4& model,
-                const glm::vec3& color, float shininess, const glm::vec3& emissive) {
+                const glm::vec3& color, float shininess, const glm::vec3& emissive,
+                float alpha, bool unlit) {
     shader.Activate();
     shader.SetMat4("model", model);
     shader.SetVec3("materialColor", color);
     shader.SetFloat("shininess", shininess);
     shader.SetVec3("emissive", emissive);
+    shader.SetFloat("alphaValue", alpha);
+    shader.SetBool("unlit", unlit);
 
     vao.Bind();
-    glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(drawMode, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
     vao.Unbind();
+}
+
+void Mesh::Delete() {
+    vao.Delete();
+    ebo.Delete();
+    if (vboID != 0) {
+        glDeleteBuffers(1, &vboID);
+        vboID = 0;
+    }
 }

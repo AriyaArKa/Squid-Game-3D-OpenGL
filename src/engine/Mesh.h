@@ -17,12 +17,20 @@ public:
     std::vector<GLuint> indices;
     VAO vao;
     EBO ebo;
+    GLuint vboID = 0;
+    GLenum drawMode;
 
-    Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices);
+    Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, GLenum drawMode = GL_TRIANGLES);
 
     void Draw(Shader& shader, const glm::mat4& model,
               const glm::vec3& color, float shininess = 32.0f,
-              const glm::vec3& emissive = glm::vec3(0.0f));
+              const glm::vec3& emissive = glm::vec3(0.0f),
+              float alpha = 1.0f, bool unlit = false);
+
+    // Frees the VAO/EBO (and the VBO buffer created alongside them). Only call this for
+    // one-off meshes (e.g. GLCompat's per-call immediate-mode geometry) - the shared/cached
+    // meshes in Primitives.h live for the whole program and are never deleted.
+    void Delete();
 };
 
 #endif // ENGINE_MESH_H

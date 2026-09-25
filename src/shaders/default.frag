@@ -11,9 +11,16 @@ uniform vec3 lightColor;
 uniform vec3 materialColor;
 uniform float shininess;
 uniform vec3 emissive;    // e.g. the doll's glowing red-light eyes
+uniform float alphaValue; // for translucent overlays (blush, ground shadow, laser glow) - GLCompat always sets this (1.0 default)
+uniform bool unlit;       // flat color, ignoring scene lighting - GLCompat always sets this (false default)
 
 void main() {
     vec3 baseColor = materialColor * VertexColor;
+
+    if (unlit) {
+        FragColor = vec4(baseColor + emissive, alphaValue);
+        return;
+    }
 
     vec3 norm = normalize(Normal);
     vec3 toLight = normalize(-lightDir);
@@ -32,5 +39,5 @@ void main() {
     vec3 specular = spec * lightColor * 0.5;
 
     vec3 result = (ambient + diffuse) * baseColor + specular + emissive;
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, alphaValue);
 }

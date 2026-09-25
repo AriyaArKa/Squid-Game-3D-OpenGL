@@ -19,6 +19,7 @@ public:
     void SetMat4(const char* name, const glm::mat4& value);
     void SetVec3(const char* name, const glm::vec3& value);
     void SetFloat(const char* name, float value);
+    void SetBool(const char* name, bool value);
 
 private:
     static std::string readFile(const char* path);
