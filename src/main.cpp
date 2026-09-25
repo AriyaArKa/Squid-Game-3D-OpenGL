@@ -4,16 +4,16 @@
 #include <ctime>
 #include <vector>
 
-#include "Config.h"
-#include "Types.h"
-#include "Audio.h"
-#include "Renderer.h"
-#include "Doll.h"
-#include "Guards.h"
-#include "Contestants.h"
-#include "Environment.h"
-#include "UI.h"
-#include "Camera.h"
+#include "core/Config.h"
+#include "core/Types.h"
+#include "audio/Audio.h"
+#include "render/Renderer.h"
+#include "doll/Doll.h"
+#include "guards/Guards.h"
+#include "contestants/Contestants.h"
+#include "environment/Environment.h"
+#include "ui/UI.h"
+#include "camera/Camera.h"
 
 // -----------------------------------------------------------------------------------
 // GLOBAL GAME INSTANCES & STATE
@@ -114,12 +114,16 @@ void display() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // ==========================================
-    // 1. MAIN 3D ARENA VIEWPORT (Full Screen)
+    // 1. MAIN 3D ARENA VIEWPORT (Center - between the two persistent sidebars)
     // ==========================================
-    glViewport(0, 0, windowWidth, windowHeight);
+    int centerX = UI_LEFT_BAR_WIDTH;
+    int centerW = windowWidth - UI_LEFT_BAR_WIDTH - UI_RIGHT_BAR_WIDTH;
+    if (centerW < 200) centerW = 200; // keep a sane minimum on tiny windows
+
+    glViewport(centerX, 0, centerW, windowHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    float aspect = (float)windowWidth / (float)(windowHeight ? windowHeight : 1);
+    float aspect = (float)centerW / (float)(windowHeight ? windowHeight : 1);
     gluPerspective(55.0, aspect, 0.1, 280.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -139,14 +143,17 @@ void display() {
     ContestantsManager::drawParticles(particles);
 
     // ==========================================
-    // 2. CORNER PiP DOLL SURVEILLANCE CAM
+    // 2. PERSISTENT LEFT/RIGHT SIDEBARS (Doll Cam dock + full controls reference)
     // ==========================================
-    int pipW = (int)(windowWidth * 0.22f);
-    if (pipW < 230) pipW = 230;
-    if (pipW > 340) pipW = 340;
-    int pipH = (int)(pipW * 0.72f);
-    int pipX = 20;
-    int pipY = windowHeight - pipH - 75;
+    glViewport(0, 0, windowWidth, windowHeight);
+    UIManager::drawSidebarBackgrounds(windowWidth, windowHeight);
+
+    // Doll surveillance cam (CAM 01), docked at the top of the left bar
+    int pipPad = 12;
+    int pipW = UI_LEFT_BAR_WIDTH - pipPad * 2;
+    int pipH = (int)(pipW * 0.85f);
+    int pipX = pipPad;
+    int pipY = windowHeight - pipH - 58;
 
     glEnable(GL_SCISSOR_TEST);
     glScissor(pipX, pipY, pipW, pipH);
@@ -176,16 +183,16 @@ void display() {
     glDisable(GL_SCISSOR_TEST);
 
     // ==========================================
-    // 3. 2D HUD OVERLAYS & COUNTERS
+    // 3. 2D HUD: PiP frame, sidebar text content, and center-screen state overlay
     // ==========================================
     glViewport(0, 0, windowWidth, windowHeight);
 
-    // Draw PiP CCTV frame border
     UIManager::drawDollCamFrame((float)pipX, (float)pipY, (float)pipW, (float)pipH, gameTimer);
 
-    // Render Main HUD (05:00 Digital Clock, Player Count, Speed Badge, Status Banner)
-    UIManager::renderHUD(windowWidth, windowHeight, gameState, doll.lightState,
-                         gameTimer, aliveCount, player, camMode);
+    UIManager::drawLeftBarStats(windowWidth, windowHeight, pipY, gameState, doll.lightState,
+                                gameTimer, aliveCount, player);
+    UIManager::drawRightBarControls(windowWidth, windowHeight, camMode);
+    UIManager::renderStateOverlay(windowWidth, windowHeight, gameState);
 
     glutSwapBuffers();
 }
@@ -194,11 +201,14 @@ void reshape(int w, int h) {
     if (h == 0) h = 1;
     windowWidth = w;
     windowHeight = h;
-    glViewport(0, 0, w, h);
+
+    int centerW = w - UI_LEFT_BAR_WIDTH - UI_RIGHT_BAR_WIDTH;
+    if (centerW < 200) centerW = 200;
+    glViewport(UI_LEFT_BAR_WIDTH, 0, centerW, h);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    float aspect = (float)w / (float)h;
+    float aspect = (float)centerW / (float)h;
     gluPerspective(55.0, aspect, 0.1, 280.0);
     glMatrixMode(GL_MODELVIEW);
 }

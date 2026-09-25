@@ -1,7 +1,7 @@
 #ifndef GUARDS_H
 #define GUARDS_H
 
-#include "Types.h"
+#include "core/Types.h"
 #include <vector>
 
 class GuardsManager {

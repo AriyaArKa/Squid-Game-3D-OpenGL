@@ -4,20 +4,33 @@ A Computer Graphics course project built with C++, OpenGL, and FreeGLUT featurin
 
 ## Architecture & Modular File Structure
 
+Source is organized into one folder per subsystem under `src/`, so any single file stays
+small enough to read and debug in isolation:
+
 ```
 .
 ├── src/
-│   ├── Config.h            # Arena constants, speeds, camera offsets, timings
-│   ├── Types.h             # Structs for Player, Doll, Guards, NPCs, GameState
-│   ├── Audio.h / .cpp      # WinMM audio engine & procedural Squid Game sound synthesizer
-│   ├── Renderer.h / .cpp   # OpenGL lighting, materials, primitives (cylinders, spheres, boxes)
-│   ├── Doll.h / .cpp       # Young-hee Doll (pigtails, clips, collared dress, laser eyes) & dead tree
-│   ├── Guards.h / .cpp     # Pink Soldiers (Circle, Triangle, Square masks, weapons, muzzle flash)
-│   ├── Contestants.h / .cpp# Player 456 + NPC tracksuits, AI running/freeze logic, blood particles
-│   ├── Environment.h / .cpp# Sandy arena ground, painted sky backdrop walls, guard huts, lines, 3D clock
-│   ├── UI.h / .cpp         # Authentic 7-segment digital countdown clock, player counter, HUD & screens
-│   ├── Camera.h / .cpp     # Smooth 3rd person follow, 1st person POV, Doll POV modes
-│   └── main.cpp            # Entry point, GLUT callbacks, game loop & state machine
+│   ├── main.cpp                 # Entry point, GLUT callbacks, game loop & state machine
+│   ├── core/
+│   │   ├── Config.h             # Arena constants, speeds, camera offsets, timings, UI bar widths
+│   │   └── Types.h              # Structs for Player, Doll, Guards, NPCs, GameState
+│   ├── render/                  # Renderer.h / .cpp — lighting, materials, primitives (cylinders, spheres, boxes)
+│   ├── audio/                   # Audio.h / .cpp — WinMM engine & procedural Squid Game sound synthesizer
+│   ├── camera/                  # Camera.h / .cpp — 3rd/1st person follow, Doll POV, 360° orbit modes
+│   ├── doll/                    # Young-hee Doll, split by concern:
+│   │   ├── Doll.h / .cpp        #   state machine (green/red light, head turn) + composition
+│   │   ├── DollHead.cpp/.h      #   face, eyes, hair, ears, pigtails
+│   │   ├── DollBody.cpp/.h      #   torso, dress, ball-jointed arms/hands, legs
+│   │   └── DollTree.cpp/.h      #   the procedural gnarled dead tree
+│   ├── guards/                  # Guards.h / .cpp — Pink Soldiers (Circle/Triangle/Square masks, weapons)
+│   ├── contestants/             # Contestants.h / .cpp — Player 456 + NPCs, AI logic, blood particles
+│   ├── environment/             # Arena, split by concern:
+│   │   ├── Environment.h/.cpp   #   ground, sky walls, wheat trim, boundary lines
+│   │   ├── EnvironmentHouses.cpp#   background Korean village houses
+│   │   └── EnvironmentClock.cpp #   overhead 3D digital scoreboard clock
+│   └── ui/                      # HUD, split by concern:
+│       ├── UI.h / .cpp          #   sidebar panels, Doll Cam frame, state overlays
+│       └── UIPrimitives.h       #   shared 2D drawing toolkit (text, rects, 7-seg digits, timer widget)
 ├── bin/                    # Build output (game.exe)
 ├── .vscode/tasks.json      # VS Code build task
 └── README.md
@@ -26,9 +39,15 @@ A Computer Graphics course project built with C++, OpenGL, and FreeGLUT featurin
 ## Setup & Compilation (Windows)
 
 1. Ensure MSYS2 MinGW-w64 is in your PATH (`C:\msys64\mingw64\bin`).
-2. Build via VS Code (`Ctrl+Shift+B`) or run from terminal:
+2. Build via VS Code (`Ctrl+Shift+B`) or run from terminal (`-I src` lets every file use
+   folder-qualified includes like `"core/Config.h"`):
    ```powershell
-   g++ src/*.cpp -o bin/game.exe -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
+   g++ -I src src/main.cpp src/audio/Audio.cpp src/render/Renderer.cpp `
+       src/doll/Doll.cpp src/doll/DollHead.cpp src/doll/DollBody.cpp src/doll/DollTree.cpp `
+       src/guards/Guards.cpp src/contestants/Contestants.cpp `
+       src/environment/Environment.cpp src/environment/EnvironmentHouses.cpp src/environment/EnvironmentClock.cpp `
+       src/ui/UI.cpp src/camera/Camera.cpp `
+       -o bin/game.exe -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
    ```
 3. Run the game:
    ```powershell
@@ -37,17 +56,21 @@ A Computer Graphics course project built with C++, OpenGL, and FreeGLUT featurin
 
 ## Controls
 
-| Key           | Action                                       |
-|---------------|----------------------------------------------|
-| **W / Up**    | Move forward                                 |
-| **S / Down**  | Move backward                                |
-| **A / D**     | Turn left / right                            |
-| **Q / E**     | Strafe left / right                          |
-| **C**         | Switch Camera (3rd Person / 1st Person / Doll POV) |
-| **F**         | Toggle Flat <-> Smooth Gouraud shading       |
-| **Space**     | Start game from title screen                 |
-| **R**         | Restart game                                 |
-| **Esc**       | Exit                                         |
+The in-game right sidebar always lists the full, current control scheme during play. Summary:
+
+| Key                    | Action                                              |
+|-------------------------|------------------------------------------------------|
+| **W/S or ↑/↓**          | Move forward / backward                              |
+| **A/D or ←/→**          | Turn left / right                                    |
+| **Q / E**               | Strafe left / right                                  |
+| **Z / X / C**           | Slow walk / easy run / fast sprint (or hold Shift/Ctrl) |
+| **G**                   | Cycle speed gear                                     |
+| **1 – 9, 0**             | Switch camera (3rd/1st person, top-down, Doll orbit, stadium, Doll POV, start/finish line, overhead) |
+| **Mouse drag / wheel**  | 360° orbit the active camera / zoom                  |
+| **F**                   | Toggle flat ↔ smooth shading                          |
+| **Space / click**       | Start game from the title screen                     |
+| **R**                   | Restart game                                          |
+| **Esc**                 | Exit                                                  |
 
 ## Features & Graphics Highlights
 

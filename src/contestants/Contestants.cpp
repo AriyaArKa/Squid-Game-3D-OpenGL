@@ -1,8 +1,8 @@
-#include "Contestants.h"
-#include "Guards.h"
-#include "Renderer.h"
-#include "Audio.h"
-#include "Config.h"
+#include "contestants/Contestants.h"
+#include "guards/Guards.h"
+#include "render/Renderer.h"
+#include "audio/Audio.h"
+#include "core/Config.h"
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdlib>

@@ -1,7 +1,7 @@
 #ifndef CONTESTANTS_H
 #define CONTESTANTS_H
 
-#include "Types.h"
+#include "core/Types.h"
 #include <vector>
 
 class ContestantsManager {

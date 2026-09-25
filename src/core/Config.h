@@ -37,4 +37,10 @@ const float DOLL_SCALE = 2.6f;           // Colossal Young-hee Doll
 const int TOTAL_CONTESTANTS = 456;
 const int NUM_NPC_CONTESTANTS = 32;      // 32 detailed 3D contestants across the line
 
+// Persistent HUD Sidebars: Left bar docks the Doll Cam + live stats, Right bar always
+// lists every control. Both stay on screen during play so the player never has to pause
+// or guess a key — only the start prompt is shown before the game begins.
+const int UI_LEFT_BAR_WIDTH  = 210;
+const int UI_RIGHT_BAR_WIDTH = 240;
+
 #endif // CONFIG_H

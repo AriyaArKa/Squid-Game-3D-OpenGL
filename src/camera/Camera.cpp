@@ -1,5 +1,5 @@
-#include "Camera.h"
-#include "Config.h"
+#include "camera/Camera.h"
+#include "core/Config.h"
 #include <GL/glut.h>
 #include <cmath>
 
