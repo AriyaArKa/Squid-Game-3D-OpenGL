@@ -284,6 +284,77 @@ void CameraManager::applyDollCloseupView(const Doll& doll) {
               0.0f, 1.0f, 0.0f);
 }
 
+void CameraManager::getViewVectors(const Player& player, const Doll& doll, CameraMode mode,
+                                   float& eyeX, float& eyeY, float& eyeZ,
+                                   float& lookX, float& lookY, float& lookZ,
+                                   float& upX, float& upY, float& upZ, float& fov) {
+    upX = 0.0f; upY = 1.0f; upZ = 0.0f;
+    fov = 55.0f;
+
+    switch (mode) {
+        case CAM_THIRD_PERSON:
+        case CAM_DOLL_CLOSEUP:
+        case CAM_OVERHEAD:
+        case CAM_SIDE_LEFT:
+        case CAM_SIDE_RIGHT:
+        case CAM_START_LINE:
+        case CAM_FINISH_LINE:
+            eyeX = smoothCamX; eyeY = smoothCamY; eyeZ = smoothCamZ;
+            lookX = smoothLookX; lookY = smoothLookY; lookZ = smoothLookZ;
+            break;
+
+        case CAM_FIRST_PERSON: {
+            float totalYawRad = (player.facingAngle + camYaw) * DEG2RAD;
+            float pitchRad = camPitch * DEG2RAD;
+            float forwardX = sinf(totalYawRad) * cosf(pitchRad);
+            float forwardY = sinf(pitchRad);
+            float forwardZ = cosf(totalYawRad) * cosf(pitchRad);
+
+            eyeX = player.x; eyeY = player.y + 1.65f; eyeZ = player.z;
+            lookX = eyeX + forwardX * 15.0f; lookY = eyeY + forwardY * 15.0f; lookZ = eyeZ + forwardZ * 15.0f;
+            break;
+        }
+
+        case CAM_TOP_DOWN:
+            eyeX = player.x * 0.3f; eyeY = 55.0f; eyeZ = (player.z + DOLL_Z) * 0.4f;
+            lookX = player.x * 0.3f; lookY = 0.0f; lookZ = (player.z + DOLL_Z) * 0.4f + 0.1f;
+            upX = 0.0f; upY = 0.0f; upZ = 1.0f;
+            break;
+
+        case CAM_DOLL_POV: {
+            float headRad = (doll.headAngle + camYaw) * DEG2RAD;
+            float lookDirX = sinf(headRad);
+            float lookDirZ = -cosf(headRad);
+            float pitchOffset = sinf(camPitch * DEG2RAD) * 8.0f;
+
+            eyeX = doll.x; eyeY = doll.y + 6.0f; eyeZ = doll.z;
+            lookX = eyeX + lookDirX * 35.0f; lookY = eyeY - 4.5f + pitchOffset; lookZ = eyeZ + lookDirZ * 35.0f;
+            break;
+        }
+
+        default:
+            eyeX = smoothCamX; eyeY = smoothCamY; eyeZ = smoothCamZ;
+            lookX = smoothLookX; lookY = smoothLookY; lookZ = smoothLookZ;
+            break;
+    }
+}
+
+void CameraManager::getDollCloseupVectors(const Doll& doll,
+                                         float& eyeX, float& eyeY, float& eyeZ,
+                                         float& lookX, float& lookY, float& lookZ,
+                                         float& upX, float& upY, float& upZ, float& fov) {
+    eyeX = doll.x + 1.8f;
+    eyeY = doll.y + 6.0f;
+    eyeZ = doll.z - 4.5f;
+
+    lookX = doll.x;
+    lookY = doll.y + 5.5f;
+    lookZ = doll.z + 0.8f;
+
+    upX = 0.0f; upY = 1.0f; upZ = 0.0f;
+    fov = 42.0f;
+}
+
 void CameraManager::cycleMode(CameraMode& mode) {
     int next = ((int)mode) + 1;
     if (next > 9) next = 0;

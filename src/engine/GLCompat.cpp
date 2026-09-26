@@ -140,6 +140,7 @@ void GLCompat::normal3f(float x, float y, float z) {
 }
 
 void GLCompat::color3f(float r, float g, float b) {
+    curColor = glm::vec3(r, g, b);
     immCurColor = glm::vec3(r, g, b);
 }
 
