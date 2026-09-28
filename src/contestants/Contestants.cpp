@@ -49,7 +49,7 @@ namespace {
     }
 
     // Classic proportional human contestant figure with custom numbers
-    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle) {
+    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle, bool isPlayer = false) {
         // Tracksuit Colors: Authentic Squid Game Teal Green
         const float tr = 0.10f, tg = 0.50f, tb = 0.44f;
         const float wr = 0.96f, wg = 0.96f, wb = 0.96f;
@@ -156,11 +156,13 @@ namespace {
         glScalef(0.18f, 0.11f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number (e.g. 456, 067, 218, 001)
-        glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.015f);
-        draw3DigitNumber(number, 0.045f);
-        glPopMatrix();
+        // Printed 3-digit number (e.g. 456) for player
+        if (isPlayer) {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, 0.015f);
+            draw3DigitNumber(number, 0.045f);
+            glPopMatrix();
+        }
         glPopMatrix();
 
         // --- WHITE BACK BADGE WITH CONTESTANT NUMBER ---
@@ -173,11 +175,13 @@ namespace {
         glScalef(0.24f, 0.14f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number on back
-        glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.015f);
-        draw3DigitNumber(number, 0.060f);
-        glPopMatrix();
+        // Printed 3-digit number on back for player
+        if (isPlayer) {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, 0.015f);
+            draw3DigitNumber(number, 0.060f);
+            glPopMatrix();
+        }
         glPopMatrix();
 
         glPopMatrix(); // End Torso
@@ -371,7 +375,7 @@ void ContestantsManager::drawPlayer(const Player& player) {
     glRotatef(player.facingAngle, 0.0f, 1.0f, 0.0f);
     glScalef(1.15f, 1.15f, 1.15f);
 
-    drawContestantFigure(player.legAngle, player.armAngle, player.playerNumber, player.isAlive, player.deathTimer * 90.0f);
+    drawContestantFigure(player.legAngle, player.armAngle, player.playerNumber, player.isAlive, player.deathTimer * 90.0f, true);
 
     glPopMatrix();
 }

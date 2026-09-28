@@ -172,7 +172,6 @@ namespace {
         if (action == GLFW_PRESS && gameState == WAITING) {
             if (key == GLFW_KEY_SPACE || key == GLFW_KEY_ENTER || key == GLFW_KEY_W || key == GLFW_KEY_S) {
                 startGame();
-                return;
             }
         }
 
@@ -202,10 +201,12 @@ namespace {
                     else player.speedTier = SPEED_WALK;
                     break;
                 case GLFW_KEY_1: switchCamera(CAM_THIRD_PERSON); break;
+                case GLFW_KEY_2: switchCamera(CAM_OVERHEAD); break;     // Arena Free 360° Cam
                 case GLFW_KEY_3: switchCamera(CAM_TOP_DOWN); break;     // Aerial Top View
                 case GLFW_KEY_4: switchCamera(CAM_DOLL_CLOSEUP); break;
                 case GLFW_KEY_5: switchCamera(CAM_SIDE_LEFT); break;
                 case GLFW_KEY_6: switchCamera(CAM_SIDE_RIGHT); break;
+                case GLFW_KEY_7: switchCamera(CAM_FINISH_LINE); break;  // Finish Line 360° Cam
                 case GLFW_KEY_V: case GLFW_KEY_N:
                     CameraManager::cycleMode(camMode);
                     break;
@@ -463,7 +464,7 @@ int main() {
             glEnable(GL_SCISSOR_TEST);
             glScissor(pipX, pipY, pipW, pipH);
             glViewport(pipX, pipY, pipW, pipH);
-            glClearColor(0.10f, 0.22f, 0.42f, 1.0f);
+            glClearColor(0.26f, 0.52f, 0.82f, 1.0f); // Bright blue soundstage sky background
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             CameraManager::getDollCloseupVectors(doll, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ, fov);
@@ -474,12 +475,17 @@ int main() {
                            glm::vec3(upX, upY, upZ),
                            fov, 0.1f, 80.0f);
 
-            GLCompat::beginFrame(shader, camera, lightDir, lightColor);
+            // Frontal camera headlight: lightDir is ray direction from camera towards doll
+            glm::vec3 camDir = glm::normalize(glm::vec3(lookX - eyeX, lookY - eyeY, lookZ - eyeZ));
+            glm::vec3 pipLightDir = camDir; // Ray points from camera to doll
+            glm::vec3 pipLightColor(1.40f, 1.35f, 1.30f); // Bright vivid CCTV fill light!
+
+            GLCompat::beginFrame(shader, camera, pipLightDir, pipLightColor);
             DollManager::draw(doll);
             GuardsManager::draw(guards);
 
             glDisable(GL_SCISSOR_TEST);
-            glClearColor(0.10f, 0.25f, 0.55f, 1.0f);
+            glClearColor(0.08f, 0.22f, 0.52f, 1.0f);
         }
 
         // =========================================================================
@@ -508,12 +514,30 @@ int main() {
             ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.78f, 1.0f), "RED LIGHT, GREEN LIGHT");
             ImGui::Spacing();
 
-            // Doll Cam Header
-            ImGui::TextColored(ImVec4(1.0f, 0.15f, 0.15f, 1.0f), "■ LIVE");
+            // Doll Cam Header with State Indicator
+            if (doll.lightState == RED_LIGHT) {
+                ImGui::TextColored(ImVec4(1.0f, 0.15f, 0.15f, 1.0f), "● SCANNING");
+            } else {
+                ImGui::TextColored(ImVec4(0.15f, 0.95f, 0.35f, 1.0f), "● CHANTING");
+            }
             ImGui::SameLine(ImGui::GetWindowWidth() - 95.0f);
             ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.95f, 1.0f), "CAM 01 : DOLL");
 
-            // Empty space reserved for 3D PiP viewport
+            // Empty space reserved for 3D PiP viewport with CCTV corner brackets
+            ImVec2 pipMin = ImGui::GetCursorScreenPos();
+            ImVec2 pipMax(pipMin.x + (float)pipW, pipMin.y + (float)pipH);
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            dl->AddRect(pipMin, pipMax, IM_COL32(0, 220, 240, 180), 2.0f, 0, 1.5f);
+            float cLen = 14.0f;
+            dl->AddLine(pipMin, ImVec2(pipMin.x + cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(pipMin, ImVec2(pipMin.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x - cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x + cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(pipMax, ImVec2(pipMax.x - cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
+            dl->AddLine(pipMax, ImVec2(pipMax.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+
             ImGui::Dummy(ImVec2((float)pipW, (float)pipH + 6.0f));
 
             // Cyan Bordered Digital Clock Box
@@ -638,53 +662,90 @@ int main() {
             };
 
             const CamItem camItems[] = {
-                { CAM_THIRD_PERSON, "[1] Player View (3rd)" },
-                { CAM_TOP_DOWN,     "[3] Top Arena View" },
-                { CAM_DOLL_CLOSEUP, "[4] Doll 360 Orbit" },
-                { CAM_SIDE_LEFT,    "[5] Left Broadcast" },
-                { CAM_SIDE_RIGHT,   "[6] Right Broadcast" }
+                { CAM_THIRD_PERSON, ">> [1] 3RD PERSON VIEW" },
+                { CAM_OVERHEAD,     ">> [2] ARENA FREE 360° CAM" },
+                { CAM_TOP_DOWN,     ">> [3] TOP ARENA VIEW" },
+                { CAM_DOLL_CLOSEUP, ">> [4] DOLL 360° ORBIT" },
+                { CAM_SIDE_LEFT,    ">> [5] LEFT BROADCAST" },
+                { CAM_SIDE_RIGHT,   ">> [6] RIGHT BROADCAST" },
+                { CAM_FINISH_LINE,  ">> [7] FINISH LINE 360°" }
             };
 
             const int numCamItems = sizeof(camItems) / sizeof(camItems[0]);
             for (int i = 0; i < numCamItems; ++i) {
                 bool isSelected = (camMode == camItems[i].mode);
                 if (isSelected) {
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.94f, 0.16f, 0.48f, 0.85f));
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.95f, 0.20f, 1.0f));
+                    // Solid bright green button with white text (exact match for GREEN LIGHT - MOVE!)
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.08f, 0.75f, 0.28f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.12f, 0.85f, 0.35f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.08f, 0.75f, 0.28f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                    if (ImGui::Button(camItems[i].label, ImVec2(-1, 26))) {
+                        switchCamera(camItems[i].mode);
+                    }
+                    ImGui::PopStyleColor(4);
                 } else {
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.14f, 0.18f, 0.70f));
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.88f, 0.92f, 1.0f));
+                    // Dark card with pink border and gold text (exact match for PLAYERS: 456 / 456)
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.06f, 0.06f, 0.08f, 0.94f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.12f, 0.10f, 0.15f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.94f, 0.16f, 0.48f, 0.4f));
+                    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.94f, 0.16f, 0.48f, 1.0f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.92f, 0.20f, 1.0f));
+                    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
+                    const char* inactiveLabel = camItems[i].label + 3; // Strip ">> "
+                    if (ImGui::Button(inactiveLabel, ImVec2(-1, 26))) {
+                        switchCamera(camItems[i].mode);
+                    }
+                    ImGui::PopStyleVar();
+                    ImGui::PopStyleColor(5);
                 }
-
-                if (ImGui::Button(camItems[i].label, ImVec2(-1, 26))) {
-                    switchCamera(camItems[i].mode);
-                }
-                ImGui::PopStyleColor(2);
             }
 
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-            // CARD 2: SPEED & MOVEMENT
-            ImGui::TextColored(ImVec4(0.25f, 0.90f, 1.0f, 1.0f), "SPEED & MOVEMENT");
+            // CARD 2: SPEED & MOVEMENT (Cyan border card)
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.06f, 0.06f, 0.08f, 0.94f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.15f, 0.85f, 0.95f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+            if (ImGui::BeginChild("MoveCard", ImVec2(-1, 52), true)) {
+                ImGui::TextColored(ImVec4(0.20f, 0.90f, 1.0f, 1.0f), "W / S : FORWARD / BACK");
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "A / D : TURN LEFT / RIGHT");
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
             ImGui::Spacing();
-            ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.95f, 1.0f), "W / S : Move Forward / Back");
-            ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.95f, 1.0f), "A / D : Turn Left / Right");
-            ImGui::TextColored(ImVec4(0.30f, 1.0f, 0.50f, 1.0f), "Z/X/C : Walk / Jog / Sprint");
-            ImGui::TextColored(ImVec4(0.30f, 1.0f, 0.50f, 1.0f), "G     : Cycle Speed Tier");
 
-            ImGui::Spacing();
-            ImGui::Separator();
+            // CARD 3: SPEED TIERS (Green border card)
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.06f, 0.06f, 0.08f, 0.94f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.25f, 1.0f, 0.45f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+            if (ImGui::BeginChild("SpeedCard", ImVec2(-1, 52), true)) {
+                ImGui::TextColored(ImVec4(0.30f, 1.0f, 0.50f, 1.0f), "Z/X/C : WALK / JOG / SPRINT");
+                ImGui::TextColored(ImVec4(1.0f, 0.92f, 0.20f, 1.0f), "G     : CYCLE SPEED GEAR");
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
             ImGui::Spacing();
 
-            // CARD 3: SYSTEM CONTROLS
-            ImGui::TextColored(ImVec4(0.25f, 1.0f, 0.45f, 1.0f), "SYSTEM CONTROLS");
-            ImGui::Spacing();
-            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "Mouse Drag  : 360 Orbit");
-            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "Mouse Wheel : Zoom");
-            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "V           : Cycle Views");
-            ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.45f, 1.0f), "R           : Restart Match");
+            // CARD 4: SYSTEM CONTROLS (Pink border card)
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.06f, 0.06f, 0.08f, 0.94f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.94f, 0.16f, 0.48f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+            if (ImGui::BeginChild("SystemCard", ImVec2(-1, 68), true)) {
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "MOUSE DRAG  : 360° ORBIT");
+                ImGui::TextColored(ImVec4(0.20f, 0.90f, 1.0f, 1.0f), "MOUSE WHEEL : ZOOM IN / OUT");
+                ImGui::TextColored(ImVec4(1.0f, 0.92f, 0.20f, 1.0f), "V : CYCLE VIEWS | R : RESTART");
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
 
             ImGui::End();
         }

@@ -28,15 +28,12 @@ enum SpeedTier {
 
 enum CameraMode {
     CAM_THIRD_PERSON = 1, // 1: Behind Player 456 (360° Orbit)
-    CAM_FIRST_PERSON = 2, // 2: 1st person eyes
-    CAM_TOP_DOWN     = 3, // 3: Aerial Top Floor View of entire arena
+    CAM_OVERHEAD     = 2, // 2: Arena Free 360° Cam (Zoom in/out to any point!)
+    CAM_TOP_DOWN     = 3, // 3: Aerial Top View of entire arena
     CAM_DOLL_CLOSEUP = 4, // 4: Doll 360° Orbit & Arena Surroundings
     CAM_SIDE_LEFT    = 5, // 5: Left stadium broadcast
     CAM_SIDE_RIGHT   = 6, // 6: Right stadium broadcast
-    CAM_DOLL_POV     = 7, // 7: Looking from Doll down at players
-    CAM_START_LINE   = 8, // 8: Ground starting line cam
-    CAM_FINISH_LINE  = 9, // 9: Finish line gate cam
-    CAM_OVERHEAD     = 0  // 0: High panoramic stadium drone (360° Orbit)
+    CAM_FINISH_LINE  = 7  // 7: Finish line 360° Cam (looking down at incoming players)
 };
 
 struct Player {

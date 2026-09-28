@@ -150,6 +150,12 @@ void GLCompat::vertex3f(float x, float y, float z) {
     immVerts.push_back({glm::vec3(worldPos), worldNormal, immCurColor});
 }
 
+namespace {
+    GLuint dynVAO = 0;
+    GLuint dynVBO = 0;
+    GLuint dynEBO = 0;
+}
+
 void GLCompat::endPrimitive() {
     std::vector<GLuint> idx;
     GLenum drawMode = GL_TRIANGLES;
@@ -176,15 +182,47 @@ void GLCompat::endPrimitive() {
         drawMode = GL_TRIANGLES;
     }
 
-    if (!idx.empty()) {
-        Mesh mesh(immVerts, idx, drawMode);
-        mesh.Draw(*activeShader, glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f), curShininess, curEmissive, curAlpha, curUnlit);
-        mesh.Delete(); // one-off geometry - free it immediately, don't leak a VAO/VBO/EBO every call
+    if (!idx.empty() && activeShader) {
+        if (dynVAO == 0) {
+            glGenVertexArrays(1, &dynVAO);
+            glGenBuffers(1, &dynVBO);
+            glGenBuffers(1, &dynEBO);
+
+            glBindVertexArray(dynVAO);
+            glBindBuffer(GL_ARRAY_BUFFER, dynVBO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dynEBO);
+
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+        }
+
+        glBindVertexArray(dynVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, dynVBO);
+        glBufferData(GL_ARRAY_BUFFER, immVerts.size() * sizeof(Vertex), immVerts.data(), GL_STREAM_DRAW);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dynEBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STREAM_DRAW);
+
+        activeShader->Activate();
+        activeShader->SetMat4("model", glm::mat4(1.0f));
+        activeShader->SetVec3("materialColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        activeShader->SetFloat("shininess", curShininess);
+        activeShader->SetVec3("emissive", curEmissive);
+        activeShader->SetFloat("alphaValue", curAlpha);
+        activeShader->SetBool("unlit", curUnlit);
+
+        glDrawElements(drawMode, (GLsizei)idx.size(), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
     }
     immVerts.clear();
 }
 
 void GLCompat::drawGroundShadow(float x, float z, float radiusX, float radiusZ, float alpha) {
+    if (!activeShader) return;
     bool savedUnlit = curUnlit;
     float savedAlpha = curAlpha;
 
@@ -195,18 +233,10 @@ void GLCompat::drawGroundShadow(float x, float z, float radiusX, float radiusZ, 
 
     pushMatrix();
     translatef(x, 0.015f, z);
-
-    beginPrimitive(GL_TRIANGLE_FAN);
-    color3f(0.12f, 0.08f, 0.05f);
-    normal3f(0.0f, 1.0f, 0.0f);
-    const int segments = 20;
-    vertex3f(0.0f, 0.0f, 0.0f);
-    for (int i = 0; i <= segments; ++i) {
-        float theta = 2.0f * 3.14159265f * (float)i / (float)segments;
-        vertex3f(cosf(theta) * radiusX, 0.0f, sinf(theta) * radiusZ);
-    }
-    endPrimitive();
-
+    scalef(radiusX, 1.0f, radiusZ);
+    rotatef(-90.0f, 1.0f, 0.0f, 0.0f); // Rotate unit disk flat onto ground
+    Primitives::disk(0.0f, 1.0f, 16)
+        .Draw(*activeShader, matrixStack.back(), glm::vec3(0.12f, 0.08f, 0.05f), 0.0f, glm::vec3(0.0f), alpha, true);
     popMatrix();
 
     setDepthWrite(true);

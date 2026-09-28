@@ -205,14 +205,26 @@ namespace {
     }
 
     void loadMP3() {
+        char exePath[MAX_PATH] = {0};
+        GetModuleFileNameA(NULL, exePath, MAX_PATH);
+        char exeDir[MAX_PATH] = {0};
+        strcpy(exeDir, exePath);
+        char* lastSlash = strrchr(exeDir, '\\');
+        if (!lastSlash) lastSlash = strrchr(exeDir, '/');
+        if (lastSlash) *(lastSlash + 1) = '\0';
+
+        char testPath1[MAX_PATH], testPath2[MAX_PATH];
+        sprintf(testPath1, "%ssquid_song.mp3", exeDir);
+        sprintf(testPath2, "%s..\\bin\\squid_song.mp3", exeDir);
+
         const char* candidatePaths[] = {
+            testPath1,
+            testPath2,
             "squid_song.mp3",
             "bin\\squid_song.mp3",
             "bin/squid_song.mp3",
             "src\\bgmusic\\squid_song.mp3",
-            "src/bgmusic/squid_song.mp3",
-            "src\\bgmusic\\squid-game-red-light-green-light-song-red-light-green-light-squid-game-sound_zzRrIF98.mp3",
-            "src/bgmusic/squid-game-red-light-green-light-song-red-light-green-light-squid-game-sound_zzRrIF98.mp3"
+            "src/bgmusic/squid_song.mp3"
         };
 
         char fullPath[MAX_PATH] = {0};
@@ -252,11 +264,10 @@ namespace {
             }
 
             char cmd[512];
-            sprintf(cmd, "open \"%s\" alias squid_song", foundMp3Path);
+            sprintf(cmd, "open \"%s\" type mpegvideo alias squid_song", foundMp3Path);
             MCIERROR err = mciSendStringA(cmd, NULL, 0, NULL);
             if (err != 0) {
-                // Try with explicit mpegvideo type
-                sprintf(cmd, "open \"%s\" type mpegvideo alias squid_song", foundMp3Path);
+                sprintf(cmd, "open \"%s\" alias squid_song", foundMp3Path);
                 err = mciSendStringA(cmd, NULL, 0, NULL);
             }
 
@@ -288,7 +299,7 @@ void AudioManager::cleanup() {
 
 void AudioManager::playSong() {
     if (mp3Loaded) {
-        mciSendStringA("play squid_song", NULL, 0, NULL);
+        mciSendStringA("play squid_song from 0", NULL, 0, NULL);
     } else {
         PlaySoundA((LPCSTR)chantNormal.data.data(), NULL, SND_MEMORY | SND_ASYNC);
     }
@@ -312,35 +323,39 @@ void AudioManager::stopSong() {
 
 void AudioManager::restartSong() {
     if (mp3Loaded) {
-        mciSendStringA("seek squid_song to 0", NULL, 0, NULL);
-        mciSendStringA("play squid_song", NULL, 0, NULL);
+        mciSendStringA("stop squid_song", NULL, 0, NULL);
+        mciSendStringA("play squid_song from 0", NULL, 0, NULL);
     } else {
         PlaySoundA((LPCSTR)chantNormal.data.data(), NULL, SND_MEMORY | SND_ASYNC);
     }
 }
 
 void AudioManager::playChant(float tempoMultiplier) {
-    playSong();
+    restartSong();
 }
 
 void AudioManager::stopChant() {
-    pauseSong();
+    stopSong();
 }
 
 void AudioManager::playGunshot() {
-    PlaySoundA((LPCSTR)gunshotSound.data.data(), NULL, SND_MEMORY | SND_ASYNC | SND_NOSTOP);
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)gunshotSound.data.data(), NULL, flags);
 }
 
 void AudioManager::playTimerBeep() {
-    PlaySoundA((LPCSTR)timerBeepSound.data.data(), NULL, SND_MEMORY | SND_ASYNC | SND_NOSTOP);
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)timerBeepSound.data.data(), NULL, flags);
 }
 
 void AudioManager::playHeadTurnClick() {
-    PlaySoundA((LPCSTR)headTurnSound.data.data(), NULL, SND_MEMORY | SND_ASYNC | SND_NOSTOP);
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)headTurnSound.data.data(), NULL, flags);
 }
 
 void AudioManager::playEliminationSound() {
-    PlaySoundA((LPCSTR)eliminationSound.data.data(), NULL, SND_MEMORY | SND_ASYNC | SND_NOSTOP);
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)eliminationSound.data.data(), NULL, flags);
 }
 
 void AudioManager::playWinMusic() {

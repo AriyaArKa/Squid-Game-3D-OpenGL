@@ -158,19 +158,27 @@ void display() {
     glEnable(GL_SCISSOR_TEST);
     glScissor(pipX, pipY, pipW, pipH);
     glViewport(pipX, pipY, pipW, pipH);
+    glClearColor(0.20f, 0.44f, 0.74f, 1.0f); // Bright blue soundstage sky background
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    gluPerspective(42.0, (float)pipW / (float)pipH, 0.1, 80.0);
+    gluPerspective(40.0, (float)pipW / (float)pipH, 0.1, 80.0);
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
 
-    // Close-up camera pointing directly at Doll's face
+    // Close-up camera pointing directly at Doll and Tree
     CameraManager::applyDollCloseupView(doll);
-    Renderer::setupLighting();
+
+    // Frontal camera headlight so the doll is vibrantly lit with NO dark shadows!
+    GLfloat camLightPos[4]     = { 0.0f, 0.4f, -1.0f, 0.0f };
+    GLfloat camLightDiffuse[4] = { 1.0f, 0.98f, 0.95f, 1.0f };
+    GLfloat camLightAmbient[4] = { 0.50f, 0.50f, 0.52f, 1.0f };
+    glLightfv(GL_LIGHT0, GL_POSITION, camLightPos);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, camLightDiffuse);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, camLightAmbient);
 
     DollManager::draw(doll);
     GuardsManager::draw(guards);
@@ -181,6 +189,7 @@ void display() {
     glPopMatrix();
 
     glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.10f, 0.25f, 0.55f, 1.0f);
 
     // ==========================================
     // 3. 2D HUD: PiP frame, sidebar text content, and center-screen state overlay
@@ -275,10 +284,12 @@ void keyboard(unsigned char key, int x, int y) {
 
         // Camera Hotkeys:
         case '1': switchCamera(CAM_THIRD_PERSON); break;
+        case '2': switchCamera(CAM_OVERHEAD); break;     // Arena Free 360° Cam (Zoom anywhere!)
         case '3': switchCamera(CAM_TOP_DOWN); break;     // Aerial Top View of entire system
         case '4': switchCamera(CAM_DOLL_CLOSEUP); break; // 360° Doll Orbit & Arena Surroundings!
         case '5': switchCamera(CAM_SIDE_LEFT); break;
         case '6': switchCamera(CAM_SIDE_RIGHT); break;
+        case '7': switchCamera(CAM_FINISH_LINE); break;  // Finish Line 360° Cam
         case 'v': case 'V': case 'n': case 'N':
             CameraManager::cycleMode(camMode);
             break;

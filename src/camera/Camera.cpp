@@ -44,20 +44,20 @@ void CameraManager::init() {
 
 void CameraManager::resetAnglesForMode(CameraMode mode) {
     if (mode == CAM_DOLL_CLOSEUP) {
-        camYaw = 0.0f; // Looks directly at the doll hugging the tree from the arena side
+        camYaw = 0.0f;
         camPitch = 8.0f;
     } else if (mode == CAM_OVERHEAD) {
         camYaw = 0.0f;
-        camPitch = 38.0f;
+        camPitch = 30.0f;
+    } else if (mode == CAM_TOP_DOWN) {
+        camYaw = 0.0f;
+        camPitch = 90.0f;
+    } else if (mode == CAM_FINISH_LINE) {
+        camYaw = 0.0f;
+        camPitch = 2.0f;
     } else if (mode == CAM_THIRD_PERSON) {
         camYaw = 0.0f;
         camPitch = 14.0f;
-    } else if (mode == CAM_FIRST_PERSON) {
-        camYaw = 0.0f;
-        camPitch = 0.0f;
-    } else if (mode == CAM_DOLL_POV) {
-        camYaw = 0.0f;
-        camPitch = -8.0f;
     }
 }
 
@@ -88,44 +88,22 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             break;
         }
 
-        case CAM_DOLL_CLOSEUP: { // 4: Full 360° Orbit around Young-hee Doll & Surroundings
-            // Center of orbit is the Doll's head/chest center (Y + 5.5f)
-            targetLookX = doll.x;
-            targetLookY = doll.y + 5.5f;
-            targetLookZ = doll.z;
-
-            float yawRad = camYaw * DEG2RAD;
-            float pitchRad = camPitch * DEG2RAD;
-            float hDist = dollCamDist * cosf(pitchRad);
-            float vDist = dollCamDist * sinf(pitchRad);
-
-            // Orbit around Doll (yaw=0 is in front looking at face, yaw=180 looks at doll back and whole arena)
-            targetEyeX = doll.x + sinf(yawRad) * hDist;
-            targetEyeZ = doll.z - cosf(yawRad) * hDist;
-            targetEyeY = doll.y + 5.5f + vDist;
-
-            // Keep within arena bounds
-            if (targetEyeX < -ARENA_HALF_WIDTH + 0.8f) targetEyeX = -ARENA_HALF_WIDTH + 0.8f;
-            if (targetEyeX >  ARENA_HALF_WIDTH - 0.8f) targetEyeX =  ARENA_HALF_WIDTH - 0.8f;
-            if (targetEyeZ >  ARENA_HALF_LENGTH - 0.8f) targetEyeZ =  ARENA_HALF_LENGTH - 0.8f;
-            if (targetEyeY < 0.6f) targetEyeY = 0.6f;
-            break;
-        }
-
-        case CAM_OVERHEAD: { // 0: 360° High Drone Stadium Overview
+        case CAM_OVERHEAD: { // 2: Arena Free 360° Orbit & Free Zoom Cam (Zoom in/out to any point!)
             targetLookX = 0.0f;
             targetLookY = 2.0f;
-            targetLookZ = 0.0f; // Arena center
+            targetLookZ = -3.5f; // Arena center
 
             float yawRad = camYaw * DEG2RAD;
-            float pitchRad = (camPitch + 25.0f) * DEG2RAD;
-            if (pitchRad > 1.45f) pitchRad = 1.45f;
+            float pitchRad = (camPitch + 15.0f) * DEG2RAD;
+            if (pitchRad < 0.05f) pitchRad = 0.05f;
+            if (pitchRad > 1.48f) pitchRad = 1.48f;
+
             float hDist = droneDist * cosf(pitchRad);
             float vDist = droneDist * sinf(pitchRad);
 
-            targetEyeX = sinf(yawRad) * hDist;
-            targetEyeZ = -cosf(yawRad) * hDist;
-            targetEyeY = 2.0f + vDist;
+            targetEyeX = targetLookX + sinf(yawRad) * hDist;
+            targetEyeZ = targetLookZ - cosf(yawRad) * hDist;
+            targetEyeY = targetLookY + vDist;
             break;
         }
 
@@ -137,6 +115,27 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             targetEyeX = 0.0f;
             targetEyeY = 110.0f;
             targetEyeZ = -3.5f;
+            break;
+        }
+
+        case CAM_DOLL_CLOSEUP: { // 4: Full 360° Orbit around Young-hee Doll & Surroundings
+            targetLookX = doll.x;
+            targetLookY = doll.y + 5.5f;
+            targetLookZ = doll.z;
+
+            float yawRad = camYaw * DEG2RAD;
+            float pitchRad = camPitch * DEG2RAD;
+            float hDist = dollCamDist * cosf(pitchRad);
+            float vDist = dollCamDist * sinf(pitchRad);
+
+            targetEyeX = doll.x + sinf(yawRad) * hDist;
+            targetEyeZ = doll.z - cosf(yawRad) * hDist;
+            targetEyeY = doll.y + 5.5f + vDist;
+
+            if (targetEyeX < -ARENA_HALF_WIDTH + 0.8f) targetEyeX = -ARENA_HALF_WIDTH + 0.8f;
+            if (targetEyeX >  ARENA_HALF_WIDTH - 0.8f) targetEyeX =  ARENA_HALF_WIDTH - 0.8f;
+            if (targetEyeZ >  ARENA_HALF_LENGTH - 0.8f) targetEyeZ =  ARENA_HALF_LENGTH - 0.8f;
+            if (targetEyeY < 0.6f) targetEyeY = 0.6f;
             break;
         }
 
@@ -159,6 +158,29 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             targetEyeX = ARENA_HALF_WIDTH - 1.5f;
             targetEyeY = 12.0f;
             targetEyeZ = player.z + 5.0f;
+            break;
+        }
+
+        case CAM_FINISH_LINE: { // 7: Finish Line 360° Orbit Cam (from finish line looking at contestants)
+            float posX = 0.0f;
+            float posY = 2.4f;
+            float posZ = FINISH_Z; // Standing right at finish line (Z = 45)
+
+            // yaw = 0 looks toward -Z (straight down arena towards oncoming contestants)
+            float totalYawRad = (180.0f + camYaw) * DEG2RAD;
+            float pitchRad = camPitch * DEG2RAD;
+
+            float forwardX = sinf(totalYawRad) * cosf(pitchRad);
+            float forwardY = sinf(pitchRad);
+            float forwardZ = cosf(totalYawRad) * cosf(pitchRad);
+
+            targetEyeX = posX;
+            targetEyeY = posY;
+            targetEyeZ = posZ;
+
+            targetLookX = posX + forwardX * 25.0f;
+            targetLookY = posY + forwardY * 25.0f;
+            targetLookZ = posZ + forwardZ * 25.0f;
             break;
         }
 
@@ -185,42 +207,18 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
 
 void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode mode) {
     switch (mode) {
-        case CAM_THIRD_PERSON:
-        case CAM_DOLL_CLOSEUP:
-        case CAM_OVERHEAD:
-        case CAM_SIDE_LEFT:
-        case CAM_SIDE_RIGHT:
-        case CAM_START_LINE:
-        case CAM_FINISH_LINE:
-            gluLookAt(smoothCamX, smoothCamY, smoothCamZ,
-                      smoothLookX, smoothLookY, smoothLookZ,
-                      0.0f, 1.0f, 0.0f);
-            break;
-
-        case CAM_FIRST_PERSON: { // 2: 1st Person Eyes with mouse look
-            float totalYawRad = (player.facingAngle + camYaw) * DEG2RAD;
-            float pitchRad = camPitch * DEG2RAD;
-
-            float forwardX = sinf(totalYawRad) * cosf(pitchRad);
-            float forwardY = sinf(pitchRad);
-            float forwardZ = cosf(totalYawRad) * cosf(pitchRad);
-
-            float eyeX = player.x;
-            float eyeY = player.y + 1.65f;
-            float eyeZ = player.z;
-
-            gluLookAt(eyeX, eyeY, eyeZ,
-                      eyeX + forwardX * 15.0f, eyeY + forwardY * 15.0f, eyeZ + forwardZ * 15.0f,
-                      0.0f, 1.0f, 0.0f);
-            break;
-        }
-
         case CAM_TOP_DOWN: // 3: Aerial Top View of entire system
             gluLookAt(0.0f, 110.0f, -3.5f,
                       0.0f, 0.0f, -3.5f,
                       0.0f, 0.0f, 1.0f);
             break;
 
+        case CAM_THIRD_PERSON:
+        case CAM_OVERHEAD:
+        case CAM_DOLL_CLOSEUP:
+        case CAM_SIDE_LEFT:
+        case CAM_SIDE_RIGHT:
+        case CAM_FINISH_LINE:
         default:
             gluLookAt(smoothCamX, smoothCamY, smoothCamZ,
                       smoothLookX, smoothLookY, smoothLookZ,
@@ -230,14 +228,14 @@ void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode
 }
 
 void CameraManager::applyDollCloseupView(const Doll& doll) {
-    // Corner PiP CCTV Angle centered on Doll hugging the tree from arena side
-    float eyeX = doll.x;
-    float eyeY = doll.y + 5.2f;
-    float eyeZ = doll.z - 4.8f;
+    // Corner PiP CCTV Angle: elevated 3/4 front perspective framing the doll's face, pigtails, and dress
+    float eyeX = doll.x - 2.8f;
+    float eyeY = doll.y + 4.9f;
+    float eyeZ = doll.z - 2.2f;
 
     float lookX = doll.x;
-    float lookY = doll.y + 4.9f;
-    float lookZ = doll.z + 0.6f;
+    float lookY = doll.y + 4.3f;
+    float lookZ = doll.z + 0.3f;
 
     gluLookAt(eyeX, eyeY, eyeZ,
               lookX, lookY, lookZ,
@@ -253,9 +251,11 @@ void CameraManager::getViewVectors(const Player& player, const Doll& doll, Camer
 
     switch (mode) {
         case CAM_THIRD_PERSON:
+        case CAM_OVERHEAD:
         case CAM_DOLL_CLOSEUP:
         case CAM_SIDE_LEFT:
         case CAM_SIDE_RIGHT:
+        case CAM_FINISH_LINE:
             eyeX = smoothCamX; eyeY = smoothCamY; eyeZ = smoothCamZ;
             lookX = smoothLookX; lookY = smoothLookY; lookZ = smoothLookZ;
             break;
@@ -278,25 +278,28 @@ void CameraManager::getDollCloseupVectors(const Doll& doll,
                                          float& eyeX, float& eyeY, float& eyeZ,
                                          float& lookX, float& lookY, float& lookZ,
                                          float& upX, float& upY, float& upZ, float& fov) {
-    eyeX = doll.x;
-    eyeY = doll.y + 5.2f;
-    eyeZ = doll.z - 4.8f;
+    // Corner PiP CCTV Angle: elevated 3/4 front perspective framing the doll's face, pigtails, and dress
+    eyeX = doll.x - 2.8f;
+    eyeY = doll.y + 4.9f;
+    eyeZ = doll.z - 2.2f;
 
     lookX = doll.x;
-    lookY = doll.y + 4.9f;
-    lookZ = doll.z + 0.6f;
+    lookY = doll.y + 4.3f;
+    lookZ = doll.z + 0.3f;
 
     upX = 0.0f; upY = 1.0f; upZ = 0.0f;
-    fov = 40.0f;
+    fov = 38.0f;
 }
 
 void CameraManager::cycleMode(CameraMode& mode) {
     static const CameraMode activeModes[] = {
         CAM_THIRD_PERSON,
+        CAM_OVERHEAD,
         CAM_TOP_DOWN,
         CAM_DOLL_CLOSEUP,
         CAM_SIDE_LEFT,
-        CAM_SIDE_RIGHT
+        CAM_SIDE_RIGHT,
+        CAM_FINISH_LINE
     };
     const int count = sizeof(activeModes) / sizeof(activeModes[0]);
     int currIdx = 0;
@@ -320,7 +323,6 @@ void CameraManager::handleMouseClick(int button, int state, int x, int y) {
             isMouseDown = false;
         }
     }
-    // Mouse wheel up/down handled via zoom() in main.cpp
 }
 
 void CameraManager::handleMouseMotion(int x, int y) {
@@ -331,7 +333,6 @@ void CameraManager::handleMouseMotion(int x, int y) {
         camYaw += dx * 0.35f;
         camPitch -= dy * 0.25f;
 
-        // Wrap yaw 0..360 for clean continuous rotation
         while (camYaw > 360.0f) camYaw -= 360.0f;
         while (camYaw < -360.0f) camYaw += 360.0f;
 
@@ -349,9 +350,9 @@ void CameraManager::zoom(float delta, CameraMode mode) {
         if (dollCamDist < 2.0f) dollCamDist = 2.0f;
         if (dollCamDist > 38.0f) dollCamDist = 38.0f;
     } else if (mode == CAM_OVERHEAD) {
-        droneDist += delta * 2.0f;
-        if (droneDist < 20.0f) droneDist = 20.0f;
-        if (droneDist > 90.0f) droneDist = 90.0f;
+        droneDist += delta * 3.5f;
+        if (droneDist < 3.0f) droneDist = 3.0f;
+        if (droneDist > 140.0f) droneDist = 140.0f;
     } else {
         camDist += delta;
         if (camDist < 1.8f) camDist = 1.8f;
