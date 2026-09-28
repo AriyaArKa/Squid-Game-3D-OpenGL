@@ -336,7 +336,6 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
                         // This NPC flinches and gets eliminated!
                         npc.isAlive = false;
                         npc.hasMovedDuringRed = true;
-                        aliveCount--;
                         GuardsManager::triggerShot(guards, npc.x, npc.z);
                         ContestantsManager::spawnBloodParticles(particles, npc.x, npc.y, npc.z);
                         AudioManager::playEliminationSound();
@@ -355,6 +354,15 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
             npc.armAngle = 0.0f;
         }
     }
+
+    // Real surviving contestants calculation out of 456
+    int livingNpcs = 0;
+    for (const auto& n : npcs) {
+        if (n.isAlive) livingNpcs++;
+    }
+    int scaledAlive = (int)std::round(((float)livingNpcs / (float)NUM_NPC_CONTESTANTS) * 455.0f);
+    aliveCount = scaledAlive + (player.isAlive ? 1 : 0);
+    if (livingNpcs == 0 && !player.isAlive) aliveCount = 0;
 }
 
 void ContestantsManager::drawPlayer(const Player& player) {

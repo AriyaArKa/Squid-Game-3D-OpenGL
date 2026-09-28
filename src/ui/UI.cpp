@@ -49,160 +49,172 @@ void UIManager::drawLeftBarStats(int windowWidth, int windowHeight, int pipBotto
     const float pad = 14.0f;
     const float contentW = (float)UI_LEFT_BAR_WIDTH - pad * 2.0f;
 
-    float headerY = (float)windowHeight - 24.0f;
-    drawSquidGameSymbols(pad + 26.0f, headerY, 8.0f);
+    // Header matches reference image: clean bold title and subline
+    float headerY = (float)windowHeight - 16.0f;
     glColor3f(1.0f, 1.0f, 1.0f);
-    drawText(pad, headerY - 26.0f, "SQUID GAME", GLUT_BITMAP_HELVETICA_18);
-    glColor3f(0.7f, 0.7f, 0.76f);
-    drawText(pad, headerY - 42.0f, "RED LIGHT, GREEN LIGHT", GLUT_BITMAP_HELVETICA_10);
+    drawText(pad, headerY - 14.0f, "SQUID GAME", GLUT_BITMAP_HELVETICA_18);
+    glColor3f(0.70f, 0.70f, 0.78f);
+    drawText(pad, headerY - 30.0f, "RED LIGHT, GREEN LIGHT", GLUT_BITMAP_HELVETICA_10);
 
     // ---- Stats stack, starting just below the Doll Cam feed ----
-    // (36px clears the timer box's own half-height so it never overlaps the feed above it)
-    float cy = (float)pipBottomY - 36.0f;
+    float cy = (float)pipBottomY - 32.0f;
 
     drawHUDDigitalTimer(pad + contentW * 0.5f, cy, gameTimer);
-    cy -= 48.0f;
+    cy -= 46.0f;
 
     float boxH = 38.0f;
-    drawFilledRect(pad, cy - boxH, contentW, boxH, 0.08f, 0.08f, 0.10f, 0.9f);
+    drawFilledRect(pad, cy - boxH, contentW, boxH, 0.06f, 0.06f, 0.08f, 0.95f);
     drawBorderRect(pad, cy - boxH, contentW, boxH, 2.0f, 0.94f, 0.16f, 0.48f);
     char aliveBuf[64];
     sprintf(aliveBuf, "PLAYERS: %d / %d", aliveCount, TOTAL_CONTESTANTS);
-    glColor3f(1.0f, 0.95f, 0.20f);
+    glColor3f(1.0f, 0.92f, 0.20f);
     drawText(pad + 10.0f, cy - boxH * 0.5f - 4.0f, aliveBuf, GLUT_BITMAP_HELVETICA_12);
-    cy -= boxH + 14.0f;
+    cy -= boxH + 12.0f;
 
-    if (gameState == PLAYING) {
-        // Light status banner
-        float bannerH = 38.0f;
-        if (lightState == GREEN_LIGHT) {
-            drawFilledRect(pad, cy - bannerH, contentW, bannerH, 0.05f, 0.65f, 0.25f, 0.9f);
-            drawBorderRect(pad, cy - bannerH, contentW, bannerH, 2.5f, 0.2f, 1.0f, 0.4f);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            drawText(pad + 8.0f, cy - bannerH * 0.5f - 4.0f, "GREEN LIGHT - MOVE!", GLUT_BITMAP_HELVETICA_12);
-        } else {
-            drawFilledRect(pad, cy - bannerH, contentW, bannerH, 0.85f, 0.08f, 0.08f, 0.92f);
-            drawBorderRect(pad, cy - bannerH, contentW, bannerH, 2.5f, 1.0f, 0.3f, 0.3f);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            drawText(pad + 8.0f, cy - bannerH * 0.5f - 4.0f, "RED LIGHT - FREEZE!", GLUT_BITMAP_HELVETICA_12);
-        }
-        cy -= bannerH + 14.0f;
-
-        // Progress bar to finish line
-        float totalDist = FINISH_Z - START_Z;
-        float currDist = player.z - START_Z;
-        float progress = currDist / totalDist;
-        if (progress < 0.0f) progress = 0.0f;
-        if (progress > 1.0f) progress = 1.0f;
-
-        glColor3f(0.8f, 0.8f, 0.85f);
-        drawText(pad, cy, "COURSE PROGRESS", GLUT_BITMAP_HELVETICA_10);
-        cy -= 16.0f;
-
-        float pbarH = 14.0f;
-        drawFilledRect(pad, cy - pbarH, contentW, pbarH, 0.15f, 0.15f, 0.18f, 0.8f);
-        drawFilledRect(pad, cy - pbarH, contentW * progress, pbarH, 0.94f, 0.16f, 0.48f, 0.95f);
-        drawBorderRect(pad, cy - pbarH, contentW, pbarH, 1.5f, 1.0f, 1.0f, 1.0f, 0.8f);
-
-        char pctBuf[16];
-        sprintf(pctBuf, "%d%% TO FINISH", (int)(progress * 100.0f));
+    // Light status banner (shown at all times, green during wait/green, red during red)
+    float bannerH = 38.0f;
+    if (gameState == WAITING || lightState == GREEN_LIGHT) {
+        drawFilledRect(pad, cy - bannerH, contentW, bannerH, 0.08f, 0.75f, 0.28f, 0.95f);
+        drawBorderRect(pad, cy - bannerH, contentW, bannerH, 2.0f, 0.25f, 1.0f, 0.45f);
         glColor3f(1.0f, 1.0f, 1.0f);
-        drawText(pad, cy - pbarH - 14.0f, pctBuf, GLUT_BITMAP_HELVETICA_10);
-        cy -= pbarH + 28.0f;
+        drawText(pad + 8.0f, cy - bannerH * 0.5f - 4.0f, "GREEN LIGHT - MOVE!", GLUT_BITMAP_HELVETICA_12);
+    } else {
+        drawFilledRect(pad, cy - bannerH, contentW, bannerH, 0.85f, 0.08f, 0.08f, 0.95f);
+        drawBorderRect(pad, cy - bannerH, contentW, bannerH, 2.0f, 1.0f, 0.3f, 0.3f);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        drawText(pad + 8.0f, cy - bannerH * 0.5f - 4.0f, "RED LIGHT - FREEZE!", GLUT_BITMAP_HELVETICA_12);
+    }
+    cy -= bannerH + 12.0f;
 
-        // Speed pace badge
-        float speedH = 32.0f;
-        drawFilledRect(pad, cy - speedH, contentW, speedH, 0.08f, 0.08f, 0.12f, 0.85f);
-        if (player.speedTier == SPEED_WALK) {
-            drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 0.2f, 0.85f, 1.0f);
-            glColor3f(0.3f, 0.9f, 1.0f);
-            drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: WALK (Z)", GLUT_BITMAP_HELVETICA_10);
-        } else if (player.speedTier == SPEED_SPRINT) {
-            drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 1.0f, 0.35f, 0.15f);
-            glColor3f(1.0f, 0.45f, 0.2f);
-            drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: SPRINT (C)", GLUT_BITMAP_HELVETICA_10);
-        } else {
-            drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 0.2f, 1.0f, 0.4f);
-            glColor3f(0.25f, 1.0f, 0.45f);
-            drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: JOG (X)", GLUT_BITMAP_HELVETICA_10);
-        }
-        cy -= speedH + 10.0f;
+    // Progress bar to finish line
+    float totalDist = FINISH_Z - START_Z;
+    float currDist = player.z - START_Z;
+    float progress = currDist / totalDist;
+    if (progress < 0.0f) progress = 0.0f;
+    if (progress > 1.0f) progress = 1.0f;
+
+    glColor3f(0.85f, 0.85f, 0.90f);
+    drawText(pad, cy, "COURSE PROGRESS", GLUT_BITMAP_HELVETICA_10);
+    cy -= 16.0f;
+
+    float pbarH = 14.0f;
+    drawFilledRect(pad, cy - pbarH, contentW, pbarH, 0.15f, 0.15f, 0.18f, 0.9f);
+    drawFilledRect(pad, cy - pbarH, contentW * progress, pbarH, 0.94f, 0.16f, 0.48f, 0.95f);
+    drawBorderRect(pad, cy - pbarH, contentW, pbarH, 1.5f, 0.9f, 0.9f, 0.95f, 0.85f);
+
+    char pctBuf[32];
+    sprintf(pctBuf, "%d%% TO FINISH", (int)(progress * 100.0f));
+    glColor3f(1.0f, 1.0f, 1.0f);
+    drawText(pad, cy - pbarH - 14.0f, pctBuf, GLUT_BITMAP_HELVETICA_10);
+    cy -= pbarH + 26.0f;
+
+    // Speed pace badge
+    float speedH = 32.0f;
+    drawFilledRect(pad, cy - speedH, contentW, speedH, 0.06f, 0.06f, 0.08f, 0.90f);
+    if (player.speedTier == SPEED_WALK) {
+        drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 0.2f, 0.85f, 1.0f);
+        glColor3f(0.3f, 0.9f, 1.0f);
+        drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: WALK (Z)", GLUT_BITMAP_HELVETICA_10);
+    } else if (player.speedTier == SPEED_SPRINT) {
+        drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 1.0f, 0.35f, 0.15f);
+        glColor3f(1.0f, 0.45f, 0.2f);
+        drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: SPRINT (C)", GLUT_BITMAP_HELVETICA_10);
+    } else {
+        drawBorderRect(pad, cy - speedH, contentW, speedH, 2.0f, 0.15f, 0.95f, 0.35f);
+        glColor3f(0.15f, 0.95f, 0.35f);
+        drawText(pad + 8.0f, cy - speedH * 0.5f - 4.0f, "PACE: JOG (X)", GLUT_BITMAP_HELVETICA_10);
     }
 
     end2D();
 }
 
 // ---------------------------------------------------------------------------------------
-// Right bar content: the entire control scheme, always on screen so the player never has
-// to stop and recall a key or reopen a rules screen mid-run.
+// Right bar content: simplified, bold, high-contrast, with highlighted active modes
 // ---------------------------------------------------------------------------------------
 void UIManager::drawRightBarControls(int windowWidth, int windowHeight, CameraMode camMode) {
     begin2D(windowWidth, windowHeight);
 
-    const float pad = 16.0f;
+    const float pad = 14.0f;
     const float barX = (float)(windowWidth - UI_RIGHT_BAR_WIDTH);
-    const float lineH = 17.0f;
-    float y = (float)windowHeight - 24.0f;
+    const float contentW = (float)UI_RIGHT_BAR_WIDTH - pad * 2.0f;
+    float y = (float)windowHeight - 20.0f;
 
-    glColor3f(1.0f, 0.85f, 0.20f);
-    drawText(barX + pad, y, "CONTROLS", GLUT_BITMAP_HELVETICA_18);
-    y -= 28.0f;
+    // Header
+    glColor3f(1.0f, 0.92f, 0.25f);
+    drawText(barX + pad, y, "GAME CONTROLS", GLUT_BITMAP_HELVETICA_18);
+    y -= 30.0f;
 
-    glColor3f(0.2f, 0.9f, 1.0f);
-    drawText(barX + pad, y, "MOVEMENT", GLUT_BITMAP_HELVETICA_12); y -= lineH;
-    glColor3f(0.9f, 0.9f, 0.9f);
-    drawText(barX + pad, y, "W/S or Up/Down : Move", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    drawText(barX + pad, y, "A/D or Left/Right : Turn", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    drawText(barX + pad, y, "Q / E : Strafe Left/Right", GLUT_BITMAP_HELVETICA_10); y -= lineH + 8.0f;
+    // CARD 1: CAMERAS (5 Clean Cameras with Highlighted Active Mode)
+    float camCardH = 158.0f;
+    drawFilledRect(barX + pad, y - camCardH, contentW, camCardH, 0.07f, 0.07f, 0.10f, 0.92f);
+    drawBorderRect(barX + pad, y - camCardH, contentW, camCardH, 1.8f, 0.94f, 0.16f, 0.48f);
 
-    glColor3f(0.2f, 0.9f, 1.0f);
-    drawText(barX + pad, y, "SPEED", GLUT_BITMAP_HELVETICA_12); y -= lineH;
-    glColor3f(0.4f, 0.95f, 1.0f);
-    drawText(barX + pad, y, "Z : Slow Walk", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    glColor3f(0.3f, 1.0f, 0.5f);
-    drawText(barX + pad, y, "X : Easy Run (default)", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    glColor3f(1.0f, 0.5f, 0.25f);
-    drawText(barX + pad, y, "C or Shift : Fast Sprint", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    glColor3f(0.85f, 0.85f, 0.85f);
-    drawText(barX + pad, y, "G : Cycle Speed Gear", GLUT_BITMAP_HELVETICA_10); y -= lineH + 8.0f;
+    glColor3f(0.94f, 0.30f, 0.65f);
+    drawText(barX + pad + 10.0f, y - 18.0f, "CAMERA ANGLES (KEY)", GLUT_BITMAP_HELVETICA_12);
 
-    glColor3f(0.94f, 0.40f, 0.70f);
-    drawText(barX + pad, y, "CAMERAS", GLUT_BITMAP_HELVETICA_12); y -= lineH;
-
-    struct CamEntry { CameraMode mode; const char* label; };
-    const CamEntry cams[10] = {
-        { CAM_THIRD_PERSON, "1  3rd Person Follow" },
-        { CAM_FIRST_PERSON, "2  1st Person Eyes" },
-        { CAM_TOP_DOWN,     "3  Top-Down Aerial" },
-        { CAM_DOLL_CLOSEUP, "4  Doll 360 Orbit" },
-        { CAM_SIDE_LEFT,    "5  Left Stadium" },
-        { CAM_SIDE_RIGHT,   "6  Right Stadium" },
-        { CAM_DOLL_POV,     "7  Doll Scanning POV" },
-        { CAM_START_LINE,   "8  Start Line" },
-        { CAM_FINISH_LINE,  "9  Finish Line" },
-        { CAM_OVERHEAD,     "0  Overhead Drone" }
+    struct CamOption { CameraMode mode; const char* key; const char* label; };
+    const CamOption camList[] = {
+        { CAM_THIRD_PERSON, "1", "Player View (3rd)" },
+        { CAM_TOP_DOWN,     "3", "Top Arena View" },
+        { CAM_DOLL_CLOSEUP, "4", "Doll 360 Orbit" },
+        { CAM_SIDE_LEFT,    "5", "Left Broadcast" },
+        { CAM_SIDE_RIGHT,   "6", "Right Broadcast" }
     };
-    for (int i = 0; i < 10; ++i) {
-        bool active = (cams[i].mode == camMode);
-        if (active) {
-            drawFilledRect(barX + pad - 4.0f, y - 3.0f, (float)UI_RIGHT_BAR_WIDTH - pad * 2.0f + 8.0f, 14.0f,
-                            0.94f, 0.16f, 0.48f, 0.35f);
-            glColor3f(1.0f, 0.95f, 0.3f);
-        } else {
-            glColor3f(0.85f, 0.85f, 0.85f);
-        }
-        drawText(barX + pad, y, cams[i].label, GLUT_BITMAP_HELVETICA_10);
-        y -= lineH;
-    }
-    y -= 8.0f;
 
-    glColor3f(0.2f, 0.9f, 1.0f);
-    drawText(barX + pad, y, "OTHER", GLUT_BITMAP_HELVETICA_12); y -= lineH;
-    glColor3f(0.85f, 0.85f, 0.85f);
-    drawText(barX + pad, y, "Mouse Drag : 360 Orbit", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    drawText(barX + pad, y, "Mouse Wheel : Zoom", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    drawText(barX + pad, y, "R : Restart Game", GLUT_BITMAP_HELVETICA_10); y -= lineH;
-    drawText(barX + pad, y, "Esc : Quit", GLUT_BITMAP_HELVETICA_10); y -= lineH;
+    float camBtnY = y - 44.0f;
+    for (int i = 0; i < 5; ++i) {
+        bool isActive = (camMode == camList[i].mode);
+        float itemH = 20.0f;
+        float itemW = contentW - 14.0f;
+        float itemX = barX + pad + 7.0f;
+
+        if (isActive) {
+            // Bright illuminated active badge
+            drawFilledRect(itemX, camBtnY - 3.0f, itemW, itemH, 0.94f, 0.16f, 0.48f, 0.45f);
+            drawBorderRect(itemX, camBtnY - 3.0f, itemW, itemH, 1.5f, 1.0f, 0.95f, 0.25f);
+            glColor3f(1.0f, 0.95f, 0.20f);
+            char lineBuf[64];
+            sprintf(lineBuf, ">> [%s] %s", camList[i].key, camList[i].label);
+            drawText(itemX + 6.0f, camBtnY + 2.0f, lineBuf, GLUT_BITMAP_HELVETICA_12);
+        } else {
+            glColor3f(0.85f, 0.88f, 0.92f);
+            char lineBuf[64];
+            sprintf(lineBuf, "   [%s] %s", camList[i].key, camList[i].label);
+            drawText(itemX + 6.0f, camBtnY + 2.0f, lineBuf, GLUT_BITMAP_HELVETICA_12);
+        }
+        camBtnY -= 22.0f;
+    }
+    y -= camCardH + 16.0f;
+
+    // CARD 2: MOVEMENT & SPEED TIERS
+    float moveCardH = 105.0f;
+    drawFilledRect(barX + pad, y - moveCardH, contentW, moveCardH, 0.07f, 0.07f, 0.10f, 0.92f);
+    drawBorderRect(barX + pad, y - moveCardH, contentW, moveCardH, 1.8f, 0.20f, 0.85f, 1.0f);
+
+    glColor3f(0.25f, 0.90f, 1.0f);
+    drawText(barX + pad + 10.0f, y - 18.0f, "SPEED & MOVEMENT", GLUT_BITMAP_HELVETICA_12);
+
+    glColor3f(0.95f, 0.95f, 0.95f);
+    drawText(barX + pad + 10.0f, y - 38.0f, "W / S : Move Forward/Back", GLUT_BITMAP_HELVETICA_12);
+    drawText(barX + pad + 10.0f, y - 56.0f, "A / D : Turn Left/Right", GLUT_BITMAP_HELVETICA_12);
+
+    glColor3f(0.30f, 1.0f, 0.50f);
+    drawText(barX + pad + 10.0f, y - 76.0f, "Z / X / C : Walk / Jog / Sprint", GLUT_BITMAP_HELVETICA_12);
+    drawText(barX + pad + 10.0f, y - 94.0f, "G : Cycle Speed Tier", GLUT_BITMAP_HELVETICA_12);
+    y -= moveCardH + 16.0f;
+
+    // CARD 3: CAMERA & UTILITY CONTROLS
+    float utilCardH = 92.0f;
+    drawFilledRect(barX + pad, y - utilCardH, contentW, utilCardH, 0.07f, 0.07f, 0.10f, 0.92f);
+    drawBorderRect(barX + pad, y - utilCardH, contentW, utilCardH, 1.8f, 0.25f, 1.0f, 0.45f);
+
+    glColor3f(0.25f, 1.0f, 0.45f);
+    drawText(barX + pad + 10.0f, y - 18.0f, "SYSTEM CONTROLS", GLUT_BITMAP_HELVETICA_12);
+
+    glColor3f(0.92f, 0.92f, 0.92f);
+    drawText(barX + pad + 10.0f, y - 38.0f, "Mouse Drag : Orbit 360", GLUT_BITMAP_HELVETICA_12);
+    drawText(barX + pad + 10.0f, y - 56.0f, "Mouse Wheel : Zoom", GLUT_BITMAP_HELVETICA_12);
+    drawText(barX + pad + 10.0f, y - 74.0f, "C : Cycle Views | R : Restart", GLUT_BITMAP_HELVETICA_12);
 
     end2D();
 }

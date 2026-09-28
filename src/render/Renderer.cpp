@@ -81,15 +81,15 @@ void Renderer::initGL() {
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     glShadeModel(GL_SMOOTH);
-    glClearColor(0.55f, 0.78f, 0.95f, 1.0f); // Warm atmospheric sky color
+    glClearColor(0.24f, 0.45f, 0.70f, 1.0f); // Realistic atmospheric sky tone
 }
 
 void Renderer::setupLighting() {
-    // Warm sun light
+    // Balanced realistic sun light
     GLfloat lightPos[4] = { 15.0f, 30.0f, 10.0f, 0.0f }; // Directional sunlight
-    GLfloat ambientLight[4]  = { 0.45f, 0.45f, 0.48f, 1.0f };
-    GLfloat diffuseLight[4]  = { 0.95f, 0.92f, 0.85f, 1.0f }; // Warm direct sun
-    GLfloat specularLight[4] = { 0.70f, 0.70f, 0.70f, 1.0f };
+    GLfloat ambientLight[4]  = { 0.28f, 0.28f, 0.30f, 1.0f };
+    GLfloat diffuseLight[4]  = { 0.72f, 0.70f, 0.65f, 1.0f }; // Warm direct sun
+    GLfloat specularLight[4] = { 0.35f, 0.35f, 0.35f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);

@@ -153,12 +153,12 @@ void display() {
     int pipW = UI_LEFT_BAR_WIDTH - pipPad * 2;
     int pipH = (int)(pipW * 0.85f);
     int pipX = pipPad;
-    int pipY = windowHeight - pipH - 58;
+    int pipY = windowHeight - pipH - 68;
 
     glEnable(GL_SCISSOR_TEST);
     glScissor(pipX, pipY, pipW, pipH);
     glViewport(pipX, pipY, pipW, pipH);
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -275,15 +275,10 @@ void keyboard(unsigned char key, int x, int y) {
 
         // Camera Hotkeys:
         case '1': switchCamera(CAM_THIRD_PERSON); break;
-        case '2': switchCamera(CAM_FIRST_PERSON); break;
-        case '3': switchCamera(CAM_TOP_DOWN); break;
+        case '3': switchCamera(CAM_TOP_DOWN); break;     // Aerial Top View of entire system
         case '4': switchCamera(CAM_DOLL_CLOSEUP); break; // 360° Doll Orbit & Arena Surroundings!
         case '5': switchCamera(CAM_SIDE_LEFT); break;
         case '6': switchCamera(CAM_SIDE_RIGHT); break;
-        case '7': switchCamera(CAM_DOLL_POV); break;
-        case '8': switchCamera(CAM_START_LINE); break;
-        case '9': switchCamera(CAM_FINISH_LINE); break;
-        case '0': switchCamera(CAM_OVERHEAD); break;
         case 'v': case 'V': case 'n': case 'N':
             CameraManager::cycleMode(camMode);
             break;

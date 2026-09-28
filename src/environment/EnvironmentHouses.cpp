@@ -49,7 +49,7 @@ namespace {
         glRotatef(rotY, 0.0f, 1.0f, 0.0f);
 
         // 1. White / Pale-Blue Stucco Building Body
-        Renderer::setMaterial(0.88f, 0.90f, 0.93f, 15.0f);
+        Renderer::setMaterial(0.76f, 0.78f, 0.82f, 15.0f);
         glPushMatrix();
         glTranslatef(0.0f, 1.6f, 0.0f);
         Renderer::drawBox(4.4f, 3.2f, 3.2f);

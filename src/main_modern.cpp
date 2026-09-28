@@ -202,15 +202,10 @@ namespace {
                     else player.speedTier = SPEED_WALK;
                     break;
                 case GLFW_KEY_1: switchCamera(CAM_THIRD_PERSON); break;
-                case GLFW_KEY_2: switchCamera(CAM_FIRST_PERSON); break;
-                case GLFW_KEY_3: switchCamera(CAM_TOP_DOWN); break;
+                case GLFW_KEY_3: switchCamera(CAM_TOP_DOWN); break;     // Aerial Top View
                 case GLFW_KEY_4: switchCamera(CAM_DOLL_CLOSEUP); break;
                 case GLFW_KEY_5: switchCamera(CAM_SIDE_LEFT); break;
                 case GLFW_KEY_6: switchCamera(CAM_SIDE_RIGHT); break;
-                case GLFW_KEY_7: switchCamera(CAM_DOLL_POV); break;
-                case GLFW_KEY_8: switchCamera(CAM_START_LINE); break;
-                case GLFW_KEY_9: switchCamera(CAM_FINISH_LINE); break;
-                case GLFW_KEY_0: switchCamera(CAM_OVERHEAD); break;
                 case GLFW_KEY_V: case GLFW_KEY_N:
                     CameraManager::cycleMode(camMode);
                     break;
@@ -294,7 +289,7 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    glClearColor(0.55f, 0.78f, 0.95f, 1.0f); // Warm atmospheric sky color
+    glClearColor(0.10f, 0.25f, 0.55f, 1.0f); // Deep rich atmospheric sky tone
 
     // Modern Engine Components
     Shader shader("src/shaders/default.vert", "src/shaders/default.frag");
@@ -443,7 +438,7 @@ int main() {
                        fov, 0.1f, 280.0f);
 
         glm::vec3 lightDir(-0.4f, -1.0f, -0.3f);
-        glm::vec3 lightColor(1.0f, 0.98f, 0.92f);
+        glm::vec3 lightColor(0.75f, 0.72f, 0.68f);
 
         GLCompat::beginFrame(shader, camera, lightDir, lightColor);
 
@@ -463,12 +458,13 @@ int main() {
             int pipW = leftBarW - pipPad * 2;
             int pipH = (int)(pipW * 0.85f);
             int pipX = pipPad;
-            int pipY = windowHeight - pipH - 45;
+            int pipY = windowHeight - pipH - 68;
 
             glEnable(GL_SCISSOR_TEST);
             glScissor(pipX, pipY, pipW, pipH);
             glViewport(pipX, pipY, pipW, pipH);
-            glClear(GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.10f, 0.22f, 0.42f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             CameraManager::getDollCloseupVectors(doll, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ, fov);
             camera.width = pipW;
@@ -483,6 +479,7 @@ int main() {
             GuardsManager::draw(guards);
 
             glDisable(GL_SCISSOR_TEST);
+            glClearColor(0.10f, 0.25f, 0.55f, 1.0f);
         }
 
         // =========================================================================
@@ -502,69 +499,124 @@ int main() {
                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-            // Doll Cam Header
             int pipPad = 12;
             int pipW = leftBarW - pipPad * 2;
             int pipH = (int)(pipW * 0.85f);
 
-            bool blink = ((int)(glfwGetTime() * 2.0)) % 2 == 0;
-            if (blink) {
-                ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), " [●] REC");
-            } else {
-                ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), " [ ] REC");
-            }
-            ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.9f, 1.0f), "DOLL CAM 01");
+            // Title & Subtitle Header
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "SQUID GAME");
+            ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.78f, 1.0f), "RED LIGHT, GREEN LIGHT");
+            ImGui::Spacing();
+
+            // Doll Cam Header
+            ImGui::TextColored(ImVec4(1.0f, 0.15f, 0.15f, 1.0f), "■ LIVE");
+            ImGui::SameLine(ImGui::GetWindowWidth() - 95.0f);
+            ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.95f, 1.0f), "CAM 01 : DOLL");
 
             // Empty space reserved for 3D PiP viewport
-            ImGui::Dummy(ImVec2((float)pipW, (float)pipH + 10.0f));
+            ImGui::Dummy(ImVec2((float)pipW, (float)pipH + 6.0f));
 
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            // Doll Light Status
-            if (doll.lightState == GREEN_LIGHT) {
-                ImGui::TextColored(ImVec4(0.2f, 0.95f, 0.4f, 1.0f), "● GREEN LIGHT (MOVE!)");
-            } else {
-                ImGui::TextColored(ImVec4(1.0f, 0.15f, 0.25f, 1.0f), "● RED LIGHT (FREEZE!)");
-            }
-
-            ImGui::Spacing();
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            // Game Timer
+            // Cyan Bordered Digital Clock Box
             int minutes = (int)gameTimer / 60;
             int seconds = (int)gameTimer % 60;
-            int millis = (int)((gameTimer - (int)gameTimer) * 100);
-            ImGui::Text("TIME REMAINING:");
-            ImGui::TextColored(gameTimer < 15.0f ? ImVec4(1.0f, 0.2f, 0.2f, 1.0f) : ImVec4(1.0f, 0.85f, 0.2f, 1.0f),
-                               "%02d:%02d.%02d", minutes, seconds, millis);
+            char clockBuf[32];
+            sprintf(clockBuf, "    0 %d : %02d", minutes, seconds);
 
-            ImGui::Spacing();
-            ImGui::Separator();
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.04f, 0.04f, 0.06f, 0.95f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.15f, 0.85f, 0.95f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+            if (ImGui::BeginChild("ClockBox", ImVec2(-1, 46), true)) {
+                ImGui::SetCursorPosY(12.0f);
+                ImGui::TextColored(ImVec4(1.0f, 0.15f, 0.15f, 1.0f), "%s", clockBuf);
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
             ImGui::Spacing();
 
-            // Contestants Counter
-            ImGui::Text("CONTESTANTS ALIVE:");
-            ImGui::TextColored(ImVec4(0.18f, 0.85f, 0.95f, 1.0f), "%d / %d", aliveCount, TOTAL_CONTESTANTS);
-
+            // Pink Bordered Players Count Box
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.06f, 0.06f, 0.08f, 0.95f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.94f, 0.16f, 0.48f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+            if (ImGui::BeginChild("PlayerBox", ImVec2(-1, 38), true)) {
+                ImGui::SetCursorPosY(8.0f);
+                ImGui::TextColored(ImVec4(1.0f, 0.92f, 0.20f, 1.0f), "PLAYERS: %d / %d", aliveCount, TOTAL_CONTESTANTS);
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
             ImGui::Spacing();
-            ImGui::Separator();
+
+            // Green / Red Light Status Banner
+            if (gameState == WAITING || doll.lightState == GREEN_LIGHT) {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.08f, 0.75f, 0.28f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.12f, 0.85f, 0.35f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.08f, 0.75f, 0.28f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                ImGui::Button("GREEN LIGHT - MOVE!", ImVec2(-1, 36));
+                ImGui::PopStyleColor(4);
+            } else {
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.85f, 0.08f, 0.08f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.95f, 0.15f, 0.15f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.85f, 0.08f, 0.08f, 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                ImGui::Button("RED LIGHT - FREEZE!", ImVec2(-1, 36));
+                ImGui::PopStyleColor(4);
+            }
             ImGui::Spacing();
 
-            // Player Status
-            ImGui::Text("PLAYER 456:");
-            const char* tierNames[] = { "Slow Walk (Z)", "Easy Jog (X)", "Sprint (C)" };
-            ImGui::Text("Speed: %s", tierNames[(int)player.speedTier]);
-            float distToFinish = FINISH_Z - player.z;
-            if (distToFinish < 0.0f) distToFinish = 0.0f;
-            ImGui::Text("Distance: %.1f m", distToFinish);
+            // Course Progress
+            float totalDist = FINISH_Z - START_Z;
+            float currDist = player.z - START_Z;
+            float progress = currDist / totalDist;
+            if (progress < 0.0f) progress = 0.0f;
+            if (progress > 1.0f) progress = 1.0f;
+
+            ImGui::TextColored(ImVec4(0.85f, 0.85f, 0.90f, 1.0f), "COURSE PROGRESS");
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.94f, 0.16f, 0.48f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.15f, 0.15f, 0.18f, 1.0f));
+            ImGui::ProgressBar(progress, ImVec2(-1, 14), "");
+            ImGui::PopStyleColor(2);
+            ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%d%% TO FINISH", (int)(progress * 100.0f));
+            ImGui::Spacing();
+
+            // Speed Pace Badge
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.06f, 0.06f, 0.08f, 0.90f));
+            if (player.speedTier == SPEED_WALK) {
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.2f, 0.85f, 1.0f, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+                if (ImGui::BeginChild("PaceBox", ImVec2(-1, 32), true)) {
+                    ImGui::SetCursorPosY(6.0f);
+                    ImGui::TextColored(ImVec4(0.3f, 0.9f, 1.0f, 1.0f), "PACE: WALK (Z)");
+                }
+            } else if (player.speedTier == SPEED_SPRINT) {
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 0.35f, 0.15f, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+                if (ImGui::BeginChild("PaceBox", ImVec2(-1, 32), true)) {
+                    ImGui::SetCursorPosY(6.0f);
+                    ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.2f, 1.0f), "PACE: SPRINT (C)");
+                }
+            } else {
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.15f, 0.95f, 0.35f, 1.0f));
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
+                ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
+                if (ImGui::BeginChild("PaceBox", ImVec2(-1, 32), true)) {
+                    ImGui::SetCursorPosY(6.0f);
+                    ImGui::TextColored(ImVec4(0.15f, 0.95f, 0.35f, 1.0f), "PACE: JOG (X)");
+                }
+            }
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
 
             ImGui::End();
         }
 
-        // 2. RIGHT SIDEBAR PANEL (Camera Switcher & Game Controls)
+        // 2. RIGHT SIDEBAR PANEL (Simplified, High-Contrast with Active Highlighting)
         {
             ImGui::SetNextWindowPos(ImVec2((float)(windowWidth - rightBarW), 0));
             ImGui::SetNextWindowSize(ImVec2((float)rightBarW, (float)windowHeight));
@@ -572,41 +624,67 @@ int main() {
                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-            ImGui::TextColored(ImVec4(0.95f, 0.25f, 0.55f, 1.0f), "CAMERA ANGLES");
+            ImGui::TextColored(ImVec4(1.0f, 0.92f, 0.25f, 1.0f), "GAME CONTROLS");
             ImGui::Separator();
+            ImGui::Spacing();
 
-            const char* camNames[] = {
-                "1: Third Person", "2: First Person", "3: Top-Down",
-                "4: Doll Orbit 360", "5: Broadcast Left", "6: Broadcast Right",
-                "7: Doll POV", "8: Start Line", "9: Finish Line", "0: Overhead Orbit"
+            // CARD 1: CAMERA ANGLES (5 Modes, highlighted active)
+            ImGui::TextColored(ImVec4(0.94f, 0.30f, 0.65f, 1.0f), "CAMERA ANGLES (KEY)");
+            ImGui::Spacing();
+
+            struct CamItem {
+                CameraMode mode;
+                const char* label;
             };
 
-            for (int i = 0; i < 10; ++i) {
-                bool isSelected = ((int)camMode == i);
-                if (isSelected) ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.20f, 0.50f, 1.0f));
-                if (ImGui::Button(camNames[i], ImVec2(-1, 24))) {
-                    switchCamera((CameraMode)i);
+            const CamItem camItems[] = {
+                { CAM_THIRD_PERSON, "[1] Player View (3rd)" },
+                { CAM_TOP_DOWN,     "[3] Top Arena View" },
+                { CAM_DOLL_CLOSEUP, "[4] Doll 360 Orbit" },
+                { CAM_SIDE_LEFT,    "[5] Left Broadcast" },
+                { CAM_SIDE_RIGHT,   "[6] Right Broadcast" }
+            };
+
+            const int numCamItems = sizeof(camItems) / sizeof(camItems[0]);
+            for (int i = 0; i < numCamItems; ++i) {
+                bool isSelected = (camMode == camItems[i].mode);
+                if (isSelected) {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.94f, 0.16f, 0.48f, 0.85f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.95f, 0.20f, 1.0f));
+                } else {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.14f, 0.18f, 0.70f));
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.88f, 0.92f, 1.0f));
                 }
-                if (isSelected) ImGui::PopStyleColor();
+
+                if (ImGui::Button(camItems[i].label, ImVec2(-1, 26))) {
+                    switchCamera(camItems[i].mode);
+                }
+                ImGui::PopStyleColor(2);
             }
 
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-            ImGui::TextColored(ImVec4(0.95f, 0.25f, 0.55f, 1.0f), "CONTROLS GUIDE");
+            // CARD 2: SPEED & MOVEMENT
+            ImGui::TextColored(ImVec4(0.25f, 0.90f, 1.0f, 1.0f), "SPEED & MOVEMENT");
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.95f, 1.0f), "W / S : Move Forward / Back");
+            ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.95f, 1.0f), "A / D : Turn Left / Right");
+            ImGui::TextColored(ImVec4(0.30f, 1.0f, 0.50f, 1.0f), "Z/X/C : Walk / Jog / Sprint");
+            ImGui::TextColored(ImVec4(0.30f, 1.0f, 0.50f, 1.0f), "G     : Cycle Speed Tier");
+
+            ImGui::Spacing();
             ImGui::Separator();
-            ImGui::Text("W / S : Forward / Back");
-            ImGui::Text("A / D : Turn Left / Right");
-            ImGui::Text("Q / E : Strafe Left / Right");
-            ImGui::Text("Shift : Hold to Sprint");
-            ImGui::Text("Ctrl  : Hold to Walk");
-            ImGui::Text("Z/X/C : Set Speed Tier");
-            ImGui::Text("G     : Cycle Speed Gear");
-            ImGui::Text("Mouse : Left-Drag 360 Orbit");
-            ImGui::Text("Wheel : Zoom In / Out");
-            ImGui::Text("F     : Flat / Smooth Shading");
-            ImGui::Text("R     : Restart Match");
+            ImGui::Spacing();
+
+            // CARD 3: SYSTEM CONTROLS
+            ImGui::TextColored(ImVec4(0.25f, 1.0f, 0.45f, 1.0f), "SYSTEM CONTROLS");
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "Mouse Drag  : 360 Orbit");
+            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "Mouse Wheel : Zoom");
+            ImGui::TextColored(ImVec4(0.92f, 0.92f, 0.92f, 1.0f), "V           : Cycle Views");
+            ImGui::TextColored(ImVec4(1.0f, 0.45f, 0.45f, 1.0f), "R           : Restart Match");
 
             ImGui::End();
         }

@@ -17,7 +17,7 @@ namespace {
         glTranslatef(cx, cy, cz);
 
         // Fluffy cumulus cloud spheres
-        Renderer::setMaterial(0.98f, 0.98f, 1.0f, 10.0f); // Bright pure white cloud top
+        Renderer::setMaterial(0.82f, 0.84f, 0.88f, 10.0f);
 
         const float offsets[6][4] = {
             { 0.0f,   0.0f,  1.10f, 0.95f}, // Center main billow
@@ -85,11 +85,11 @@ void EnvironmentManager::drawArenaGround() {
             float z1 = -ARENA_HALF_LENGTH + j * stepZ;
             float z2 = z1 + stepZ;
 
-            // Subtle warm sand color variation
-            float noise = sinf(x1 * 0.8f) * cosf(z1 * 0.6f) * 0.035f;
-            float r = 0.89f + noise;
-            float g = 0.77f + noise * 0.8f;
-            float b = 0.58f + noise * 0.6f;
+            // Deep warm courtyard dirt/sand tone (Matching Reference Image 4)
+            float noise = sinf(x1 * 0.8f) * cosf(z1 * 0.6f) * 0.030f;
+            float r = 0.64f + noise;
+            float g = 0.48f + noise * 0.8f;
+            float b = 0.30f + noise * 0.6f;
 
             glColor3f(r, g, b);
             glVertex3f(x1, 0.0f, z1);
@@ -104,16 +104,16 @@ void EnvironmentManager::drawArenaGround() {
 }
 
 void EnvironmentManager::drawPaintedSkyWalls() {
-    // Giant walls enclosing the arena painted like the sky with clouds (Reference Images 1, 2, 3)
+    // Giant walls enclosing the arena painted like the sky with clouds (Reference Images 1, 2, 3, 4)
     glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
 
     const float hw = ARENA_HALF_WIDTH;
     const float hl = ARENA_HALF_LENGTH;
     const float h  = WALL_HEIGHT;
 
-    // Sky colors: Soft, pleasant storybook blue gradient
-    const float skyTopR = 0.40f, skyTopG = 0.70f, skyTopB = 0.94f;
-    const float skyBotR = 0.78f, skyBotG = 0.89f, skyBotB = 0.98f;
+    // Sky colors: Deep rich atmospheric storybook blue mural (Matching Reference Image 4)
+    const float skyTopR = 0.10f, skyTopG = 0.25f, skyTopB = 0.55f;
+    const float skyBotR = 0.22f, skyBotG = 0.40f, skyBotB = 0.65f;
 
     glBegin(GL_QUADS);
 
@@ -194,7 +194,7 @@ void EnvironmentManager::drawWheatFieldTrim() {
     glPushMatrix();
 
     // 1. Golden Yellow Wheat Field (Bottom layer, y = 0..3.2)
-    Renderer::setMaterial(0.86f, 0.70f, 0.24f, 15.0f);
+    Renderer::setMaterial(0.72f, 0.55f, 0.18f, 15.0f);
 
     glBegin(GL_QUADS);
     // Far Wall base

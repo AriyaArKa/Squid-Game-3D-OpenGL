@@ -7,32 +7,68 @@
 
 namespace {
     void drawMaskSymbol(GuardType type) {
-        Renderer::setMaterial(0.98f, 0.98f, 0.98f, 10.0f);
-        Renderer::setEmissive(0.9f, 0.9f, 0.9f, 0.6f);
+        Renderer::setMaterial(0.98f, 0.98f, 0.98f, 20.0f);
+        Renderer::setEmissive(0.95f, 0.95f, 0.95f, 0.6f);
 
         glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.28f);
+        glTranslatef(0.0f, 0.0f, 0.285f);
 
         if (type == GUARD_CIRCLE) {
-            // White circle outline
-            Renderer::drawTorus(0.02f, 0.09f, 8, 16);
+            // White circle ring with thickness
+            Renderer::drawTorus(0.016f, 0.088f, 12, 24);
         } else if (type == GUARD_TRIANGLE) {
-            // White triangle
-            glBegin(GL_LINE_LOOP);
-            glLineWidth(3.0f);
-            glVertex3f( 0.0f,   0.09f, 0.0f);
-            glVertex3f(-0.08f, -0.07f, 0.0f);
-            glVertex3f( 0.08f, -0.07f, 0.0f);
-            glEnd();
+            // White equilateral triangle composed of 3 solid segments
+            // Base
+            glPushMatrix();
+            glTranslatef(0.0f, -0.065f, 0.0f);
+            glScalef(0.16f, 0.018f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
+
+            // Left side
+            glPushMatrix();
+            glTranslatef(-0.042f, 0.012f, 0.0f);
+            glRotatef(30.0f, 0.0f, 0.0f, 1.0f);
+            glScalef(0.018f, 0.165f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
+
+            // Right side
+            glPushMatrix();
+            glTranslatef(0.042f, 0.012f, 0.0f);
+            glRotatef(-30.0f, 0.0f, 0.0f, 1.0f);
+            glScalef(0.018f, 0.165f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
         } else if (type == GUARD_SQUARE) {
-            // White square
-            glBegin(GL_LINE_LOOP);
-            glLineWidth(3.0f);
-            glVertex3f(-0.08f,  0.08f, 0.0f);
-            glVertex3f( 0.08f,  0.08f, 0.0f);
-            glVertex3f( 0.08f, -0.08f, 0.0f);
-            glVertex3f(-0.08f, -0.08f, 0.0f);
-            glEnd();
+            // White square composed of 4 solid segments
+            // Top
+            glPushMatrix();
+            glTranslatef(0.0f, 0.075f, 0.0f);
+            glScalef(0.168f, 0.018f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
+
+            // Bottom
+            glPushMatrix();
+            glTranslatef(0.0f, -0.075f, 0.0f);
+            glScalef(0.168f, 0.018f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
+
+            // Left
+            glPushMatrix();
+            glTranslatef(-0.075f, 0.0f, 0.0f);
+            glScalef(0.018f, 0.168f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
+
+            // Right
+            glPushMatrix();
+            glTranslatef(0.075f, 0.0f, 0.0f);
+            glScalef(0.018f, 0.168f, 0.018f);
+            glutSolidCube(1.0);
+            glPopMatrix();
         }
 
         glPopMatrix();
@@ -177,10 +213,10 @@ void GuardsManager::drawSingleGuard(const Guard& guard) {
     // Ground shadow
     Renderer::drawGroundShadow(0.0f, 0.0f, 0.45f, 0.40f, 0.35f);
 
-    // Pink / Magenta jumpsuit color
-    const float pr = 0.94f, pg = 0.16f, pb = 0.48f;
+    // Authentic Squid Game hot magenta jumpsuit tone
+    const float pr = 0.88f, pg = 0.08f, pb = 0.42f;
 
-    // Boots (Black combat boots)
+    // Boots (Black combat boots with rubber sole)
     Renderer::setMaterial(0.10f, 0.10f, 0.12f, 30.0f);
     glPushMatrix();
     glTranslatef(-0.16f, 0.10f, 0.03f);
@@ -193,7 +229,7 @@ void GuardsManager::drawSingleGuard(const Guard& guard) {
     glutSolidCube(1.0);
     glPopMatrix();
 
-    // Legs (Pink Jumpsuit pants)
+    // Legs (Magenta Jumpsuit pants)
     Renderer::setMaterial(pr, pg, pb, 20.0f);
     glPushMatrix();
     glTranslatef(-0.16f, 0.42f, 0.0f);
@@ -206,18 +242,52 @@ void GuardsManager::drawSingleGuard(const Guard& guard) {
     glutSolidCube(1.0);
     glPopMatrix();
 
-    // Torso (Pink Jumpsuit)
+    // Torso (Magenta Jumpsuit)
     glPushMatrix();
     glTranslatef(0.0f, 0.95f, 0.0f);
     glScalef(0.55f, 0.60f, 0.32f);
     glutSolidCube(1.0);
     glPopMatrix();
 
-    // Black Belt & Harness
+    // Black Central Front Zipper
+    Renderer::setMaterial(0.08f, 0.08f, 0.09f, 35.0f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.95f, 0.165f);
+    glScalef(0.024f, 0.58f, 0.015f);
+    glutSolidCube(1.0);
+    glPopMatrix();
+
+    // Black Belt
     Renderer::setMaterial(0.08f, 0.08f, 0.09f, 40.0f);
     glPushMatrix();
     glTranslatef(0.0f, 0.70f, 0.0f);
     glScalef(0.57f, 0.12f, 0.34f);
+    glutSolidCube(1.0);
+    glPopMatrix();
+
+    // Silver Metallic Belt Buckle
+    Renderer::setMaterial(0.85f, 0.85f, 0.88f, 70.0f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.70f, 0.175f);
+    glScalef(0.12f, 0.09f, 0.025f);
+    glutSolidCube(1.0);
+    glPopMatrix();
+
+    // Black Tactical Shoulder Straps (Harness)
+    Renderer::setMaterial(0.08f, 0.08f, 0.09f, 35.0f);
+    for (int side = -1; side <= 1; side += 2) {
+        glPushMatrix();
+        glTranslatef(side * 0.14f, 0.98f, 0.163f);
+        glScalef(0.045f, 0.50f, 0.015f);
+        glutSolidCube(1.0);
+        glPopMatrix();
+    }
+
+    // Hood Neck Cowl / Collar
+    Renderer::setMaterial(pr, pg, pb, 15.0f);
+    glPushMatrix();
+    glTranslatef(0.0f, 1.22f, 0.0f);
+    glScalef(0.34f, 0.09f, 0.32f);
     glutSolidCube(1.0);
     glPopMatrix();
 

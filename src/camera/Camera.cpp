@@ -129,14 +129,14 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             break;
         }
 
-        case CAM_TOP_DOWN: { // 3: Top-Down Aerial Floor View
-            targetLookX = player.x * 0.4f;
+        case CAM_TOP_DOWN: { // 3: Aerial Top View of entire system
+            targetLookX = 0.0f;
             targetLookY = 0.0f;
-            targetLookZ = (player.z + DOLL_Z) * 0.4f;
+            targetLookZ = -3.5f;
 
-            targetEyeX = player.x * 0.4f;
-            targetEyeY = 55.0f;
-            targetEyeZ = (player.z + DOLL_Z) * 0.4f + 0.1f;
+            targetEyeX = 0.0f;
+            targetEyeY = 110.0f;
+            targetEyeZ = -3.5f;
             break;
         }
 
@@ -159,28 +159,6 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             targetEyeX = ARENA_HALF_WIDTH - 1.5f;
             targetEyeY = 12.0f;
             targetEyeZ = player.z + 5.0f;
-            break;
-        }
-
-        case CAM_START_LINE: { // 8: Start Line
-            targetLookX = 0.0f;
-            targetLookY = 2.0f;
-            targetLookZ = FINISH_Z;
-
-            targetEyeX = 0.0f;
-            targetEyeY = 2.5f;
-            targetEyeZ = START_Z - 6.0f;
-            break;
-        }
-
-        case CAM_FINISH_LINE: { // 9: Finish Line
-            targetLookX = player.x;
-            targetLookY = player.y + 1.2f;
-            targetLookZ = player.z;
-
-            targetEyeX = 0.0f;
-            targetEyeY = 2.8f;
-            targetEyeZ = FINISH_Z + 4.0f;
             break;
         }
 
@@ -237,27 +215,11 @@ void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode
             break;
         }
 
-        case CAM_TOP_DOWN: // 3: Top Floor Aerial Bird's Eye View
-            gluLookAt(player.x * 0.3f, 55.0f, (player.z + DOLL_Z) * 0.4f,
-                      player.x * 0.3f, 0.0f, (player.z + DOLL_Z) * 0.4f + 0.1f,
+        case CAM_TOP_DOWN: // 3: Aerial Top View of entire system
+            gluLookAt(0.0f, 110.0f, -3.5f,
+                      0.0f, 0.0f, -3.5f,
                       0.0f, 0.0f, 1.0f);
             break;
-
-        case CAM_DOLL_POV: { // 7: Doll's Eyes Looking Down at contestants
-            float headRad = (doll.headAngle + camYaw) * DEG2RAD;
-            float lookDirX = sinf(headRad);
-            float lookDirZ = -cosf(headRad);
-            float pitchOffset = sinf(camPitch * DEG2RAD) * 8.0f;
-
-            float dollEyeX = doll.x;
-            float dollEyeY = doll.y + 6.0f;
-            float dollEyeZ = doll.z;
-
-            gluLookAt(dollEyeX, dollEyeY, dollEyeZ,
-                      dollEyeX + lookDirX * 35.0f, dollEyeY - 4.5f + pitchOffset, dollEyeZ + lookDirZ * 35.0f,
-                      0.0f, 1.0f, 0.0f);
-            break;
-        }
 
         default:
             gluLookAt(smoothCamX, smoothCamY, smoothCamZ,
@@ -268,16 +230,14 @@ void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode
 }
 
 void CameraManager::applyDollCloseupView(const Doll& doll) {
-    // Corner PiP CCTV Angle looking from arena side at Doll hugging tree
-    // When Green Light: shows doll holding tree with two hands from back
-    // When Red Light: head rotates 180° so face looks straight at camera/players!
-    float eyeX = doll.x + 1.8f;
-    float eyeY = doll.y + 6.0f;
-    float eyeZ = doll.z - 4.5f;
+    // Corner PiP CCTV Angle centered on Doll hugging the tree from arena side
+    float eyeX = doll.x;
+    float eyeY = doll.y + 5.2f;
+    float eyeZ = doll.z - 4.8f;
 
     float lookX = doll.x;
-    float lookY = doll.y + 5.5f;
-    float lookZ = doll.z + 0.8f;
+    float lookY = doll.y + 4.9f;
+    float lookZ = doll.z + 0.6f;
 
     gluLookAt(eyeX, eyeY, eyeZ,
               lookX, lookY, lookZ,
@@ -294,43 +254,18 @@ void CameraManager::getViewVectors(const Player& player, const Doll& doll, Camer
     switch (mode) {
         case CAM_THIRD_PERSON:
         case CAM_DOLL_CLOSEUP:
-        case CAM_OVERHEAD:
         case CAM_SIDE_LEFT:
         case CAM_SIDE_RIGHT:
-        case CAM_START_LINE:
-        case CAM_FINISH_LINE:
             eyeX = smoothCamX; eyeY = smoothCamY; eyeZ = smoothCamZ;
             lookX = smoothLookX; lookY = smoothLookY; lookZ = smoothLookZ;
             break;
 
-        case CAM_FIRST_PERSON: {
-            float totalYawRad = (player.facingAngle + camYaw) * DEG2RAD;
-            float pitchRad = camPitch * DEG2RAD;
-            float forwardX = sinf(totalYawRad) * cosf(pitchRad);
-            float forwardY = sinf(pitchRad);
-            float forwardZ = cosf(totalYawRad) * cosf(pitchRad);
-
-            eyeX = player.x; eyeY = player.y + 1.65f; eyeZ = player.z;
-            lookX = eyeX + forwardX * 15.0f; lookY = eyeY + forwardY * 15.0f; lookZ = eyeZ + forwardZ * 15.0f;
-            break;
-        }
-
         case CAM_TOP_DOWN:
-            eyeX = player.x * 0.3f; eyeY = 55.0f; eyeZ = (player.z + DOLL_Z) * 0.4f;
-            lookX = player.x * 0.3f; lookY = 0.0f; lookZ = (player.z + DOLL_Z) * 0.4f + 0.1f;
+            eyeX = 0.0f; eyeY = 110.0f; eyeZ = -3.5f;
+            lookX = 0.0f; lookY = 0.0f; lookZ = -3.5f;
             upX = 0.0f; upY = 0.0f; upZ = 1.0f;
+            fov = 58.0f;
             break;
-
-        case CAM_DOLL_POV: {
-            float headRad = (doll.headAngle + camYaw) * DEG2RAD;
-            float lookDirX = sinf(headRad);
-            float lookDirZ = -cosf(headRad);
-            float pitchOffset = sinf(camPitch * DEG2RAD) * 8.0f;
-
-            eyeX = doll.x; eyeY = doll.y + 6.0f; eyeZ = doll.z;
-            lookX = eyeX + lookDirX * 35.0f; lookY = eyeY - 4.5f + pitchOffset; lookZ = eyeZ + lookDirZ * 35.0f;
-            break;
-        }
 
         default:
             eyeX = smoothCamX; eyeY = smoothCamY; eyeZ = smoothCamZ;
@@ -343,22 +278,35 @@ void CameraManager::getDollCloseupVectors(const Doll& doll,
                                          float& eyeX, float& eyeY, float& eyeZ,
                                          float& lookX, float& lookY, float& lookZ,
                                          float& upX, float& upY, float& upZ, float& fov) {
-    eyeX = doll.x + 1.8f;
-    eyeY = doll.y + 6.0f;
-    eyeZ = doll.z - 4.5f;
+    eyeX = doll.x;
+    eyeY = doll.y + 5.2f;
+    eyeZ = doll.z - 4.8f;
 
     lookX = doll.x;
-    lookY = doll.y + 5.5f;
-    lookZ = doll.z + 0.8f;
+    lookY = doll.y + 4.9f;
+    lookZ = doll.z + 0.6f;
 
     upX = 0.0f; upY = 1.0f; upZ = 0.0f;
-    fov = 42.0f;
+    fov = 40.0f;
 }
 
 void CameraManager::cycleMode(CameraMode& mode) {
-    int next = ((int)mode) + 1;
-    if (next > 9) next = 0;
-    mode = (CameraMode)next;
+    static const CameraMode activeModes[] = {
+        CAM_THIRD_PERSON,
+        CAM_TOP_DOWN,
+        CAM_DOLL_CLOSEUP,
+        CAM_SIDE_LEFT,
+        CAM_SIDE_RIGHT
+    };
+    const int count = sizeof(activeModes) / sizeof(activeModes[0]);
+    int currIdx = 0;
+    for (int i = 0; i < count; ++i) {
+        if (activeModes[i] == mode) {
+            currIdx = i;
+            break;
+        }
+    }
+    mode = activeModes[(currIdx + 1) % count];
     resetAnglesForMode(mode);
 }
 
