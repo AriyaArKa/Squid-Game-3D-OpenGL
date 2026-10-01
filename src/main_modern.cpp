@@ -473,16 +473,17 @@ int main() {
             camera.SetView(glm::vec3(eyeX, eyeY, eyeZ),
                            glm::vec3(lookX, lookY, lookZ),
                            glm::vec3(upX, upY, upZ),
-                           fov, 0.1f, 80.0f);
+                           fov, 0.05f, 260.0f);
 
-            // Frontal camera headlight: lightDir is ray direction from camera towards doll
-            glm::vec3 camDir = glm::normalize(glm::vec3(lookX - eyeX, lookY - eyeY, lookZ - eyeZ));
-            glm::vec3 pipLightDir = camDir; // Ray points from camera to doll
-            glm::vec3 pipLightColor(1.40f, 1.35f, 1.30f); // Bright vivid CCTV fill light!
+            glm::vec3 pipLightDir(-0.35f, -1.0f, -0.4f);
+            glm::vec3 pipLightColor(1.25f, 1.22f, 1.18f);
 
             GLCompat::beginFrame(shader, camera, pipLightDir, pipLightColor);
+            EnvironmentManager::draw(false);
             DollManager::draw(doll);
             GuardsManager::draw(guards);
+            ContestantsManager::drawNPCs(npcs);
+            ContestantsManager::drawPlayer(player);
 
             glDisable(GL_SCISSOR_TEST);
             glClearColor(0.08f, 0.22f, 0.52f, 1.0f);

@@ -228,14 +228,16 @@ void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode
 }
 
 void CameraManager::applyDollCloseupView(const Doll& doll) {
-    // Corner PiP CCTV Angle: elevated 3/4 front perspective framing the doll's face, pigtails, and dress
-    float eyeX = doll.x - 2.8f;
-    float eyeY = doll.y + 4.9f;
-    float eyeZ = doll.z - 2.2f;
+    // Iconic Episode 1 Camera: Over-the-shoulder behind the tree
+    // Left side: Tree trunk and Doll's arm, face profile, and pigtail
+    // Center & Right: Expansive sandy arena, 456 contestants, and horizon houses
+    float eyeX = doll.x - 1.15f;
+    float eyeY = doll.y + 4.90f;
+    float eyeZ = doll.z + 2.10f;
 
-    float lookX = doll.x;
-    float lookY = doll.y + 4.3f;
-    float lookZ = doll.z + 0.3f;
+    float lookX = doll.x + 0.40f;
+    float lookY = doll.y + 2.20f;
+    float lookZ = doll.z - 30.0f;
 
     gluLookAt(eyeX, eyeY, eyeZ,
               lookX, lookY, lookZ,
@@ -278,17 +280,19 @@ void CameraManager::getDollCloseupVectors(const Doll& doll,
                                          float& eyeX, float& eyeY, float& eyeZ,
                                          float& lookX, float& lookY, float& lookZ,
                                          float& upX, float& upY, float& upZ, float& fov) {
-    // Corner PiP CCTV Angle: elevated 3/4 front perspective framing the doll's face, pigtails, and dress
-    eyeX = doll.x - 2.8f;
-    eyeY = doll.y + 4.9f;
-    eyeZ = doll.z - 2.2f;
+    // Iconic Episode 1 Camera: Over-the-shoulder behind the tree
+    // Left side: Tree trunk and Doll's arm, face profile, and pigtail
+    // Center & Right: Expansive sandy arena, 456 contestants, and horizon houses
+    eyeX = doll.x - 1.15f;
+    eyeY = doll.y + 4.90f;
+    eyeZ = doll.z + 2.10f;
 
-    lookX = doll.x;
-    lookY = doll.y + 4.3f;
-    lookZ = doll.z + 0.3f;
+    lookX = doll.x + 0.40f;
+    lookY = doll.y + 2.20f;
+    lookZ = doll.z - 30.0f;
 
     upX = 0.0f; upY = 1.0f; upZ = 0.0f;
-    fov = 38.0f;
+    fov = 48.0f;
 }
 
 void CameraManager::cycleMode(CameraMode& mode) {

@@ -10,48 +10,48 @@ small enough to read and debug in isolation:
 ```
 .
 ├── src/
-│   ├── main.cpp                 # Entry point, GLUT callbacks, game loop & state machine
+│   ├── main_modern.cpp          # Entry point, GLFW window/input loops, Dear ImGui HUD overlays
+│   ├── engine/                  # Modern OpenGL engine (Shader, VAO, VBO, EBO, Mesh, Primitives, GLCompat)
+│   ├── compat/                  # Compatibility shim mapping legacy GL to Modern OpenGL VAO/VBO
+│   ├── shaders/                 # GLSL 330 core vertex & fragment shaders (default.vert, default.frag)
 │   ├── core/
 │   │   ├── Config.h             # Arena constants, speeds, camera offsets, timings, UI bar widths
 │   │   └── Types.h              # Structs for Player, Doll, Guards, NPCs, GameState
-│   ├── render/                  # Renderer.h / .cpp — lighting, materials, primitives (cylinders, spheres, boxes)
+│   ├── render/                  # Renderer.h / .cpp — GLCompat material, lighting & primitive dispatch
 │   ├── audio/                   # Audio.h / .cpp — WinMM engine & procedural Squid Game sound synthesizer
-│   ├── camera/                  # Camera.h / .cpp — 3rd/1st person follow, Doll POV, 360° orbit modes
-│   ├── doll/                    # Young-hee Doll, split by concern:
-│   │   ├── Doll.h / .cpp        #   state machine (green/red light, head turn) + composition
-│   │   ├── DollHead.cpp/.h      #   face, eyes, hair, ears, pigtails
-│   │   ├── DollBody.cpp/.h      #   torso, dress, ball-jointed arms/hands, legs
-│   │   └── DollTree.cpp/.h      #   the procedural gnarled dead tree
+│   ├── camera/                  # Camera.h / .cpp — View vectors, Doll POV, 360° orbit modes
+│   ├── doll/                    # Young-hee Doll (Doll.cpp, DollHead.cpp, DollBody.cpp, DollTree.cpp)
 │   ├── guards/                  # Guards.h / .cpp — Pink Soldiers (Circle/Triangle/Square masks, weapons)
 │   ├── contestants/             # Contestants.h / .cpp — Player 456 + NPCs, AI logic, blood particles
-│   ├── environment/             # Arena, split by concern:
-│   │   ├── Environment.h/.cpp   #   ground, sky walls, wheat trim, boundary lines
-│   │   ├── EnvironmentHouses.cpp#   background Korean village houses
-│   │   └── EnvironmentClock.cpp #   overhead 3D digital scoreboard clock
-│   └── ui/                      # HUD, split by concern:
-│       ├── UI.h / .cpp          #   sidebar panels, Doll Cam frame, state overlays
-│       └── UIPrimitives.h       #   shared 2D drawing toolkit (text, rects, 7-seg digits, timer widget)
-├── bin/                    # Build output (game.exe)
-├── .vscode/tasks.json      # VS Code build task
+│   ├── environment/             # Arena (Environment.cpp, EnvironmentHouses.cpp, EnvironmentClock.cpp)
+│   └── vendor/                  # GLAD (OpenGL loader) and Dear ImGui
+├── bin/                         # Build output (game_modern.exe)
+├── .vscode/tasks.json           # VS Code build task
 └── README.md
 ```
 
 ## Setup & Compilation (Windows)
 
 1. Ensure MSYS2 MinGW-w64 is in your PATH (`C:\msys64\mingw64\bin`).
-2. Build via VS Code (`Ctrl+Shift+B`) or run from terminal (`-I src` lets every file use
-   folder-qualified includes like `"core/Config.h"`):
+2. Build via VS Code (`Ctrl+Shift+B`) or run from terminal:
    ```powershell
-   g++ -I src src/main.cpp src/audio/Audio.cpp src/render/Renderer.cpp `
+   g++ -O2 -DMODERN_OPENGL `
+       -I src/compat -I src -I src/vendor/glad/include -I src/vendor/imgui -I src/vendor/imgui/backends `
+       src/main_modern.cpp `
+       src/engine/Shader.cpp src/engine/Camera.cpp src/engine/VAO.cpp src/engine/VBO.cpp src/engine/EBO.cpp `
+       src/engine/Mesh.cpp src/engine/Primitives.cpp src/engine/GLCompat.cpp `
+       src/audio/Audio.cpp src/render/Renderer.cpp `
        src/doll/Doll.cpp src/doll/DollHead.cpp src/doll/DollBody.cpp src/doll/DollTree.cpp `
        src/guards/Guards.cpp src/contestants/Contestants.cpp `
        src/environment/Environment.cpp src/environment/EnvironmentHouses.cpp src/environment/EnvironmentClock.cpp `
-       src/ui/UI.cpp src/camera/Camera.cpp `
-       -o bin/game.exe -lfreeglut -lopengl32 -lglu32 -lwinmm -lgdi32
+       src/camera/Camera.cpp src/vendor/glad/src/gl.c `
+       src/vendor/imgui/imgui.cpp src/vendor/imgui/imgui_draw.cpp src/vendor/imgui/imgui_tables.cpp `
+       src/vendor/imgui/imgui_widgets.cpp src/vendor/imgui/backends/imgui_impl_glfw.cpp src/vendor/imgui/backends/imgui_impl_opengl3.cpp `
+       -o bin/game_modern.exe -lglfw3 -lopengl32 -lwinmm -lgdi32
    ```
 3. Run the game:
    ```powershell
-   .\bin\game.exe
+   .\bin\game_modern.exe
    ```
 
 ## Controls
