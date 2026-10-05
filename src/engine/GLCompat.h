@@ -3,6 +3,7 @@
 
 #include "engine/Shader.h"
 #include "engine/Camera.h"
+#include "core/Types.h"
 #include <glm/glm.hpp>
 
 // Authoring-time compatibility layer used to port the ~2500 lines of already-tuned scene
@@ -13,9 +14,18 @@
 // deliberately rhymes with the legacy fixed-function calls so that code doesn't need every
 // one of its hundreds of transform/primitive calls hand-retyped.
 namespace GLCompat {
+    // Call once per frame with complete 3-type lighting and shading configuration:
+    void beginFrame(Shader& shader, Camera& camera, const SceneLighting& lighting);
+
     // Call once per frame before drawing the scene: binds the shader and uploads the
     // camera + directional light uniforms every draw call will share.
     void beginFrame(Shader& shader, Camera& camera, const glm::vec3& lightDir, const glm::vec3& lightColor);
+
+    // Dynamic Lighting & Shading mode accessors
+    const SceneLighting& getLighting();
+    void setLighting(const SceneLighting& lighting);
+    void toggleGouraudShading();
+    bool isGouraudShading();
 
     // Matrix stack (mirrors glPushMatrix/glPopMatrix/glTranslatef/glRotatef/glScalef).
     void pushMatrix();

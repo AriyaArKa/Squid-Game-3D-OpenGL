@@ -24,6 +24,9 @@ public:
     static void playEliminationSound();
     static void playWinMusic();
     static void playGameOverMusic();
+    static void playGlassShatter();
+    static void playGlassStep();
+    static void playFallWhoosh();
     static void stopAll();
 };
 

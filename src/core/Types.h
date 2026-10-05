@@ -1,12 +1,118 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <glm/glm.hpp>
+
+// -----------------------------------------------------------------------------
+// 3-TYPE LIGHTING & SHADING LAB CONFIGURATION
+// -----------------------------------------------------------------------------
+struct DirLightData {
+    bool enabled = true;
+    glm::vec3 direction = glm::vec3(-0.4f, -1.0f, -0.3f);
+    glm::vec3 color = glm::vec3(0.78f, 0.74f, 0.70f);
+    float ambientIntensity = 0.35f;
+    float diffuseIntensity = 0.65f;
+    float specularIntensity = 0.30f;
+};
+
+struct PointLightData {
+    bool enabled = true;
+    glm::vec3 position = glm::vec3(0.0f, 18.0f, 25.0f);
+    glm::vec3 color = glm::vec3(1.0f, 0.88f, 0.62f);
+    float constant = 1.0f;
+    float linear = 0.035f;
+    float quadratic = 0.005f;
+    float intensity = 1.2f;
+};
+
+struct SpotLightData {
+    bool enabled = true;
+    glm::vec3 position = glm::vec3(0.0f, 6.5f, 58.0f);
+    glm::vec3 direction = glm::vec3(0.0f, -0.15f, -1.0f);
+    glm::vec3 color = glm::vec3(1.0f, 0.20f, 0.20f);
+    float cutOff = 0.965f;      // cos(15 degrees)
+    float outerCutOff = 0.920f; // cos(23 degrees)
+    float intensity = 2.0f;
+};
+
+struct SceneLighting {
+    DirLightData dir;
+    PointLightData point;
+    SpotLightData spot;
+    bool useGouraud = false; // false = Phong Shading (Per-Pixel), true = Gouraud Shading (Per-Vertex)
+};
+
+enum GamePhase {
+    PHASE_RED_LIGHT_GREEN_LIGHT = 0,
+    PHASE_GLASS_BRIDGE          = 1
+};
+
 enum GameState {
     WAITING,
     PLAYING,
     WON,
     CAUGHT,
     TIME_UP
+};
+
+enum GlassBridgeState {
+    GB_WAITING,
+    GB_PLAYING,
+    GB_WON,
+    GB_ELIMINATED
+};
+
+enum GlassBridgeCamMode {
+    GB_CAM_FOLLOW        = 1, // Follow active jumper / Player 456
+    GB_CAM_RUNWAY        = 2, // Runway view down the bridge (matches Image 1)
+    GB_CAM_OVER_SHOULDER = 3, // Over the shoulder of waiting queue (matches Image 2)
+    GB_CAM_ORBIT_360     = 4, // Free 360° mouse drag orbit & zoom
+    GB_CAM_TOP_DOWN      = 5, // Top aerial view
+    GB_CAM_SIDE_PROFILE  = 6, // Side broadcast view
+    GB_CAM_DESTINATION   = 7  // Looking back from finish platform
+};
+
+enum GlassSide {
+    GLASS_NONE  = -1,
+    GLASS_LEFT  = 0,
+    GLASS_RIGHT = 1
+};
+
+struct GlassStep {
+    GlassSide safeSide;        // GLASS_LEFT or GLASS_RIGHT
+    bool leftShattered;
+    bool rightShattered;
+    bool leftRevealed;
+    bool rightRevealed;
+};
+
+struct GlassShard {
+    float x, y, z;
+    float vx, vy, vz;
+    float rx, ry, rz;
+    float vrx, vry, vrz;
+    float size;
+    float r, g, b, a;
+    float life;
+};
+
+struct GBContestant {
+    int queueNumber;         // 1 to 16
+    int bibNumber;           // e.g. 456, 067, 218...
+    bool isPlayer456;
+    bool isAlive;
+    bool hasFinished;
+    int currentStep;         // -1 = on start platform, 0..15 = on bridge step, 16 = on finish platform
+    GlassSide currentSide;   // GLASS_LEFT or GLASS_RIGHT
+    float x, y, z;
+    float targetX, targetY, targetZ;
+    float jumpStartX, jumpStartY, jumpStartZ;
+    float jumpProgress;      // 0.0 to 1.0 during jump arc
+    bool isJumping;
+    float fallVelocity;
+    float fallY;
+    float legAngle, armAngle;
+    float aiThinkTimer;
 };
 
 enum LightState {

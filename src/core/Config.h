@@ -40,7 +40,20 @@ const int NUM_NPC_CONTESTANTS = 32;      // 32 detailed 3D contestants across th
 // Persistent HUD Sidebars: Left bar docks the Doll Cam + live stats, Right bar always
 // lists every control. Both stay on screen during play so the player never has to pause
 // or guess a key — only the start prompt is shown before the game begins.
-const int UI_LEFT_BAR_WIDTH  = 210;
-const int UI_RIGHT_BAR_WIDTH = 240;
+const int UI_LEFT_BAR_WIDTH  = 255;
+const int UI_RIGHT_BAR_WIDTH = 280;
+
+// Glass Bridge dimensions & rules
+const int GB_NUM_STEPS         = 16;     // 16 pairs of glass panels
+const int GB_TOTAL_PLAYERS     = 16;     // 16 contestants in queue
+const float GB_BRIDGE_START_Z  = 3.0f;   // Z where glass panels start
+const float GB_STEP_LENGTH     = 3.3f;   // Distance between step centers
+const float GB_BRIDGE_HEIGHT   = 16.0f;  // Elevated high above bottomless void
+const float GB_LEFT_PANEL_X    =  1.35f; // Center X of left glass pane (screen left when looking down +Z)
+const float GB_RIGHT_PANEL_X   = -1.35f; // Center X of right glass pane (screen right when looking down +Z)
+const float GB_PANEL_WIDTH     =  1.90f; // Width of glass pane
+const float GB_PANEL_LENGTH    =  2.40f; // Length of glass pane
+const float GB_PANEL_THICKNESS =  0.10f; // Thickness of glass pane
+const float GB_TIME_LIMIT      = 960.0f; // 16 minutes countdown (16:00)
 
 #endif // CONFIG_H

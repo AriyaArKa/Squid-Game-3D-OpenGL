@@ -10,11 +10,11 @@ void Renderer::initGL() {}
 void Renderer::setupLighting() {}
 
 void Renderer::toggleShading() {
-    smoothMode = !smoothMode;
+    GLCompat::toggleGouraudShading();
 }
 
 bool Renderer::isSmoothShading() {
-    return smoothMode;
+    return !GLCompat::isGouraudShading(); // Smooth = Phong, Flat/Per-vertex = Gouraud
 }
 
 void Renderer::setMaterial(float r, float g, float b, float shininess, float spec) {

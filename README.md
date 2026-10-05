@@ -44,7 +44,7 @@ small enough to read and debug in isolation:
        src/doll/Doll.cpp src/doll/DollHead.cpp src/doll/DollBody.cpp src/doll/DollTree.cpp `
        src/guards/Guards.cpp src/contestants/Contestants.cpp `
        src/environment/Environment.cpp src/environment/EnvironmentHouses.cpp src/environment/EnvironmentClock.cpp `
-       src/camera/Camera.cpp src/vendor/glad/src/gl.c `
+       src/camera/Camera.cpp src/glassbridge/GlassBridge.cpp src/vendor/glad/src/gl.c `
        src/vendor/imgui/imgui.cpp src/vendor/imgui/imgui_draw.cpp src/vendor/imgui/imgui_tables.cpp `
        src/vendor/imgui/imgui_widgets.cpp src/vendor/imgui/backends/imgui_impl_glfw.cpp src/vendor/imgui/backends/imgui_impl_opengl3.cpp `
        -o bin/game_modern.exe -lglfw3 -lopengl32 -lwinmm -lgdi32
@@ -54,23 +54,49 @@ small enough to read and debug in isolation:
    .\bin\game_modern.exe
    ```
 
-## Controls
+## Squid Game Modes & Controls
 
-The in-game right sidebar always lists the full, current control scheme during play. Summary:
+Switch between game phases at any time via the top navigation bar or the **P** hotkey. When winning Round 1, Player 456 seamlessly advances to Round 2!
 
-| Key                    | Action                                              |
-|-------------------------|------------------------------------------------------|
-| **W/S or ↑/↓**          | Move forward / backward                              |
-| **A/D or ←/→**          | Turn left / right                                    |
-| **Q / E**               | Strafe left / right                                  |
-| **Z / X / C**           | Slow walk / easy run / fast sprint (or hold Shift/Ctrl) |
-| **G**                   | Cycle speed gear                                     |
-| **1 – 9, 0**             | Switch camera (3rd/1st person, top-down, Doll orbit, stadium, Doll POV, start/finish line, overhead) |
-| **Mouse drag / wheel**  | 360° orbit the active camera / zoom                  |
-| **F**                   | Toggle flat ↔ smooth shading                          |
-| **Space / click**       | Start game from the title screen                     |
-| **R**                   | Restart game                                          |
-| **Esc**                 | Exit                                                  |
+### Round 1: Red Light, Green Light
+- **W / S or ↑ / ↓**: Move forward / backward
+- **A / D or ← / →**: Turn left / right
+- **Z / X / C**: Slow walk / easy jog / fast sprint (or hold Shift / Ctrl)
+- **1 – 7**: Switch camera (3rd person, overhead free cam, top-down, Doll closeup, stadium, finish line)
+- **Mouse Drag / Wheel**: 360° orbit active camera / zoom in & out
+- **P**: Switch to Round 2: Glass Bridge | **R**: Restart round
+
+### Round 2: Squid Game Glass Bridge
+Crossing the suspended 16-step glass bridge high above the bottomless abyss (matching Episode 7!).
+- **Random Queue Assignment**: Player 456 is assigned a random queue position (1 to 16) with an authentic Squid Game bib.
+- **AI Turn Progression**: Contestants ahead of you in the queue take their turns one by one, picking Left or Right.
+- **Tempered vs Normal Glass**: Stepping on safe tempered glass holds your weight; stepping on fragile normal glass shatters into 3D sparkling shards and sends the jumper plummeting into the abyss!
+- **Interactive Controls**:
+  - **A / Left Arrow / Q** (or GUI button): Jump to Left Glass panel
+  - **D / Right Arrow / E** (or GUI button): Jump to Right Glass panel
+  - **Tab / F**: Toggle Fast-Forward AI turns
+  - **1 – 7**: Switch between all 7 camera angles:
+    - **[1] 3rd Person Follow**: Smooth camera following active jumper
+    - **[2] Bridge Runway View (Episode 7)**: Iconic runway perspective looking straight down the illuminated bridge (Image 1)
+    - **[3] Queue Over-the-Shoulder**: Dramatic view from behind the waiting contestants (Image 2)
+    - **[4] Free 360° Orbit**: Full mouse drag rotation and wheel zoom
+    - **[5] Top-Down Aerial**: Direct plan view of the 16 steps and the chasm
+    - **[6] Side Profile Broadcast**: Stadium lateral camera showing leap arcs
+    - **[7] Destination Cam**: Platform camera looking back toward incoming jumpers
+  - **P**: Switch back to Round 1: Red Light, Green Light | **R**: Restart Glass Bridge
+
+### 💡 Computer Graphics Lab Features: 3-Type Lighting & Shading
+- **[0] Directional Light Toggle**: Toggles global directional sunlight / stage key lighting.
+- **[8] Point Light Toggle**: Toggles omnidirectional point light with quadratic distance attenuation ($1 / (k_c + k_l d + k_q d^2)$).
+  - *Round 1*: High arena floodlight pylon tower with physical steel tower and glowing lamp head.
+  - *Round 2*: Vintage brass stage chandelier suspended above the central glass bridge steps.
+- **[9] Spot Light Toggle**: Toggles focused spotlight with inner/outer angular cone falloff ($\theta = L \cdot -D$).
+  - *Round 1*: Young-hee Doll eye scanning searchlight beam that swivels dynamically with her head rotation!
+  - *Round 2*: Theatrical follow-spotlight fixture and volumetric light cone tracking the active jumping contestant.
+- **[F] Shading Model Switch (Gouraud vs Phong)**:
+  - **Phong Shading (Per-Pixel)**: Interpolates surface normals to calculate Blinn-Phong specular and diffuse lighting per fragment.
+  - **Gouraud Shading (Per-Vertex)**: Evaluates all 3 light sources per vertex in the vertex shader and interpolates colors across polygons.
+  - Full interactive checkboxes, mode buttons, and status indicators in the Dear ImGui right panel!
 
 ## Features & Graphics Highlights
 

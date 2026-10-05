@@ -22,6 +22,9 @@ namespace {
     WavBuffer eliminationSound;
     WavBuffer winSound;
     WavBuffer gameOverSound;
+    WavBuffer glassShatterSound;
+    WavBuffer glassStepSound;
+    WavBuffer fallWhooshSound;
 
     bool mp3Loaded = false;
     char foundMp3Path[MAX_PATH] = {0};
@@ -204,6 +207,63 @@ namespace {
         return createWav(samples);
     }
 
+    WavBuffer generateGlassShatter() {
+        std::vector<short> samples;
+        float duration = 1.15f;
+        int count = (int)(duration * SAMPLE_RATE);
+        for (int i = 0; i < count; ++i) {
+            float t = (float)i / SAMPLE_RATE;
+            float env = expf(-t * 3.8f);
+            float noise = (((float)rand() / RAND_MAX) * 2.0f - 1.0f) * expf(-t * 6.0f);
+            
+            // Sparkling crystalline resonant rings
+            float ring1 = sinf(2.0f * PI * 3350.0f * t) * expf(-t * 4.2f);
+            float ring2 = sinf(2.0f * PI * 4820.0f * t) * expf(-t * 5.0f);
+            float ring3 = sinf(2.0f * PI * 6180.0f * t) * expf(-t * 7.5f);
+            float lowCrack = sinf(2.0f * PI * 180.0f * t) * expf(-t * 14.0f);
+
+            float s = noise * 0.45f + ring1 * 0.25f + ring2 * 0.20f + ring3 * 0.15f + lowCrack * 0.35f;
+            s *= env;
+            if (s > 1.0f) s = 1.0f;
+            if (s < -1.0f) s = -1.0f;
+            samples.push_back((short)(s * 28000.0f));
+        }
+        return createWav(samples);
+    }
+
+    WavBuffer generateGlassStep() {
+        std::vector<short> samples;
+        float duration = 0.18f;
+        int count = (int)(duration * SAMPLE_RATE);
+        for (int i = 0; i < count; ++i) {
+            float t = (float)i / SAMPLE_RATE;
+            float env = expf(-t * 22.0f);
+            float tap = sinf(2.0f * PI * 1380.0f * t) * 0.6f + sinf(2.0f * PI * 2750.0f * t) * 0.3f;
+            float thud = sinf(2.0f * PI * 240.0f * t) * 0.5f;
+            float s = (tap + thud) * env;
+            samples.push_back((short)(s * 25000.0f));
+        }
+        return createWav(samples);
+    }
+
+    WavBuffer generateFallWhoosh() {
+        std::vector<short> samples;
+        float duration = 1.35f;
+        int count = (int)(duration * SAMPLE_RATE);
+        for (int i = 0; i < count; ++i) {
+            float t = (float)i / SAMPLE_RATE;
+            float env = (t < 0.2f) ? (t / 0.2f) : expf(-(t - 0.2f) * 2.2f);
+            float freq = 850.0f * expf(-t * 1.6f) + 140.0f;
+            float scream = sinf(2.0f * PI * freq * t) + 0.35f * sinf(2.0f * PI * freq * 1.5f * t);
+            float wind = (((float)rand() / RAND_MAX) * 2.0f - 1.0f) * 0.3f;
+            float s = (scream * 0.7f + wind) * env;
+            if (s > 1.0f) s = 1.0f;
+            if (s < -1.0f) s = -1.0f;
+            samples.push_back((short)(s * 25000.0f));
+        }
+        return createWav(samples);
+    }
+
     void loadMP3() {
         char exePath[MAX_PATH] = {0};
         GetModuleFileNameA(NULL, exePath, MAX_PATH);
@@ -286,6 +346,9 @@ void AudioManager::init() {
     eliminationSound = generateEliminationSound();
     winSound         = generateWinMusic();
     gameOverSound    = generateGameOverMusic();
+    glassShatterSound= generateGlassShatter();
+    glassStepSound   = generateGlassStep();
+    fallWhooshSound  = generateFallWhoosh();
 
     loadMP3();
 }
@@ -366,6 +429,21 @@ void AudioManager::playWinMusic() {
 void AudioManager::playGameOverMusic() {
     stopSong();
     PlaySoundA((LPCSTR)gameOverSound.data.data(), NULL, SND_MEMORY | SND_ASYNC);
+}
+
+void AudioManager::playGlassShatter() {
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)glassShatterSound.data.data(), NULL, flags);
+}
+
+void AudioManager::playGlassStep() {
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)glassStepSound.data.data(), NULL, flags);
+}
+
+void AudioManager::playFallWhoosh() {
+    DWORD flags = SND_MEMORY | SND_ASYNC | (mp3Loaded ? 0 : SND_NOSTOP);
+    PlaySoundA((LPCSTR)fallWhooshSound.data.data(), NULL, flags);
 }
 
 void AudioManager::stopAll() {

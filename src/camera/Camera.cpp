@@ -82,9 +82,9 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             if (targetEyeZ < -ARENA_HALF_LENGTH + 0.8f) targetEyeZ = -ARENA_HALF_LENGTH + 0.8f;
             if (targetEyeZ >  ARENA_HALF_LENGTH - 0.8f) targetEyeZ =  ARENA_HALF_LENGTH - 0.8f;
 
-            targetLookX = player.x;
+            targetLookX = player.x + sinf(totalYawRad) * 4.5f;
             targetLookY = player.y + 1.3f;
-            targetLookZ = player.z + 0.5f;
+            targetLookZ = player.z + cosf(totalYawRad) * 4.5f;
             break;
         }
 
@@ -194,15 +194,18 @@ void CameraManager::update(const Player& player, const Doll& doll, CameraMode mo
             break;
     }
 
-    // Smoothly interpolate camera position & target
-    float interpSpeed = (mode == CAM_DOLL_CLOSEUP || mode == CAM_THIRD_PERSON) ? 14.0f : 8.0f;
-    smoothCamX += (targetEyeX - smoothCamX) * interpSpeed * dt;
-    smoothCamY += (targetEyeY - smoothCamY) * interpSpeed * dt;
-    smoothCamZ += (targetEyeZ - smoothCamZ) * interpSpeed * dt;
+    // Smoothly interpolate camera position & target with exponential damping
+    float interpSpeed = (mode == CAM_DOLL_CLOSEUP || mode == CAM_THIRD_PERSON) ? 12.0f : 8.0f;
+    float factor = 1.0f - expf(-interpSpeed * dt);
+    if (factor > 1.0f) factor = 1.0f;
 
-    smoothLookX += (targetLookX - smoothLookX) * 16.0f * dt;
-    smoothLookY += (targetLookY - smoothLookY) * 16.0f * dt;
-    smoothLookZ += (targetLookZ - smoothLookZ) * 16.0f * dt;
+    smoothCamX += (targetEyeX - smoothCamX) * factor;
+    smoothCamY += (targetEyeY - smoothCamY) * factor;
+    smoothCamZ += (targetEyeZ - smoothCamZ) * factor;
+
+    smoothLookX += (targetLookX - smoothLookX) * factor;
+    smoothLookY += (targetLookY - smoothLookY) * factor;
+    smoothLookZ += (targetLookZ - smoothLookZ) * factor;
 }
 
 void CameraManager::applyView(const Player& player, const Doll& doll, CameraMode mode) {

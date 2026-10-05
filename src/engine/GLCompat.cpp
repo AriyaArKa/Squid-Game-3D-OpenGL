@@ -18,6 +18,8 @@ namespace {
     float curAlpha = 1.0f;
     bool curUnlit = false;
 
+    SceneLighting activeLighting;
+
     // Immediate-mode accumulation state
     unsigned int immMode = GL_TRIANGLES;
     std::vector<Vertex> immVerts;
@@ -26,8 +28,9 @@ namespace {
     glm::mat3 immNormalMatrix(1.0f);
 }
 
-void GLCompat::beginFrame(Shader& shader, Camera& camera, const glm::vec3& lightDir, const glm::vec3& lightColor) {
+void GLCompat::beginFrame(Shader& shader, Camera& camera, const SceneLighting& lighting) {
     activeShader = &shader;
+    activeLighting = lighting;
     matrixStack.clear();
     matrixStack.push_back(glm::mat4(1.0f));
     curAlpha = 1.0f;
@@ -35,8 +38,67 @@ void GLCompat::beginFrame(Shader& shader, Camera& camera, const glm::vec3& light
 
     camera.Apply(shader);
     shader.Activate();
-    shader.SetVec3("lightDir", lightDir);
-    shader.SetVec3("lightColor", lightColor);
+
+    // Directional Light
+    shader.SetBool("dirLightOn", lighting.dir.enabled);
+    shader.SetVec3("dirLightDir", lighting.dir.direction);
+    shader.SetVec3("dirLightColor", lighting.dir.color);
+
+    // Point Light
+    shader.SetBool("pointLightOn", lighting.point.enabled);
+    shader.SetVec3("pointLightPos", lighting.point.position);
+    shader.SetVec3("pointLightColor", lighting.point.color);
+    shader.SetFloat("pointLightConstant", lighting.point.constant);
+    shader.SetFloat("pointLightLinear", lighting.point.linear);
+    shader.SetFloat("pointLightQuadratic", lighting.point.quadratic);
+    shader.SetFloat("pointLightIntensity", lighting.point.intensity);
+
+    // Spot Light
+    shader.SetBool("spotLightOn", lighting.spot.enabled);
+    shader.SetVec3("spotLightPos", lighting.spot.position);
+    shader.SetVec3("spotLightDir", lighting.spot.direction);
+    shader.SetVec3("spotLightColor", lighting.spot.color);
+    shader.SetFloat("spotLightCutOff", lighting.spot.cutOff);
+    shader.SetFloat("spotLightOuterCutOff", lighting.spot.outerCutOff);
+    shader.SetFloat("spotLightIntensity", lighting.spot.intensity);
+
+    // Shading Mode
+    shader.SetBool("useGouraud", lighting.useGouraud);
+
+    // Legacy fallbacks
+    shader.SetVec3("lightDir", lighting.dir.direction);
+    shader.SetVec3("lightColor", lighting.dir.color);
+}
+
+void GLCompat::beginFrame(Shader& shader, Camera& camera, const glm::vec3& lightDir, const glm::vec3& lightColor) {
+    SceneLighting defaultLight;
+    defaultLight.dir.enabled = true;
+    defaultLight.dir.direction = lightDir;
+    defaultLight.dir.color = lightColor;
+    defaultLight.point.enabled = false;
+    defaultLight.spot.enabled = false;
+    defaultLight.useGouraud = false;
+    beginFrame(shader, camera, defaultLight);
+}
+
+const SceneLighting& GLCompat::getLighting() {
+    return activeLighting;
+}
+
+void GLCompat::setLighting(const SceneLighting& lighting) {
+    activeLighting = lighting;
+}
+
+void GLCompat::toggleGouraudShading() {
+    activeLighting.useGouraud = !activeLighting.useGouraud;
+    if (activeShader) {
+        activeShader->Activate();
+        activeShader->SetBool("useGouraud", activeLighting.useGouraud);
+    }
+}
+
+bool GLCompat::isGouraudShading() {
+    return activeLighting.useGouraud;
 }
 
 void GLCompat::pushMatrix() {

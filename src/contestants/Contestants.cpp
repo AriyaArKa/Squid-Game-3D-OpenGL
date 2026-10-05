@@ -24,18 +24,18 @@ namespace {
             {1, 1, 1, 1, 0, 1, 1}  // 9
         };
         if (d < 0 || d > 9) return;
-        float w = size * 0.45f;
-        float h = size * 0.48f;
-        float t = size * 0.09f;
+        float w = size * 0.44f;
+        float h = size * 0.46f;
+        float t = size * 0.11f;
 
-        Renderer::setMaterial(0.06f, 0.18f, 0.16f, 10.0f); // Dark teal printed numeral
-        if (segs[d][0]) { glPushMatrix(); glTranslatef(0.0f, h, 0.0f); Renderer::drawBox(w, t, 0.015f); glPopMatrix(); }
-        if (segs[d][1]) { glPushMatrix(); glTranslatef(w*0.5f, h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.015f); glPopMatrix(); }
-        if (segs[d][2]) { glPushMatrix(); glTranslatef(w*0.5f, -h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.015f); glPopMatrix(); }
-        if (segs[d][3]) { glPushMatrix(); glTranslatef(0.0f, -h, 0.0f); Renderer::drawBox(w, t, 0.015f); glPopMatrix(); }
-        if (segs[d][4]) { glPushMatrix(); glTranslatef(-w*0.5f, -h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.015f); glPopMatrix(); }
-        if (segs[d][5]) { glPushMatrix(); glTranslatef(-w*0.5f, h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.015f); glPopMatrix(); }
-        if (segs[d][6]) { glPushMatrix(); glTranslatef(0.0f, 0.0f, 0.0f); Renderer::drawBox(w, t, 0.015f); glPopMatrix(); }
+        Renderer::setMaterial(0.03f, 0.06f, 0.06f, 35.0f); // High-contrast Squid Game black printed numeral
+        if (segs[d][0]) { glPushMatrix(); glTranslatef(0.0f, h, 0.0f); Renderer::drawBox(w, t, 0.020f); glPopMatrix(); }
+        if (segs[d][1]) { glPushMatrix(); glTranslatef(w*0.5f, h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
+        if (segs[d][2]) { glPushMatrix(); glTranslatef(w*0.5f, -h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
+        if (segs[d][3]) { glPushMatrix(); glTranslatef(0.0f, -h, 0.0f); Renderer::drawBox(w, t, 0.020f); glPopMatrix(); }
+        if (segs[d][4]) { glPushMatrix(); glTranslatef(-w*0.5f, -h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
+        if (segs[d][5]) { glPushMatrix(); glTranslatef(-w*0.5f, h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
+        if (segs[d][6]) { glPushMatrix(); glTranslatef(0.0f, 0.0f, 0.0f); Renderer::drawBox(w, t, 0.020f); glPopMatrix(); }
     }
 
     void draw3DigitNumber(int num, float size) {
@@ -148,40 +148,36 @@ namespace {
         }
 
         // --- WHITE CHEST BADGE WITH CONTESTANT NUMBER ---
-        Renderer::setMaterial(wr, wg, wb, 20.0f);
+        Renderer::setMaterial(wr, wg, wb, 25.0f);
         glPushMatrix();
         glTranslatef(-0.12f, torsoH * 0.12f, torsoD * 0.53f);
         // White patch rectangle
         glPushMatrix();
-        glScalef(0.18f, 0.11f, 0.02f);
+        glScalef(0.20f, 0.12f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number (e.g. 456) for player
-        if (isPlayer) {
-            glPushMatrix();
-            glTranslatef(0.0f, 0.0f, 0.015f);
-            draw3DigitNumber(number, 0.045f);
-            glPopMatrix();
-        }
+        // Printed 3-digit number on chest for all contestants
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, 0.016f);
+        draw3DigitNumber(number, 0.048f);
+        glPopMatrix();
         glPopMatrix();
 
         // --- WHITE BACK BADGE WITH CONTESTANT NUMBER ---
-        Renderer::setMaterial(wr, wg, wb, 20.0f);
+        Renderer::setMaterial(wr, wg, wb, 25.0f);
         glPushMatrix();
         glTranslatef(0.0f, torsoH * 0.10f, -torsoD * 0.53f);
         glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
-        // White back patch
+        // White back patch (prominent & bold, exact match to Squid Game Episode 1!)
         glPushMatrix();
-        glScalef(0.24f, 0.14f, 0.02f);
+        glScalef(0.32f, 0.18f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number on back for player
-        if (isPlayer) {
-            glPushMatrix();
-            glTranslatef(0.0f, 0.0f, 0.015f);
-            draw3DigitNumber(number, 0.060f);
-            glPopMatrix();
-        }
+        // Printed 3-digit number on back for EVERY contestant
+        glPushMatrix();
+        glTranslatef(0.0f, 0.0f, 0.016f);
+        draw3DigitNumber(number, 0.076f);
+        glPopMatrix();
         glPopMatrix();
 
         glPopMatrix(); // End Torso
