@@ -24,6 +24,10 @@ namespace {
         glm::vec3 viewDir;   // direction from the object toward the camera
         float explode;       // how far parts are pushed apart in the "parts" view
         bool wireframe;      // overlay the triangle edges (used for the basic shapes)
+        glm::vec3 frontDir = glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 sideDir  = glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 topDir   = glm::vec3(0.0f, 1.0f, 0.0001f);
+        glm::vec3 topUp    = glm::vec3(0.0f, 0.0f, -1.0f);
     };
 
     Doll showcaseDoll() {
@@ -118,10 +122,12 @@ namespace {
         list.push_back({"house", [] { EnvironmentManager::drawVillageHouse(0, 0, 0); },
                         {0.75f, 0.45f, 1.0f}, 0.30f, false});
         list.push_back({"clock", [] { EnvironmentManager::drawOverheadDigitalClock(272.0f); },
-                        {-0.45f, 0.15f, -1.0f}, 0.25f, false});
+                        {-0.45f, 0.15f, -1.0f}, 0.25f, false,
+                        {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, -0.0001f}, {0.0f, 0.0f, 1.0f}});
         list.push_back({"floodlight", [] {
                             LightFixtures::drawArenaFloodlight(lampAt(glm::vec3(0.0f, 16.0f, 0.0f)));
-                        }, {0.6f, 0.25f, -1.0f}, 0.25f, false});
+                        }, {0.6f, 0.25f, -1.0f}, 0.25f, false,
+                        {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, -0.0001f}, {0.0f, 0.0f, 1.0f}});
 
         // ---- Round 2 (glass bridge) ---------------------------------------------------
         list.push_back({"bridge", [] {
@@ -129,7 +135,8 @@ namespace {
                             for (GlassStep& s : steps) s = {GLASS_LEFT, false, false, false, false};
                             std::vector<GBContestant> nobody;
                             GlassBridgeManager::drawBridge(steps, 0.0f, nobody, 0, 3);
-                        }, {1.0f, 0.75f, -0.55f}, 0.22f, false});
+                        }, {1.0f, 0.75f, -0.55f}, 0.22f, false,
+                        {0.0f, 0.15f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0001f}, {0.0f, 0.0f, -1.0f}});
         list.push_back({"platform", [] { GlassBridgeManager::drawStartPlatform(); },
                         {0.8f, 0.55f, 1.0f}, 0.25f, false});
         list.push_back({"chandelier", [] {
@@ -191,11 +198,14 @@ namespace {
 
     // Moves the camera along viewDir until the box just fits the viewport (with a margin).
     void frameBox(Camera& camera, const glm::vec3& bmin, const glm::vec3& bmax,
-                  const glm::vec3& viewDir, int w, int h) {
-        const float fov = 30.0f;
+                  const glm::vec3& viewDir, const glm::vec3& customUp, int w, int h, float fovDeg = 30.0f) {
+        const float fov = fovDeg;
         const float margin = 0.88f;
         glm::vec3 dir = glm::normalize(viewDir);
-        glm::vec3 up = std::fabs(dir.y) > 0.95f ? glm::vec3(0, 0, 1) : glm::vec3(0, 1, 0);
+        glm::vec3 up = customUp;
+        if (glm::length(up) < 0.1f) {
+            up = std::fabs(dir.y) > 0.95f ? glm::vec3(0, 0, -1) : glm::vec3(0, 1, 0);
+        }
         glm::vec3 target = (bmin + bmax) * 0.5f;
         float radius = std::max(glm::length(bmax - bmin) * 0.5f, 0.05f);
         float dist = radius / sinf(glm::radians(fov * 0.5f));
@@ -235,7 +245,7 @@ std::vector<std::string> Showcase::itemNames() {
 }
 
 std::string Showcase::render(const std::string& name, bool parts, Shader& shader, Camera& camera,
-                             int x, int y, int w, int h) {
+                             int x, int y, int w, int h, const std::string& view) {
     const Item* item = nullptr;
     for (const Item& it : items()) {
         if (it.name == name) item = &it;
@@ -251,14 +261,34 @@ std::string Showcase::render(const std::string& name, bool parts, Shader& shader
     float explode = parts ? item->explode : 0.0f;
     if (explode > 0.0f) measure(*item, shader, camera, explode, center, bmin, bmax);
 
-    // 2. Frame it and draw it for real.
-    frameBox(camera, bmin, bmax, item->viewDir, w, h);
+    // 2. Select viewing direction and camera framing based on view parameter
+    glm::vec3 chosenDir = item->viewDir;
+    glm::vec3 chosenUp = glm::vec3(0.0f);
+    float chosenFov = 30.0f;
+
+    if (view == "front") {
+        chosenDir = item->frontDir;
+        chosenFov = 15.0f;
+    } else if (view == "side") {
+        chosenDir = item->sideDir;
+        chosenFov = 15.0f;
+    } else if (view == "top") {
+        chosenDir = item->topDir;
+        chosenUp  = item->topUp;
+        chosenFov = 15.0f;
+    } else { // "iso" or default
+        chosenDir = item->viewDir;
+        chosenFov = 30.0f;
+    }
+
+    // 3. Frame it and draw it for real.
+    frameBox(camera, bmin, bmax, chosenDir, chosenUp, w, h, chosenFov);
     GLCompat::InspectSettings s;
     s.colorByShape = parts;
     s.explode = explode;
     s.explodeCenter = center;
     GLCompat::setInspect(s);
-    GLCompat::beginFrame(shader, camera, studioLighting(item->viewDir));
+    GLCompat::beginFrame(shader, camera, studioLighting(chosenDir));
     GLCompat::resetStats();
     item->draw();
 

@@ -15,10 +15,11 @@ namespace Showcase {
 
     // Draws `item` into the viewport (x, y, w, h) of the current framebuffer.
     // parts = false: normal look.  parts = true: every part painted by its shape kind and
-    // pushed slightly apart (exploded view). Returns a short text with the number of parts
-    // of each shape kind, e.g. "Box (cube)=24\nSphere=6\n".
+    // pushed slightly apart (exploded view).
+    // view = "front", "side", "top", or "iso" (default).
+    // Returns a short text with the number of parts of each shape kind.
     std::string render(const std::string& item, bool parts, Shader& shader, Camera& camera,
-                       int x, int y, int w, int h);
+                       int x, int y, int w, int h, const std::string& view = "");
 }
 
 // Writes the pixels of a framebuffer region to a 24-bit .bmp file.

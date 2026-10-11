@@ -130,6 +130,7 @@ namespace {
         bool ui = false;                       // keep the HUD in the picture
         std::string showcase;                  // render one model instead of the game
         bool parts = false;                    // showcase: shape-colored exploded view
+        std::string view;                      // "front", "side", "top", "iso"
         std::function<void(int)> onFrame;      // optional per-frame hook (frame number)
     };
     bool captureMode = false;
@@ -622,6 +623,21 @@ namespace {
             }
         }
 
+        // ---- Multi-view projections: front, side, top, iso
+        const std::vector<std::string> viewKinds = {"front", "side", "top", "iso"};
+        for (const std::string& item : Showcase::itemNames()) {
+            for (const std::string& v : viewKinds) {
+                CaptureShot shot;
+                shot.name = "view_" + item + "_" + v;
+                shot.showcase = item;
+                shot.view = v;
+                shot.parts = false;
+                shot.frames = 3;
+                shot.setup = [] { poseRLGL(-36.0f, false); };
+                all.push_back(shot);
+            }
+        }
+
         for (CaptureShot& shot : all) {
             if (filter.empty() || shot.name.rfind(filter, 0) == 0) captureShots.push_back(shot);
         }
@@ -1036,7 +1052,7 @@ int main(int argc, char** argv) {
             glClearColor(0.955f, 0.960f, 0.970f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glDisable(GL_SCISSOR_TEST);
-            std::string counts = Showcase::render(shot->showcase, shot->parts, shader, camera, 0, 0, side, side);
+            std::string counts = Showcase::render(shot->showcase, shot->parts, shader, camera, 0, 0, side, side, shot->view);
             if (captureFrame + 1 >= shot->frames) {
                 std::ofstream(captureDir + "/" + shot->name + ".txt") << counts;
             }

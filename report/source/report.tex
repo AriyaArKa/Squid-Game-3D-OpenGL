@@ -22,6 +22,10 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{listings}
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\l@section}{\addvspace{1.0em \@plus\p@}}{\addvspace{0.32em \@plus\p@}}{}{}
+\makeatother
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
 \usepackage[colorlinks=true,linkcolor=sgteal,urlcolor=sgteal]{hyperref}
@@ -77,10 +81,13 @@
 \newcommand{\shPol}{\shape{cpoly}{Polygon}}
 \newcommand{\keybox}[1]{\colorbox{rowgray}{\ttfamily #1}}
 \newenvironment{parttable}
-  {\footnotesize\rowcolors{2}{white}{rowgray}\tabularx{\linewidth}{>{\raggedright\arraybackslash}p{3.1cm} >{\raggedright\arraybackslash}p{1.75cm} L L >{\raggedright\arraybackslash}p{2.9cm}}
+  {\footnotesize\renewcommand{\arraystretch}{0.88}\rowcolors{2}{white}{rowgray}\tabularx{\linewidth}{>{\raggedright\arraybackslash}p{3.1cm} >{\raggedright\arraybackslash}p{1.75cm} L L >{\raggedright\arraybackslash}p{2.9cm}}
    \toprule \rowcolor{white}\textbf{Part} & \textbf{Shape} & \textbf{Scale / size} & \textbf{Translate (position)} & \textbf{Rotate} \\ \midrule}
   {\bottomrule\endtabularx}
 \newcommand{\note}[1]{\par\vspace{2pt}{\small\color{muted}#1}\par}
+\setlength{\intextsep}{5pt plus 1pt minus 1pt}
+\setlength{\abovecaptionskip}{3pt}
+\setlength{\belowcaptionskip}{3pt}
 
 \begin{document}
 
@@ -139,7 +146,7 @@ Lecturer, Dept. of CSE, KUET
 \vspace*{0.2cm}
 \end{titlepage}
 
-\tableofcontents
+{\small\tableofcontents}
 \clearpage
 
 % =====================================================================================
@@ -213,25 +220,20 @@ Right panel: camera buttons, controls and the lighting panel.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\linewidth]{figures/ui_gb_turn.jpg}
+\includegraphics[width=0.74\linewidth]{figures/ui_gb_turn.jpg}
 \caption{Player 456's turn. Green panes are proven safe, the red marks show broken panes. The cyan and pink
 panes in front are the two choices: press \keybox{A} for left or \keybox{D} for right.}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/gb_shatter.jpg}
-\caption{Wrong choice: the pane breaks into 55 pieces.}\end{subfigure}\hfill
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/ui_gb_won.jpg}
-\caption{Player 456 reached the finish platform.}\end{subfigure}
-\caption{Round 2 while playing.}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\linewidth]{figures/gb_sides.jpg}
-\caption{The glass bridge hall, made brighter in this version: light concrete walls on both sides, four
-wall lamps (extra point lights), two ceiling light strips, neon symbols and LED bars.}
+\begin{subfigure}{0.32\linewidth}\includegraphics[width=\linewidth]{figures/gb_shatter.jpg}
+\caption{Pane shatter physics}\end{subfigure}\hfill
+\begin{subfigure}{0.32\linewidth}\includegraphics[width=\linewidth]{figures/ui_gb_won.jpg}
+\caption{Player 456 victory}\end{subfigure}\hfill
+\begin{subfigure}{0.32\linewidth}\includegraphics[width=\linewidth]{figures/gb_sides.jpg}
+\caption{Light hall architecture}\end{subfigure}
+\caption{Round 2 in-game moments and environment.}
 \end{figure}
 
 % =====================================================================================
@@ -367,7 +369,8 @@ a sphere is always radius 1 and scaled to the wanted size.}
 \end{table}
 
 % =====================================================================================
-\section{Transformations}
+\clearpage
+\section{Transformations}\label{sec:transform}
 % =====================================================================================
 Each shape is moved into place with three transformations. In 3D we use $4\times4$ matrices:
 
@@ -397,18 +400,59 @@ glPopMatrix();
 \note{Note: these old-style function names are kept on purpose, but they run on modern OpenGL. Our
 \texttt{GLCompat} layer keeps its own matrix stack (GLM) and draws the shape with VAO/VBO buffers and shaders.}
 
+\subsection{Multi-View Orthographic and Isometric Projections}
+In engineering computer graphics and 3D geometric modeling, standard multi-view projections are employed to inspect and verify 3D objects across principal coordinate axes without perspective distortion:
+\begin{itemize}
+  \item \textbf{Front View (Elevation):} Projection along the principal viewing axis ($xy$-plane) displaying the frontal silhouette, facial features, and vertical proportion hierarchy.
+  \item \textbf{Side View (Profile):} Projection along the orthogonal lateral axis ($yz$-plane) capturing depth profile, limb swing stance, and front-to-back extents.
+  \item \textbf{Top View (Plan):} Projection down the vertical $y$-axis ($xz$-plane) displaying structural footprint, horizontal symmetry, and planar orientations.
+  \item \textbf{Isometric View:} An axonometric 3D projection where coordinate axes are equally foreshortened, revealing volumetric depth and spatial relationships ($R_x\,35.264^\circ \cdot R_y\,45^\circ$).
+\end{itemize}
+
+\[
+P_{\text{ortho}} = \begin{bmatrix}
+\frac{1}{r} & 0 & 0 & 0 \\
+0 & \frac{1}{t} & 0 & 0 \\
+0 & 0 & -\frac{2}{f-n} & -\frac{f+n}{f-n} \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\qquad
+R_{\text{iso}} = R_x(35.264^\circ) \cdot R_y(45^\circ)
+\]
+Canonical views are rendered with \texttt{glm::ortho(-w, w, -h, h, 0.1f, 100.0f)} and \texttt{glm::lookAt(eye, center, up)}.
+
 % =====================================================================================
+\clearpage
 \section{Objects and the Shapes They Are Made Of}\label{sec:objects}
 % =====================================================================================
-For every object below, the left picture is the finished model. The right picture is the \emph{same code}
-drawn in shape view: every part is painted with the color of its basic shape and pulled a little away from
-the center so the parts can be seen. Colors:
-\shape{cbox}{Box}\quad \shape{csphere}{Sphere}\quad \shape{ccyl}{Cylinder}\quad \shape{ccone}{Cone}\quad
-\shape{cdisk}{Disk}\quad \shape{ctorus}{Torus}\quad \shape{cpoly}{Polygon}.
+Every 3D model in the project is procedurally assembled from the seven primitive shapes introduced in Section~\ref{sec:shapes}, without importing third-party mesh files. For each object, we provide a complete technical specification sheet across three core dimensions:
+\begin{enumerate}
+  \item \textbf{Canonical Multi-View Projections:} High-resolution orthogonal elevations and axonometric view displaying \textbf{(a) Front (elevation)}, \textbf{(b) Side (profile)}, \textbf{(c) Top (plan)}, and \textbf{(d) Isometric} aspects.
+  \item \textbf{Hierarchical Shape Decomposition:} The finished textured model rendered alongside its exploded primitive view, color-coded by shape category:
+  \shape{cbox}{Box}\quad \shape{csphere}{Sphere}\quad \shape{ccyl}{Cylinder}\quad \shape{ccone}{Cone}\quad
+  \shape{cdisk}{Disk}\quad \shape{ctorus}{Torus}\quad \shape{cpoly}{Polygon}.
+  \item \textbf{Mathematical Transformation Hierarchy:} Exact local translations ($T$), rotations ($R$), scales ($S$), and primitive dimensions.
+\end{enumerate}
 
-\textbf{How to read the tables.} Positions are in the object's own coordinates, before the whole object is
-placed in the world. ``$\pm$'' means a left and a right copy. Rotations are written as axis + angle,
-e.g.\ $R_x\,25^\circ$ turns $25^\circ$ around the $x$ axis.
+\textbf{Coordinate Conventions and Hierarchy.} All local coordinate descriptions use a right-handed Cartesian system: $+x$ points right, $+y$ points vertically upward, and $+z$ points forward along the principal facing direction. Child parts inherit their parent's coordinate frame via the matrix stack (\texttt{glPushMatrix()} / \texttt{glPopMatrix()}). The notation ``$\pm$'' designates symmetric left/right pairs. Rotations indicate axis and angle (e.g., $R_x\,25^\circ$).
+
+\begin{table}[H]
+\centering\small
+\rowcolors{2}{white}{rowgray}
+\begin{tabularx}{\linewidth}{p{2.8cm} p{2.2cm} L}
+\toprule
+\rowcolor{white}\textbf{Shape Primitive} & \textbf{Color Code} & \textbf{Parametric Generation / Topology} \\ \midrule
+\shBox & Cyan & 12 triangles from unit cube, scaled by $(s_x, s_y, s_z)$ \\
+\shSph & Orange & UV sphere ($24\times24$ rings), polar coordinates $(\theta, \phi)$ \\
+\shCyl & Blue & Longitudinal triangle strip with taper $(r_{\text{base}} \to r_{\text{top}})$ \\
+\shCon & Green & Degenerate tapered cylinder ($r_{\text{top}} = 0$, apex vertex) \\
+\shDsk & Yellow & Planar annular ring ($r_{\text{inner}} \le r \le r_{\text{outer}}$) \\
+\shTor & Magenta & Torus swept by ring radius $R$ and tube radius $r$ \\
+\shPol & Red & Planar vertex arrays (roofs, sand ground, sky quads) \\
+\bottomrule
+\end{tabularx}
+\caption{Primitive shapes and color assignments used in all exploded decomposition figures.}
+\end{table}
 
 \begin{table}[H]
 \centering\small
@@ -419,8 +463,8 @@ e.g.\ $R_x\,25^\circ$ turns $25^\circ$ around the $x$ axis.
 Player 456 / contestant & 49 & 4 & & & & & & 53 \\
 Pink guard (Round 1) & 19 & 4 & & & & & & 23 \\
 Bridge guard (Round 2) & 9 & 2 & & & 1 & & & 12 \\
-Young-hee doll (body + head) & 50 & 70 & 4 & 5 & & 18 & & 147 \\
-\quad of which the head & 10 & 40 & 1 & & & & & 51 \\
+Young-hee doll (body) & 40 & 30 & 3 & 5 & & 18 & & 96 \\
+Young-hee doll head & 10 & 40 & 1 & & & & & 51 \\
 Dead tree & & 157 & 156 & & & & & 313 \\
 Village house & 21 & 1 & & & 3 & 2 & 2 & 29 \\
 Countdown clock & 55 & & & & & & & 55 \\
@@ -432,16 +476,23 @@ Light fixtures (5 kinds) & 21 & 9 & 1 & 1 & 2 & & & 34 \\
 \caption{Number of parts in each object, counted by the program while drawing it.}
 \end{table}
 
+\textbf{Documentation Structure.} The following sheets detail each 3D asset individually on a dedicated page, verifying its geometric symmetry, proportions, and procedural transformation pipeline.
+
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{Player 456 and the other contestants}
 % -------------------------------------------------------------------------------------
 The same model is used for every contestant in both rounds; only the number on the chest and back changes.
 \textbf{Placed in the world with:} $T(x,0,z)\cdot R_y(\text{facing})\cdot S(1.15)$ (other contestants $S(1.10)$).
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_player.png}
-\caption{Player 456: 49 boxes and 4 spheres.}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_player.png}
+\caption{Player 456 multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_player.png}
+\caption{Player 456 shape decomposition: 49 boxes and 4 spheres.}
 \end{figure}
 
 \begin{parttable}
@@ -464,7 +515,7 @@ Hair & \shSph & radius $0.26$, $S(1.02,0.95,1.02)$ & $(0,\ 1.70,\ -0.03)$ & -- \
 \end{parttable}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{Pink guard (Round 1)}
 % -------------------------------------------------------------------------------------
 Five guards stand around the arena. The mask symbol shows the rank: circle, triangle or square.
@@ -472,8 +523,13 @@ Five guards stand around the arena. The mask symbol shows the rank: circle, tria
 $\text{facing}=\operatorname{atan2}(x_t-x_g,\ z_t-z_g)$.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_guard.png}
-\caption{Triangle guard: 19 boxes and 4 spheres.}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_guard.png}
+\caption{Pink guard multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_guard.png}
+\caption{Triangle guard shape decomposition: 19 boxes and 4 spheres.}
 \end{figure}
 
 \begin{parttable}
@@ -496,15 +552,20 @@ Muzzle flash (only when shooting) & \shSph & radius $0.14$ & gun $+(0,\ 0.02,\ 0
 \note{Circle guards use one \shTor{} (tube 0.016, ring 0.088) and square guards use four boxes instead of the triangle.}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{Young-hee, the giant doll}
 % -------------------------------------------------------------------------------------
 The doll stands with her arms around the tree. Only her head turns.
 \textbf{Placed with:} $T(0,0,58)\cdot S(2.6)$; the head adds $T(0,2.50,0)\cdot R_y(\text{headAngle})$.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_doll.png}
-\caption{The whole doll: 147 parts. The skirt is 18 hand-made polygon pleats.}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_doll.png}
+\caption{Young-hee giant doll multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_doll.png}
+\caption{The doll body shape decomposition: 96 parts. The skirt is 18 hand-made polygon pleats.}
 \end{figure}
 
 \begin{parttable}
@@ -528,8 +589,20 @@ Socks $\times2$ & \shBox & $0.17\times0.52\times0.17$ & $(\pm0.19,\ 0.36,\ 0)$ &
 Shoes + soles $\times2$ & \shBox{} $\times2$ & $0.20\times0.16\times0.30$; $0.21\times0.04\times0.31$ & $(\pm0.19,\ 0.09,\ 0.04)$; $y{=}0.02$ & -- \\
 \end{parttable}
 
+% -------------------------------------------------------------------------------------
+\clearpage
+\subsection{Young-hee doll head detail}
+% -------------------------------------------------------------------------------------
+The head rotates independently by $\pm180^\circ$ for player scanning and features dual ocular laser spotlights.
+\textbf{Placed with:} local offset $T(0,2.50,0)\cdot R_y(\text{headAngle})$ relative to the torso.
+
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_dollhead.png}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_dollhead.png}
+\caption{Doll head multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_dollhead.png}
 \caption{The doll's head on its own: 51 parts, mostly squashed spheres.}
 \end{figure}
 
@@ -551,7 +624,7 @@ Red-light lasers $\times2$ & \shCyl & radius $0.010\to0.07$, length 34 & from ea
 \end{parttable}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{The dead tree}
 % -------------------------------------------------------------------------------------
 The tree is made by a small \emph{recursive} function: a branch draws itself, then two smaller branches at
@@ -560,8 +633,13 @@ no gaps. The bark is a texture (Section~\ref{sec:textures}).
 \textbf{Placed with:} $T(0,0,59.85)$, just behind the doll.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_tree.png}
-\caption{The tree: 156 cylinders and 157 spheres.}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_tree.png}
+\caption{Dead tree multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_tree.png}
+\caption{The tree shape decomposition: 156 cylinders and 157 spheres.}
 \end{figure}
 
 \begin{parttable}
@@ -576,15 +654,20 @@ Twigs (recursive) & \shCyl{} + \shSph & each level: length $\times0.70$, radius 
 \end{parttable}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{Village house}
 % -------------------------------------------------------------------------------------
 One house model is drawn 9 times: five in a row behind the start ($z=-67$) and two on each side wall
 ($x=\pm22$, turned $\pm90^\circ$). \textbf{Placed with:} $T(x,0,z)\cdot R_y(\text{angle})$.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_house.png}
-\caption{Village house: 29 parts. The roof is made of hand-made triangles and quads.}
+\centering\includegraphics[width=0.84\linewidth]{figures/views_house.png}
+\caption{Village house multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.50\linewidth]{figures/decomp_house.png}
+\caption{Village house shape decomposition: 29 parts. The roof is made of hand-made triangles and quads.}
 \end{figure}
 
 \begin{parttable}
@@ -602,16 +685,21 @@ Window + round top & \shBox{} + \shSph & $0.95\times1.15\times0.04$; $S(0.48,0.3
 Window bars $\times2$ & \shBox & $0.04\times1.35$; $0.90\times0.04$ & window $+(0,0.08,0.03)$, $+(0,0.15,0.03)$ & -- \\
 \end{parttable}
 
-% -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+% % -------------------------------------------------------------------------------------
+\clearpage
 \subsection{Countdown clock}
 % -------------------------------------------------------------------------------------
-A digital clock hangs above the finish line and shows the time on both sides. Each digit is drawn with up to
-7 thin boxes (``7-segment'' style); a small table says which bars are on for each digit 0--9.
+A digital clock hangs above the finish line and shows the remaining game time on both sides.
+Each digit is formed using 7-segment digital bars, updated synchronously each second.
 \textbf{Placed with:} $T(0,17.5,42)\cdot S(2)$.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_clock.png}
+\centering\includegraphics[width=0.92\linewidth]{figures/views_clock.png}
+\caption{Countdown scoreboard clock multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.62\linewidth]{figures/decomp_clock.png}
 \caption{Clock showing 04:32: 55 boxes.}
 \end{figure}
 
@@ -622,16 +710,22 @@ Black screen (each side) & \shBox & $4.8\times1.8\times0.04$ & $(0,\ 0,\ \pm0.29
 Digit bars (each digit) & \shBox{} $\times$ up to 7 & across $0.61\times0.11$, up $0.11\times0.65$ & digits at $x=\pm1.65,\ \pm0.60$ & back side mirrored \\
 Colon dots $\times2$ (each side) & \shBox & $0.12\times0.12\times0.02$ & $(0,\ \pm0.25,\ \pm0.33)$ & -- \\
 \end{parttable}
+\note{Seven-segment bitmasks: $A$ (top), $B$ (top-right), $C$ (bottom-right), $D$ (bottom), $E$ (bottom-left), $F$ (top-left), $G$ (mid). Digits are updated via bitwise masks (\texttt{0x3F} for 0, \texttt{0x7F} for 8).}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{The glass bridge}
 % -------------------------------------------------------------------------------------
 The bridge is entirely boxes. Step $i$ ($i=0..15$) is at $z_i = 3 + 3.3\,i$, at height 16.
 The full bridge is $54.3$ long ($z$ from $2.0$ to $56.3$, centre $29.15$).
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_bridge.png}
+\centering\includegraphics[width=0.88\linewidth]{figures/views_bridge.png}
+\caption{Glass bridge stepping stone multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.56\linewidth]{figures/decomp_bridge.png}
 \caption{The first 3 steps of the bridge: 48 boxes (the full 16-step bridge uses 217).}
 \end{figure}
 
@@ -647,16 +741,22 @@ Corner clamps $\times128$ & \shBox & $0.16\times0.12\times0.16$ & pane $+(\pm0.8
 ``Safe'' green glow & \shBox{} (glowing) & $1.82\times0.02\times2.30$ & just above a proven pane & -- \\
 Broken pane marks & \shBox{} $\times4$ & $0.24\times0.02\times0.24$ (red) & at the four corners & -- \\
 \end{parttable}
+\note{Step pairs are generated along $+z$. Alpha blending ($\alpha=0.42$) uses \texttt{glDepthMask(GL\_FALSE)} during transparent rendering to maintain proper depth order.}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
-\subsection{Start platform and bridge guards}
+\clearpage
+\subsection{Glass bridge start platform}
 % -------------------------------------------------------------------------------------
 \textbf{Start platform placed with:} $T(0,\ 15.75,\ -4.5)$. The finish platform is the same idea at the other
 end ($z=61$), without rails. The deck uses the concrete texture.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_platform.png}
+\centering\includegraphics[width=0.92\linewidth]{figures/views_platform.png}
+\caption{Glass bridge start platform multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.62\linewidth]{figures/decomp_platform.png}
 \caption{Start platform with its exit door: 17 boxes.}
 \end{figure}
 
@@ -669,9 +769,22 @@ Door frame & \shBox & $4.4\times4.6\times0.35$ & $(0,\ 2.5,\ -4.3)$ & -- \\
 Dark doorway & \shBox & $2.6\times3.8\times0.42$ & $(0,\ 2.5,\ -4.3)$ & -- \\
 Glowing strip & \shBox{} (glowing) & $2.8\times0.10\times0.05$ & door $+(0,\ 1.95,\ 0.22)$ & -- \\
 \end{parttable}
+\note{The platform anchors contestants at height $y=15.75$ prior to step 1. Bounding box collision restricts premature lateral movement before the round begins.}
+
+% -------------------------------------------------------------------------------------
+\clearpage
+\subsection{Round 2 bridge guard}
+% -------------------------------------------------------------------------------------
+Four guards stand watch on the elevated platforms, equipped with rifles and standard geometric uniform harnesses.
+\textbf{Placed with:} $T(x,16,z)\cdot R_y(\text{angle})$: two guards at the start ($x=\pm2.4$, angles $\pm30^\circ$) and two at the finish.
 
 \begin{figure}[H]
-\centering\includegraphics[width=0.86\linewidth]{figures/decomp_gbguard.png}
+\centering\includegraphics[width=0.92\linewidth]{figures/views_gbguard.png}
+\caption{Round 2 bridge guard multi-view projections: (a) Front, (b) Side profile, (c) Top view, (d) Isometric 3D view.}
+\end{figure}
+
+\begin{figure}[H]
+\centering\includegraphics[width=0.62\linewidth]{figures/decomp_gbguard.png}
 \caption{Bridge guard (simpler than the Round 1 guard): 9 boxes, 2 spheres, 1 torus.}
 \end{figure}
 
@@ -683,28 +796,33 @@ Rifle & \shBox{} $\times2$ & $0.10\times0.14\times0.52$; $0.05\times0.05\times0.
 Head, mask & \shSph{} $\times2$ & radius $0.24$; $0.17$ & $(0,\ 1.55,\ 0)$; $(0,\ 1.54,\ 0.14)$ & -- \\
 Circle symbol & \shTor & tube $0.015$, ring $0.065$ & mask $+(0,\ 0.02,\ 0.14)$ & -- \\
 \end{parttable}
-\note{Placed with $T(x,16,z)\cdot R_y(\text{angle})$: two guards at the start ($x=\pm2.4$, angles $\pm30^\circ$) and two at the finish.}
+\note{Bridge overseers feature circle rank emblems on their masks and carry low-poly rifles angled at $R_y\,\mp30^\circ$ toward the contestants.}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
+\clearpage
 \subsection{Light fixtures}
 % -------------------------------------------------------------------------------------
-Each light in the game also has a visible model, so you can see where the light comes from.
-The glowing faces use \emph{emission} (they light themselves, see Section~\ref{sec:phong}).
+Each light source in the simulation features a visible geometric housing rendering its physical presence.
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.48\linewidth}\includegraphics[width=\linewidth]{figures/views_floodlight.png}\caption{Floodlight tower (Round 1)}\end{subfigure}\hfill
+\begin{subfigure}{0.48\linewidth}\includegraphics[width=\linewidth]{figures/views_chandelier.png}\caption{Bridge chandelier (Round 2)}\end{subfigure}
+\caption{Light fixtures multi-view projections: (a) Front, (b) Side, (c) Top, (d) Isometric.}
+\end{figure}
 
 \begin{figure}[H]
 \centering
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/decomp_chandelier.png}
-\caption{Chandelier (point light, Round 2)}\end{subfigure}\hfill
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/decomp_floodlight.png}
-\caption{Floodlight tower (point light, Round 1)}\end{subfigure}\\[4pt]
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/decomp_gantry.png}
-\caption{Ceiling gantry (directional light, Round 2)}\end{subfigure}\hfill
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/decomp_walllamp.png}
-\caption{Wall lamp (new point lights, Round 2)}\end{subfigure}\\[4pt]
-\begin{subfigure}{0.495\linewidth}\includegraphics[width=\linewidth]{figures/decomp_spotlight.png}
-\caption{Follow spotlight (spot light, Round 2)}\end{subfigure}
-\caption{The light fixtures and their shapes.}
+\begin{subfigure}{0.31\linewidth}\includegraphics[width=\linewidth]{figures/decomp_chandelier.png}
+\caption{Chandelier (point)}\end{subfigure}\hfill
+\begin{subfigure}{0.31\linewidth}\includegraphics[width=\linewidth]{figures/decomp_floodlight.png}
+\caption{Tower (point)}\end{subfigure}\hfill
+\begin{subfigure}{0.31\linewidth}\includegraphics[width=\linewidth]{figures/decomp_spotlight.png}
+\caption{Spotlight (spot)}\end{subfigure}\\[2pt]
+\begin{subfigure}{0.34\linewidth}\includegraphics[width=\linewidth]{figures/decomp_gantry.png}
+\caption{Gantry (directional)}\end{subfigure}\qquad
+\begin{subfigure}{0.34\linewidth}\includegraphics[width=\linewidth]{figures/decomp_walllamp.png}
+\caption{Wall lamp (point)}\end{subfigure}
+\caption{The light fixtures and their primitive shape composition.}
 \end{figure}
 
 \begin{table}[H]
@@ -725,13 +843,12 @@ Wall lamp $\times4$ & \shBox{} bracket $0.25\times0.25\times1.5$ at $(0,0,-0.75)
 \end{table}
 
 % -------------------------------------------------------------------------------------
-\needspace{0.42\textheight}
-\subsection{The two environments}
+\clearpage
+\subsection{Round 1 arena environment}
 % -------------------------------------------------------------------------------------
 \begin{figure}[H]
-\centering\includegraphics[width=\linewidth]{figures/decomp_arena.jpg}
-\caption{Round 1 arena, normal and in shape view. The sky walls and sand floor are polygons, clouds are
-squashed spheres.}
+\centering\includegraphics[width=0.92\linewidth]{figures/decomp_arena.jpg}
+\caption{Round 1 arena, normal and exploded shape view. Sky dome and sand floor are polygons; clouds are clusters of spheres.}
 \end{figure}
 
 \begin{parttable}
@@ -744,10 +861,15 @@ Wheat and tree bands & \shPol{} $\times8$ & $y=0$--$3.2$ and $3.2$--$4.2$ & just
 Start line & \shBox & $48\times0.01\times0.35$ & $(0,\ 0.01,\ -52)$ & -- \\
 Finish line & \shBox{} (glowing) & $48\times0.01\times0.45$ & $(0,\ 0.01,\ 45)$ & -- \\
 \end{parttable}
+\note{The arena boundary is enclosed by a hemisphere sky dome ($r=190$) with smooth gradient vertex coloring and repeating sand tiles.}
 
+% -------------------------------------------------------------------------------------
+\clearpage
+\subsection{Round 2 glass bridge hall environment}
+% -------------------------------------------------------------------------------------
 \begin{figure}[H]
-\centering\includegraphics[width=\linewidth]{figures/decomp_hall.jpg}
-\caption{Round 2 hall, normal and in shape view.}
+\centering\includegraphics[width=0.92\linewidth]{figures/decomp_hall.jpg}
+\caption{Round 2 hall, normal and in exploded shape view.}
 \end{figure}
 
 \begin{parttable}
@@ -762,8 +884,10 @@ Roof trusses $\times5$ & \shBox & $40\times0.6\times0.6$ & $(0,\ 28.5,\ 0..56$ e
 Hanging cables $\times10$ & \shCyl & radius $0.025$, length $11.4$ & $(\pm2.75,\ 17.1,\ \text{truss } z)$ & $R_x{-90}^\circ$ \\
 Safety net & \shBox{} $\times39$ & cables $0.03$ thick & $y=2$, $14\times60$ area & -- \\
 \end{parttable}
+\note{The hall features 22 pairs of LED wall ribs, structural roof trusses, hanging suspension cables, and an emergency safety net spanning $14\times60$ units.}
 
 % =====================================================================================
+\clearpage
 \section{Lighting}\label{sec:lighting}
 % =====================================================================================
 The game uses all three classic light types. The shader adds up the light from every lamp for every pixel.
@@ -794,10 +918,18 @@ Spot & A point light limited to a cone, with a soft edge. & From the doll's eyes
         Inside $15^\circ$ the light is full, outside $23^\circ$ it is zero, in between it fades.
 \end{itemize}
 
-\textbf{Example.} At distance $d=10$ from the tower: $f = 1.15/(1+0.35+0.5) = 0.62$. So the light is about 62\% as strong.
-
-The pictures below were taken with only one light switched on at a time (the soft ambient light was
-lowered so each light is easy to see).
+\begin{lstlisting}
+// GLSL Point Light computation with quadratic distance attenuation
+vec3 calcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir) {
+    vec3 lightDir = normalize(light.position - fragPos);
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
+    float dist = length(light.position - fragPos);
+    float atten = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
+    return (light.ambient + diff * light.diffuse + spec * light.specular) * atten;
+}
+\end{lstlisting}
 
 \begin{figure}[H]
 \centering\includegraphics[width=\linewidth]{figures/lights_gb.jpg}
@@ -954,12 +1086,156 @@ Blood drops (30) & Burst outward, fall, fade out. & $v_y \mathrel{-}= 9.8\,\Delt
 \end{itemize}
 
 % =====================================================================================
-\section{Cameras}\label{sec:cameras}
+\section{Cameras and Viewport Pipeline}\label{sec:cameras}
 % =====================================================================================
-The view matrix comes from \texttt{glm::lookAt(eye, target, up)} and the projection from
-\texttt{glm::perspective(fov, width/height, near, far)}. Using the real window width/height keeps round things
-round on any screen. Cameras glide to their new position smoothly:
-$\text{pos} \mathrel{+}= (\text{target}-\text{pos})\cdot(1-e^{-k\,\Delta t})$.
+The project implements a modern dual-layer camera system combining the core engine
+\texttt{Camera} class in \texttt{src/engine/Camera.cpp} and the high-level game director
+\texttt{CameraManager} in \texttt{src/camera/Camera.cpp}. It supports 7 real-time cinematic perspectives,
+interactive 360$^\circ$ mouse orbiting, dynamic scroll zoom, exponential smoothing, and multi-pass
+Picture-in-Picture (PiP) rendering.
+
+\subsection{Camera Architecture and Mathematical Mechanism}
+The camera pipeline converts 3D world-space coordinates into 2D screen coordinates using the standard
+Model-View-Projection (MVP) matrix transformation:
+\begin{equation}
+\vec{v}_{\text{clip}} = P \cdot V \cdot M \cdot \vec{v}_{\text{local}}
+\end{equation}
+
+\textbf{1. View Matrix ($V$):} Derived from an eye position $\vec{P}_{\text{eye}}$, a look-at target
+$\vec{P}_{\text{target}}$, and a world up vector $\vec{U} = (0, 1, 0)$ via \texttt{glm::lookAt}:
+\begin{equation}
+\vec{F} = \frac{\vec{P}_{\text{target}} - \vec{P}_{\text{eye}}}{\|\vec{P}_{\text{target}} - \vec{P}_{\text{eye}}\|}, \quad
+\vec{R} = \frac{\vec{F} \times \vec{U}}{\|\vec{F} \times \vec{U}\|}, \quad
+\vec{U}' = \vec{R} \times \vec{F}
+\end{equation}
+\begin{equation}
+V = \begin{bmatrix}
+R_x & R_y & R_z & -\vec{R} \cdot \vec{P}_{\text{eye}} \\
+U'_x & U'_y & U'_z & -\vec{U}' \cdot \vec{P}_{\text{eye}} \\
+-F_x & -F_y & -F_z & \vec{F} \cdot \vec{P}_{\text{eye}} \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+\end{equation}
+
+\textbf{2. Perspective Projection Matrix ($P$):} Defined by the vertical field of view ($\text{fov}_y$),
+viewport aspect ratio ($\text{aspect} = W/H$), near clipping plane ($z_n = 0.1$), and far clipping
+plane ($z_f = 280.0$):
+\begin{equation}
+P = \begin{bmatrix}
+\dfrac{1}{\text{aspect} \cdot \tan(\text{fov}/2)} & 0 & 0 & 0 \\[6pt]
+0 & \dfrac{1}{\tan(\text{fov}/2)} & 0 & 0 \\[6pt]
+0 & 0 & -\dfrac{z_f + z_n}{z_f - z_n} & -\dfrac{2 z_f z_n}{z_f - z_n} \\[6pt]
+0 & 0 & -1 & 0
+\end{bmatrix}
+\end{equation}
+
+The core camera matrix update implemented in \texttt{src/engine/Camera.cpp}:
+\begin{lstlisting}
+void Camera::SetView(const glm::vec3& eye, const glm::vec3& target, const glm::vec3& up,
+                     float fovDeg, float nearPlane, float farPlane) {
+    Position    = eye;
+    Orientation = glm::normalize(target - eye);
+    Up          = up;
+    view        = glm::lookAt(eye, target, up);
+    projection  = glm::perspective(glm::radians(fovDeg),
+                                   (float)width / (float)height,
+                                   nearPlane, farPlane);
+}
+\end{lstlisting}
+
+\subsection{Screen Dimensions, Aspect Ratio, and Viewport Calculation}
+A fundamental requirement in 3D graphics is ensuring that objects retain their true geometric proportions
+regardless of screen resolution or window resizing. Without continuous aspect ratio recalculation, spheres
+and character heads would distort into stretched ellipsoids.
+
+\textbf{Resolution Handling and GLFW Callbacks:}
+The game defaults to a $1600 \times 900$ desktop window and scales seamlessly to Full HD $1920 \times 1080$,
+$2560 \times 1440$, or user-resized dimensions. Physical framebuffer dimensions are tracked via GLFW:
+\begin{lstlisting}
+void framebufferSizeCallback(GLFWwindow*, int w, int h) {
+    windowWidth  = (w > 0) ? w : 1;
+    windowHeight = (h > 0) ? h : 1;
+}
+\end{lstlisting}
+
+\textbf{Split-Screen HUD Viewport Calculation:}
+The game UI features two persistent sidebar panels:
+\begin{itemize}
+  \item \textbf{Left Sidebar ($W_{\text{left}} = 300$\,px):} Houses the live CCTV doll camera feed, countdown timer, contestant counters, and arena mini-radar.
+  \item \textbf{Right Sidebar ($W_{\text{right}} = 300$\,px):} Houses camera mode buttons, speed controls, and interactive lighting toggles.
+\end{itemize}
+
+Rather than rendering the 3D scene underneath the HUD overlays, the 3D rendering pipeline calculates
+an independent center viewport:
+\begin{equation}
+W_{\text{center}} = W_{\text{window}} - W_{\text{left}} - W_{\text{right}}, \qquad
+\text{Aspect}_{\text{3D}} = \frac{W_{\text{center}}}{H_{\text{window}}}
+\end{equation}
+
+For example, on a standard Full HD display of $1920 \times 1080$:
+\begin{itemize}
+  \item Total screen: $W_{\text{window}} = 1920$, $H_{\text{window}} = 1080$. Fullscreen aspect ratio: $\frac{1920}{1080} = \frac{16}{9} \approx 1.778$.
+  \item Center 3D viewport: $W_{\text{center}} = 1920 - 300 - 300 = 1320$\,px.
+  \item Rendered 3D aspect ratio: $\text{Aspect}_{\text{3D}} = \frac{1320}{1080} \approx 1.222$.
+\end{itemize}
+
+The viewport and projection matrices are dynamically updated every frame in \texttt{src/main\_modern.cpp}:
+\begin{lstlisting}
+int leftBarW = UI_LEFT_BAR_WIDTH, rightBarW = UI_RIGHT_BAR_WIDTH;
+int centerW  = (drawUI && windowWidth > 600) ? (windowWidth - leftBarW - rightBarW) : windowWidth;
+glViewport(drawUI ? leftBarW : 0, 0, centerW, windowHeight);
+camera.width = centerW; camera.height = windowHeight;
+camera.SetView(glm::vec3(eyeX, eyeY, eyeZ), glm::vec3(lookX, lookY, lookZ),
+               glm::vec3(upX, upY, upZ), fov, 0.1f, 280.0f);
+\end{lstlisting}
+When the user toggles the HUD off (\keybox{H}), the sidebars collapse to 0, expanding $W_{\text{center}} = 1920$
+and restoring the native $16:9$ ($1.778$) aspect ratio without any geometric stretching.
+
+\subsection{Smooth Camera Easing and Interactive Orbiting}
+To prevent abrupt camera snapping when switching perspectives or moving rapidly, the camera interpolates
+its coordinates using exponential damping:
+\begin{equation}
+\vec{P}_{\text{cam}}(t + \Delta t) = \vec{P}_{\text{cam}}(t) + \big(\vec{P}_{\text{target}} - \vec{P}_{\text{cam}}(t)\big) \cdot \big(1 - e^{-k\,\Delta t}\big)
+\end{equation}
+where $k = 12.0$ for close-up tracking and $k = 8.0$ for wide arena perspectives.
+
+\textbf{Mouse Orbit Controls:}
+Users can freely orbit $360^\circ$ around the player or the doll by dragging the mouse. The pitch ($\theta$)
+and yaw ($\phi$) spherical coordinates are translated into Cartesian eye offsets:
+\begin{equation}
+\Delta x = d \cos\theta \sin\phi, \quad \Delta y = d \sin\theta, \quad \Delta z = d \cos\theta \cos\phi
+\end{equation}
+Mouse scroll wheel deltas dynamically scale distance $d$, clamped within safety limits ($1.8 \le d \le 18.0$
+for 3rd person; $2.0 \le d \le 38.0$ for the doll).
+
+\subsection{Camera Perspectives and Multi-Pass CCTV Rendering}
+The game features 7 primary camera perspectives and an independent secondary rendering pass:
+
+\begin{table}[H]
+\centering\small
+\rowcolors{2}{white}{rowgray}
+\begin{tabularx}{\linewidth}{c >{\bfseries}p{3.2cm} c L}
+\toprule
+\rowcolor{white}\textbf{Key} & \textbf{Camera Mode} & \textbf{FOV} & \textbf{Behavior and Target} \\ \midrule
+\keybox{1} & 3rd Person Follow & $55^\circ$ & Follows Player 456; supports $360^\circ$ mouse orbit and arena collision clamping \\
+\keybox{2} & Overhead Drone & $55^\circ$ & High stadium overview ($d=58$); full arena free-orbit and zoom \\
+\keybox{3} & Top-Down Aerial & $58^\circ$ & Plan view centered at $(0, 110, -3.5)$ with north aligned forward \\
+\keybox{4} & Doll $360^\circ$ Orbit & $55^\circ$ & Orbiting camera anchored at the doll's head $(0, 8.5, 58)$ \\
+\keybox{5} & Left Broadcast & $55^\circ$ & Elevated broadcast perspective from the left wall $(-20.5, 12, z_{\text{player}}+5)$ \\
+\keybox{6} & Right Broadcast & $55^\circ$ & Symmetrical broadcast perspective from the right wall $(+20.5, 12, z_{\text{player}}+5)$ \\
+\keybox{7} & Finish Line POV & $55^\circ$ & Located at $z=45$ facing backwards to watch oncoming contestants \\
+\bottomrule
+\end{tabularx}
+\caption{The 7 dynamic camera modes available in the game.}
+\end{table}
+
+\textbf{Multi-Pass CCTV Doll Camera:}
+In addition to the main viewport, the engine executes a dedicated secondary rendering pass in Round 1:
+\begin{enumerate}
+  \item \textbf{Pass 1 (Main Scene):} Renders the central 3D viewport using the player's active camera mode.
+  \item \textbf{Pass 2 (HUD):} Draws ImGui sidebars and panels over the window.
+  \item \textbf{Pass 3 (CCTV Doll Cam):} Renders an over-the-shoulder POV ($\text{FOV} = 48^\circ$) into the left panel frame via \texttt{glViewport}.
+\end{enumerate}
 
 \begin{figure}[H]
 \centering\includegraphics[width=\linewidth]{figures/cameras_rlgl.jpg}
