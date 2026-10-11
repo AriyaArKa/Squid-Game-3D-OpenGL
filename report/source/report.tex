@@ -89,36 +89,54 @@
 % =====================================================================================
 \begin{titlepage}
 \centering
-\vspace*{0.4cm}
-{\large\bfseries Khulna University of Engineering \& Technology (KUET)\par}
-{\normalsize Department of Computer Science and Engineering\par}
-\vspace{1.2cm}
+\vspace*{0.5cm}
+\includegraphics[height=3.2cm]{figures/kuet_logo.png}\par
+\vspace{0.4cm}
+{\LARGE\bfseries Khulna University of Engineering \& Technology\par}
+\vspace{0.15cm}
+{\large\bfseries Department of Computer Science and Engineering\par}
+\vspace{0.45cm}
+{\color{sgteal}\rule{0.85\linewidth}{1.2pt}}\par
+\vspace{0.6cm}
 {\large\bfseries CSE 4102: Computer Graphics Laboratory\par}
+\vspace{0.15cm}
 {\normalsize Final Project Report\par}
-\vspace{1.4cm}
-{\fontsize{38}{44}\selectfont\bfseries\color{sgpink} Squid Game 3D\par}
-\vspace{0.3cm}
-{\Large Red Light, Green Light \& The Glass Bridge\par}
-\vspace{0.8cm}
-\includegraphics[width=0.92\linewidth]{figures/gb_hall.jpg}\par
-\vspace{0.3cm}
-{\small\color{muted} A two-round 3D game made with C++ and modern OpenGL. Every object is built from
-basic shapes, lit by three kinds of light, Phong shaded and partly texture mapped.\par}
-\vfill
-\begin{minipage}[t]{0.47\linewidth}
-\textbf{\color{sgteal}Submitted by:}\\[3pt]
-Name: Ariya Arka\\
-Roll: 2107066\\
-Department of Computer Science and Engineering, KUET
-\end{minipage}\hfill
-\begin{minipage}[t]{0.47\linewidth}
-\textbf{\color{sgteal}Submitted to:}\\[3pt]
-\textbf{Md Tajmilur Rahman}\\ Lecturer, Dept. of CSE, KUET\\[4pt]
-\textbf{Md. Mubtashim Abrar Nihal}\\ Lecturer, Dept. of CSE, KUET
-\end{minipage}
-\vspace{1cm}
+\vspace{1.2cm}
 
-{\normalsize 7th October, 2026\par}
+{\fontsize{36}{42}\selectfont\bfseries\color{sgpink} Squid Game 3D\par}
+\vspace{0.3cm}
+{\Large\bfseries Interactive Computer Graphics Simulation \& Two-Round Game\par}
+\vspace{0.15cm}
+{\large\color{muted} (Red Light, Green Light \& The Glass Bridge)\par}
+\vspace{0.9cm}
+
+\begin{minipage}{0.88\linewidth}
+\centering\normalsize\color{muted}
+A two-round 3D game made with C++ and modern OpenGL. Every object is built from basic shapes, lit by three kinds of light, Phong shaded and partly texture mapped.
+\end{minipage}
+
+\vfill
+
+\begin{minipage}[t]{0.48\linewidth}
+\textbf{\color{sgteal}\large Submitted by:}\\[6pt]
+\textbf{\large Arka Braja Prasad Nath}\\[3pt]
+\textbf{Roll:} 2107055\\[3pt]
+\textbf{Year / Term:} 4th Year, 1st Term\\[3pt]
+Department of CSE, KUET
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\linewidth}
+\textbf{\color{sgteal}\large Submitted to:}\\[6pt]
+\textbf{\large Md Tajmilur Rahman}\\[2pt]
+Lecturer, Dept. of CSE, KUET\\[6pt]
+\textbf{\large Md. Mubtashim Abrar Nihal}\\[2pt]
+Lecturer, Dept. of CSE, KUET
+\end{minipage}
+
+\vspace{1.0cm}
+{\color{sgteal}\rule{0.85\linewidth}{0.8pt}}\par
+\vspace{0.3cm}
+{\large\bfseries 12 October 2026\par}
+\vspace*{0.2cm}
 \end{titlepage}
 
 \tableofcontents
@@ -127,27 +145,45 @@ Department of Computer Science and Engineering, KUET
 % =====================================================================================
 \section{Introduction}
 % =====================================================================================
-This project is a small 3D game based on the TV series \emph{Squid Game}. It has two rounds:
+This project presents an interactive 3D Computer Graphics game inspired by the TV series \emph{Squid Game},
+developed using modern OpenGL 3.3 Core Profile and C++17. The project showcases fundamental computer graphics
+techniques including hierarchical object modeling, 3D geometric transformations, interactive camera controls,
+Phong illumination with three distinct light types, texture mapping, and real-time animation physics.
 
+The game consists of two complete, playable rounds:
 \begin{itemize}
-  \item \textbf{Round 1 -- Red Light, Green Light.} Walk to the pink finish line. Move only while the giant
-        doll sings. If you move when she turns around, you are out.
-  \item \textbf{Round 2 -- The Glass Bridge.} Cross 16 pairs of glass panes. In each pair one pane is strong
-        and one breaks. Pick left or right and hope.
+  \item \textbf{Round 1 -- Red Light, Green Light:} The player must sprint across a vast desert arena to the finish line
+        within 60 seconds while the giant Young-hee doll sings. Movement is allowed only during Green Light; moving when
+        the doll turns to scan during Red Light triggers immediate elimination by sniper guards with particle blood effects.
+  \item \textbf{Round 2 -- The Glass Bridge:} The player must cross 16 pairs of elevated glass stepping stones suspended
+        in a neon-lit industrial hall. For each step, one pane is tempered glass and holds weight, while the other pane
+        shatters into 55 physics shards upon impact, dropping the player. Surviving contestants navigate forward together.
 \end{itemize}
 
-\textbf{What this report shows:}
-\begin{itemize}
-  \item how every object is built from 7 basic shapes, with real pictures and transform tables (Section~\ref{sec:objects});
-  \item the three light types -- directional, point and spot (Section~\ref{sec:lighting});
-  \item Phong shading, done for every pixel (Section~\ref{sec:phong});
-  \item texture mapping with three image textures (Section~\ref{sec:textures});
-  \item animation, game logic and cameras (Sections~\ref{sec:anim} and \ref{sec:cameras}).
-\end{itemize}
+\subsection{Core Computer Graphics Concepts Implementation}
+The implementation adheres to the curriculum requirements of CSE 4102 by translating core theoretical graphics principles into functional code:
 
-All pictures in this report are real screenshots from the program. The game has a special
-\emph{capture mode} that sets up each scene and saves the picture automatically.
+\begin{table}[H]
+\centering\small
+\rowcolors{2}{white}{rowgray}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{3.6cm} L >{\raggedright\arraybackslash}p{2.6cm}}
+\toprule
+\rowcolor{white}\textbf{Core CG Concept} & \textbf{Implementation in Project} & \textbf{Reference} \\ \midrule
+Hierarchical Modeling & Scene graph composition via \texttt{glPushMatrix()}/\texttt{glPopMatrix()}; parent-child inheritance (limbs, fingers, doll head, gantry) & Section~\ref{sec:shapes}, \ref{sec:objects} \\
+3D Transformations & Translation (motion, offsets), Rotation (joint swings, steering, scanning), Scaling (primitive deformation, doll vs player scale) & Section~\ref{sec:anim} \\
+Lighting Models & Directional (sun / ceiling array), Point (floodlight tower / chandelier / wall lamps), Spot (doll eye searchlight / tracking spotlight) & Section~\ref{sec:lighting} \\
+Phong Shading & Ambient, diffuse, and Blinn-Phong specular reflections with tunable shininess exponents computed per-pixel in GLSL fragment shaders & Section~\ref{sec:phong} \\
+Texture Mapping & Procedural and image-based texture mapping with repeating UV coordinates for sand ground, tree bark, and concrete walls & Section~\ref{sec:textures} \\
+Camera Projections & 7 dynamic camera modes (3rd person, overhead, top-down, doll close-up, free orbit) using perspective projection and view matrices & Section~\ref{sec:cameras} \\
+Physics \& Animation & Trigonometric walk cycle animations, smooth head easing, gravity fall physics, glass fracture shards, and blood particle emitters & Section~\ref{sec:anim} \\
+\bottomrule
+\end{tabularx}
+\caption{Mapping of core computer graphics concepts to technical implementations in the project.}
+\end{table}
 
+All screenshots and visual assets in this report are captured directly from the real-time OpenGL rendering engine.
+
+\clearpage
 % =====================================================================================
 \section{The Game in Pictures}
 % =====================================================================================
@@ -245,6 +281,7 @@ A / D & Jump to the left / right pane \\
 S & Skip to Player 456's turn \\
 Tab & Fast-forward the other players \\
 1 -- 5 & Camera modes \\
+7 & Toggle wall lamps \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -341,10 +378,10 @@ R_y(\theta)=\begin{bmatrix}\cos\theta&0&\sin\theta&0\\0&1&0&0\\-\sin\theta&0&\co
 \]
 
 \begin{itemize}
-  \item \textbf{Translate} ($T$) moves a part. \textbf{Scale} ($S$) stretches it. \textbf{Rotate} ($R_x, R_y, R_z$) turns it.
-  \item A part's final matrix is \textbf{parent $\times$ T $\times$ R $\times$ S}. So the hand follows the arm, and the arm follows the body.
-  \item \texttt{pushMatrix()} saves the current matrix and \texttt{popMatrix()} brings it back. This keeps each part's
-        changes from leaking into the next part.
+  \item \textbf{Translate} ($T$ / \texttt{glTranslatef}) moves a part or character in 3D world or local coordinate space.
+  \item \textbf{Rotate} ($R$ / \texttt{glRotatef}) turns a part or body joint (e.g., pendulum limb swing, doll head $180^\circ$ scan).
+  \item \textbf{Scale} ($S$ / \texttt{glScalef}) sizes primitives: deforms unit boxes and spheres into anatomical body parts (thin soles, flat walls, oval blushes) and scales the colossal doll ($2.5\times$) relative to normal contestants.
+  \item \textbf{Hierarchical Modeling} (\texttt{glPushMatrix} / \texttt{glPopMatrix}): A part's final matrix is $\text{parent} \times T \times R \times S$. Child parts inherit parent transformations (the hand follows the arm, and the arm follows the body). \texttt{glPushMatrix()} preserves the parent matrix and \texttt{glPopMatrix()} restores it, isolating local changes from adjacent objects.
 \end{itemize}
 
 Example -- one leg of Player 456 (from \texttt{Contestants.cpp}):
@@ -933,32 +970,6 @@ $\text{pos} \mathrel{+}= (\text{target}-\text{pos})\cdot(1-e^{-k\,\Delta t})$.
 \centering\includegraphics[width=\linewidth]{figures/cameras_gb.jpg}
 \caption{Round 2 camera modes (keys 1--5) and Round 1's finish-line camera (key 7, during red light).}
 \end{figure}
-
-% =====================================================================================
-\section{What Changed in This Version}
-% =====================================================================================
-\begin{itemize}
-  \item \textbf{Brighter glass bridge hall.} Light concrete walls instead of near-black ones, four warm wall lamps
-        (real point lights) on the two sides, two ceiling light strips, LED bars, big neon symbols and a soft haze.
-        Ambient light raised from 0.22 to 0.50.
-  \item \textbf{Phong shading only.} The old Gouraud mode and its key were removed; the shaders are shorter and clearer.
-  \item \textbf{Three textures} (sand, bark, concrete) with proper texture coordinates on every basic shape.
-  \item \textbf{Better outside look.} A sky dome with a color gradient and floating clouds above Round 1, 4$\times$
-        anti-aliasing (smooth edges), and a clean Windows font for the panels.
-  \item \textbf{Shape view} (\keybox{I}) shows what every object is made of, live in the game.
-  \item \textbf{Capture mode} (\texttt{--capture}) makes all screenshots in this report automatically.
-  \item \textbf{Bugs fixed:}
-  \begin{itemize}
-    \item The doll's red laser beams pointed backwards into the tree -- now they point at the players.
-    \item The guard's triangle mask symbol was upside down ($\nabla$) -- now it is $\triangle$.
-    \item The doll camera picture (left panel) was hidden behind the panel -- now it is drawn on top.
-    \item The finish door's ring badge was on the back of the door -- moved to the front.
-    \item The top-down bridge camera was above the new ceiling -- moved below it.
-    \item Pink blush on the doll's cheeks flickered (z-fighting) -- made slightly thicker.
-    \item Symbols ``{\fontspec{Segoe UI Symbol}●}'' and ``₩'' showed as ``?'' in the panels -- fixed with the new font.
-    \item Old fixed-function calls (\texttt{glDisable(GL\_LIGHTING)}, wide lines) that are errors in modern OpenGL were removed.
-  \end{itemize}
-\end{itemize}
 
 % =====================================================================================
 \section{Conclusion}

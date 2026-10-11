@@ -44,6 +44,7 @@ struct SceneLighting {
     PointLightData point;                  // Main point light (key 8)
     PointLightData fill[MAX_FILL_LIGHTS];  // Extra point lamps, same equation as `point`
     int numFill = 0;
+    bool fillEnabled = true;               // Extra fill / wall lamps toggle (key 7 in Glass Bridge)
     SpotLightData spot;
 
     // Hemisphere ambient: surfaces facing up get `ambientSky`, facing down get `ambientGround`.

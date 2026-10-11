@@ -387,6 +387,9 @@ namespace {
                     case GLFW_KEY_3: gbCamMode = GB_CAM_TOP_DOWN; break;
                     case GLFW_KEY_4: gbCamMode = GB_CAM_SIDE_PROFILE; break;
                     case GLFW_KEY_5: gbCamMode = GB_CAM_DESTINATION; break;
+                    case GLFW_KEY_7:
+                        sceneLighting.fillEnabled = !sceneLighting.fillEnabled;
+                        break;
                     case GLFW_KEY_TAB:
                         gbFastForward = !gbFastForward;
                         break;
@@ -576,6 +579,7 @@ namespace {
                 gbContestants[0].z = 0.8f;
                 sceneLighting.dir.enabled = (i == 0 || i == 3);
                 sceneLighting.point.enabled = (i == 1 || i == 3);
+                sceneLighting.fillEnabled = (i == 1 || i == 3);
                 sceneLighting.spot.enabled = (i == 2 || i == 3);
                 captureDimAmbient = true;
                 customCamera({7.5f, 22.0f, -10.0f}, {-0.5f, 15.5f, 9.0f}, 58.0f);
@@ -720,7 +724,7 @@ int main(int argc, char** argv) {
                 captureCamOverride = false;
                 captureDimAmbient = false;
                 shapeView = false;
-                sceneLighting.dir.enabled = sceneLighting.point.enabled = sceneLighting.spot.enabled = true;
+                sceneLighting.dir.enabled = sceneLighting.point.enabled = sceneLighting.fillEnabled = sceneLighting.spot.enabled = true;
                 showSunRays = false;
                 if (shot->setup) shot->setup();
             }
@@ -1017,7 +1021,7 @@ int main(int argc, char** argv) {
             LightFixtures::drawBridgeChandelier(sceneLighting.point);
             LightFixtures::drawFollowSpotlight(sceneLighting.spot, showSunRays);
             for (int i = 0; i < sceneLighting.numFill; ++i) {
-                LightFixtures::drawWallLamp(sceneLighting.fill[i], sceneLighting.point.enabled,
+                LightFixtures::drawWallLamp(sceneLighting.fill[i], sceneLighting.fillEnabled,
                                             sceneLighting.fill[i].position.x < 0.0f ? -1.0f : 1.0f);
             }
         }
@@ -1621,7 +1625,9 @@ int main(int argc, char** argv) {
 
             if (ImGui::BeginChild("LightingCard", ImVec2(-1, 0), true)) {
                 ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "LIGHTING & SHADING");
-                ImGui::TextColored(ImVec4(0.20f, 1.0f, 0.60f, 1.0f), "Phong shading (per pixel)");
+                if (currentPhase != PHASE_RED_LIGHT_GREEN_LIGHT) {
+                    ImGui::TextColored(ImVec4(0.20f, 1.0f, 0.60f, 1.0f), "Phong shading (per pixel)");
+                }
                 ImGui::Spacing();
 
                 // Shape view: shows which basic shapes each model is made of
@@ -1677,18 +1683,19 @@ int main(int argc, char** argv) {
 
                 ImGui::Spacing();
 
-                // (b) Point Light (Omnidirectional + Attenuation)
-                const char* ptName = (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) ?
-                                     "2. Tower Point Light [8]" : "2. Chandelier + Wall Lamps [8]";
-                if (ImGui::Checkbox(ptName, &sceneLighting.point.enabled)) {}
-
-                // (c) Spot Light (Cone Cutoff + Attenuation)
-                const char* spName = (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) ?
-                                     "3. Doll Eye Spot [9]" : "3. Jumper Spot [9]";
-                if (ImGui::Checkbox(spName, &sceneLighting.spot.enabled)) {}
-
-                ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.75f, 1.0f), "Hotkeys: 0/8/9 lights | I shapes");
+                // (b) Point Lights & Wall Lamps & Spot Light
+                if (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
+                    ImGui::Checkbox("2. Tower Point Light [8]", &sceneLighting.point.enabled);
+                    ImGui::Checkbox("3. Doll Eye Spot [9]", &sceneLighting.spot.enabled);
+                    ImGui::Spacing();
+                    ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.75f, 1.0f), "Hotkeys: 0/8/9 lights | I shapes");
+                } else {
+                    ImGui::Checkbox("2. Chandelier [8]", &sceneLighting.point.enabled);
+                    ImGui::Checkbox("3. Wall Lamps (4x) [7]", &sceneLighting.fillEnabled);
+                    ImGui::Checkbox("4. Jumper Spot [9]", &sceneLighting.spot.enabled);
+                    ImGui::Spacing();
+                    ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.75f, 1.0f), "Hotkeys: 0/8/7/9 lights | I shapes");
+                }
             }
             ImGui::EndChild();
             ImGui::PopStyleVar(2);
@@ -1697,8 +1704,8 @@ int main(int argc, char** argv) {
             ImGui::End();
         }
 
-        // 2b. FLOATING SHADING MODE HUD BADGE (Top right of 3D Scene Viewport)
-        {
+        // 2b. FLOATING SHADING MODE HUD BADGE (Bottom right of 3D Scene Viewport)
+        if (shapeView || currentPhase != PHASE_RED_LIGHT_GREEN_LIGHT) {
             float badgeX = (float)(windowWidth - rightBarW - 180);
             ImGui::SetNextWindowPos(ImVec2(badgeX, (float)windowHeight - 44.0f));
             ImGui::SetNextWindowSize(ImVec2(170.0f, 34.0f));

@@ -156,24 +156,26 @@ void GLCompat::beginFrame(Shader& shader, Camera& camera, const SceneLighting& l
     shader.SetVec3("ambientSky", lighting.ambientSky);
     shader.SetVec3("ambientGround", lighting.ambientGround);
 
-    // 2. Point Lights: slot 0 is the main point light, the rest are fill lamps.
-    // All of them follow the main point light's on/off switch.
+    // 2. Point Lights: slot 0 is the main point light (e.g. chandelier / tower), rest are fill lamps (wall lamps).
+    // They can be toggled independently.
     int numPoints = 0;
+    const PointLightData* lights[1 + MAX_FILL_LIGHTS];
     if (lighting.point.enabled) {
-        const PointLightData* lights[1 + MAX_FILL_LIGHTS];
         lights[numPoints++] = &lighting.point;
+    }
+    if (lighting.fillEnabled) {
         for (int i = 0; i < lighting.numFill && i < MAX_FILL_LIGHTS; ++i) {
             lights[numPoints++] = &lighting.fill[i];
         }
-        for (int i = 0; i < numPoints; ++i) {
-            std::string base = "pointLights[" + std::to_string(i) + "].";
-            shader.SetVec3((base + "position").c_str(), lights[i]->position);
-            shader.SetVec3((base + "color").c_str(), lights[i]->color);
-            shader.SetFloat((base + "constant").c_str(), lights[i]->constant);
-            shader.SetFloat((base + "linear").c_str(), lights[i]->linear);
-            shader.SetFloat((base + "quadratic").c_str(), lights[i]->quadratic);
-            shader.SetFloat((base + "intensity").c_str(), lights[i]->intensity);
-        }
+    }
+    for (int i = 0; i < numPoints; ++i) {
+        std::string base = "pointLights[" + std::to_string(i) + "].";
+        shader.SetVec3((base + "position").c_str(), lights[i]->position);
+        shader.SetVec3((base + "color").c_str(), lights[i]->color);
+        shader.SetFloat((base + "constant").c_str(), lights[i]->constant);
+        shader.SetFloat((base + "linear").c_str(), lights[i]->linear);
+        shader.SetFloat((base + "quadratic").c_str(), lights[i]->quadratic);
+        shader.SetFloat((base + "intensity").c_str(), lights[i]->intensity);
     }
     shader.SetInt("numPointLights", numPoints);
 

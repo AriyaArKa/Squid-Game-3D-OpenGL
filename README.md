@@ -3,7 +3,7 @@
 A comprehensive 3D Computer Graphics project built with **C++**, **OpenGL 3.3 Core**, and **Dear ImGui**, featuring:
 - **Round 1: Red Light, Green Light** (Colossal Young-hee Doll hugging dead tree, head rotation, Pink Soldiers with weapons, 32 NPC contestants with individual movement and elimination physics).
 - **Round 2: Squid Game Glass Bridge** (16-step modular bridge with tempered vs normal glass, 3D shattering shard physics, 16 queued contestants with numbered bibs).
-- **3-Type Lighting Lab**: Directional Light (Sun / Stage Floodlight Array), Point Lights (Arena Floodlight Tower / Chandelier + 4 wall lamps), and Spot Light (Doll Searchlight / Tracking Follow-Spot).
+- **3-Type Lighting Lab**: Directional Light (Sun / Stage Floodlight Array), Point Lights (Arena Floodlight Tower / Chandelier, 4 Wall Lamps), and Spot Light (Doll Searchlight / Tracking Follow-Spot).
 - **Phong Shading**: lighting (ambient + diffuse + Blinn-Phong specular) is computed for every pixel in the fragment shader.
 - **Texture Mapping**: three seamless image textures - sand (arena floor), bark (dead tree) and concrete (glass bridge hall walls & platforms).
 - **Shape View (`I`)**: paints every part by its basic shape (box, sphere, cylinder, cone, disk, torus, polygon) to show how each model is built.
@@ -90,7 +90,8 @@ report/                       # Project report (PDF) and its LaTeX source
 ### Global Hotkeys
 - **`I`**: Toggle **Shape View** (color every part by its basic shape kind).
 - **`0`**: Toggle **Directional Light** (Sun in RLGL / Stage Floodlight Array in Glass Bridge).
-- **`8`**: Toggle **Point Lights** (Arena Floodlight Tower in RLGL / Chandelier + 4 wall lamps in Glass Bridge).
+- **`8`**: Toggle **Point Light** (Arena Floodlight Tower in RLGL / Chandelier in Glass Bridge).
+- **`7`**: Toggle **Wall Lamps (4x)** (Glass Bridge).
 - **`9`**: Toggle **Spot Light** (Doll Eye Searchlight in RLGL / Follow-Spotlight in Glass Bridge).
 - **`P`**: Switch Phase between **Round 1 (RLGL)** and **Round 2 (Glass Bridge)**.
 - **`R`**: Reset current game round.
