@@ -2,18 +2,16 @@
 #define RENDERER_H
 
 #include <GL/glut.h>
+#include <glm/glm.hpp>
 
 class Renderer {
 public:
     static void initGL();
     static void setupLighting();
-    
-    // Shading mode
-    static void toggleShading();
-    static bool isSmoothShading();
 
     // Material helpers
     static void setMaterial(float r, float g, float b, float shininess = 32.0f, float spec = 0.35f);
+    static void setMaterial(const glm::vec3& color, float shininess = 32.0f, float spec = 0.35f);
     static void setEmissive(float r, float g, float b, float intensity = 1.0f);
     static void resetEmission();
 

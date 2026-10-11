@@ -1,13 +1,20 @@
 #include "doll/DollTree.h"
 #include "render/Renderer.h"
+#include "render/SceneTextures.h"
 #include <GL/glut.h>
 #include <cmath>
+#include <algorithm>
 
 namespace {
     const float PI = 3.14159265358979323846f;
 
     // Draw a perfectly connected branch segment with a joint knuckle at the tip
     void drawBranchSegment(float baseR, float tipR, float len) {
+        // Bark wraps around the branch (u) and repeats along its length (v), so thick and
+        // thin, long and short segments all show bark of a similar real-world size.
+        float around = std::max(1.0f, std::round(baseR * 4.0f));
+        GLCompat::setTexture(&SceneTextures::bark(), around, std::max(0.5f, len / 1.6f));
+
         // gluCylinder draws from Z=0 to Z=len
         Renderer::drawCylinder(baseR, tipR, len, 14);
 
@@ -107,9 +114,8 @@ void DollTree::drawDeadTree(float x, float y, float z) {
     glPushMatrix();
     glTranslatef(x, y, z);
 
-    // Deep weathered hardwood bark color (rich fibrous organic tones)
-    const float barkR = 0.24f, barkG = 0.20f, barkB = 0.16f;
-    Renderer::setMaterial(barkR, barkG, barkB, 15.0f);
+    // Weathered bark: the bark texture supplies the color, the material only tints it.
+    Renderer::setMaterial(1.0f, 0.96f, 0.92f, 15.0f, 0.12f);
 
     // 1. Sprawling Root Buttresses radiating into the sand in 360 degrees
     for (int i = 0; i < 8; ++i) {
@@ -185,4 +191,5 @@ void DollTree::drawDeadTree(float x, float y, float z) {
     glPopMatrix(); // End Trunk
 
     glPopMatrix(); // End Tree
+    GLCompat::clearTexture();
 }

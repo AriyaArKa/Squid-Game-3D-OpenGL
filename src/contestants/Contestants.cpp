@@ -28,7 +28,7 @@ namespace {
         float h = size * 0.46f;
         float t = size * 0.11f;
 
-        Renderer::setMaterial(0.03f, 0.06f, 0.06f, 35.0f); // High-contrast Squid Game black printed numeral
+        Renderer::setMaterial(COLOR_BIB_TEXT, 35.0f);
         if (segs[d][0]) { glPushMatrix(); glTranslatef(0.0f, h, 0.0f); Renderer::drawBox(w, t, 0.020f); glPopMatrix(); }
         if (segs[d][1]) { glPushMatrix(); glTranslatef(w*0.5f, h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
         if (segs[d][2]) { glPushMatrix(); glTranslatef(w*0.5f, -h*0.5f, 0.0f); Renderer::drawBox(t, h, 0.020f); glPopMatrix(); }
@@ -49,10 +49,12 @@ namespace {
     }
 
     // Classic proportional human contestant figure with custom numbers
-    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle, bool isPlayer = false) {
-        // Tracksuit Colors: Authentic Squid Game Teal Green
-        const float tr = 0.10f, tg = 0.50f, tb = 0.44f;
-        const float wr = 0.96f, wg = 0.96f, wb = 0.96f;
+    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle) {
+        // Tracksuit & Body Colors from central Config.h
+        const float tr = COLOR_TRACKSUIT.r, tg = COLOR_TRACKSUIT.g, tb = COLOR_TRACKSUIT.b;
+        const float wr = COLOR_TRACKSUIT_WHITE.r, wg = COLOR_TRACKSUIT_WHITE.g, wb = COLOR_TRACKSUIT_WHITE.b;
+        const float sr = COLOR_SKIN.r, sg = COLOR_SKIN.g, sb = COLOR_SKIN.b;
+        const float hr = COLOR_HAIR.r, hg = COLOR_HAIR.g, hb = COLOR_HAIR.b;
 
         glPushMatrix();
 
@@ -104,7 +106,7 @@ namespace {
             glPopMatrix();
 
             // Shoe sole
-            Renderer::setMaterial(0.20f, 0.20f, 0.22f, 30.0f);
+            Renderer::setMaterial(COLOR_SHOE_SOLE, 30.0f);
             glPushMatrix();
             glTranslatef(0.0f, -legLen + 0.01f, 0.04f);
             glScalef(0.20f, 0.03f, 0.29f);
@@ -211,7 +213,7 @@ namespace {
             glPopMatrix();
 
             // Skin Hand
-            Renderer::setMaterial(0.92f, 0.74f, 0.60f, 20.0f);
+            Renderer::setMaterial(sr, sg, sb, 20.0f);
             glPushMatrix();
             glTranslatef(0.0f, -armLen + 0.04f, 0.0f);
             glutSolidSphere(0.07, 10, 10);
@@ -235,11 +237,11 @@ namespace {
         glPopMatrix();
 
         // Skin Tone Face
-        Renderer::setMaterial(0.92f, 0.74f, 0.60f, 25.0f);
+        Renderer::setMaterial(sr, sg, sb, 25.0f);
         glutSolidSphere(headRadius, 18, 18);
 
         // Dark Hair Cap
-        Renderer::setMaterial(0.12f, 0.10f, 0.08f, 15.0f);
+        Renderer::setMaterial(hr, hg, hb, 15.0f);
         glPushMatrix();
         glTranslatef(0.0f, 0.06f, -0.03f);
         glScalef(1.02f, 0.95f, 1.02f);
@@ -263,7 +265,7 @@ void ContestantsManager::init(Player& player, std::vector<NPCContestant>& npcs) 
     player.walkTime = 0.0f;
     player.isAlive = true;
     player.deathTimer = 0.0f;
-    player.playerNumber = 456;
+    player.playerNumber = PLAYER_NUMBER;
     player.speedTier = SPEED_JOG;
     player.currentSpeed = SPEED_EASY_RUN;
 
@@ -286,13 +288,10 @@ void ContestantsManager::init(Player& player, std::vector<NPCContestant>& npcs) 
         npc.legAngle = 0.0f;
         npc.armAngle = 0.0f;
         npc.walkTime = 0.0f;
-        npc.speed = 0.040f + ((rand() % 22) / 1000.0f); // moderate human speeds
+        npc.speed = 0.040f + ((rand() % 22) / 1000.0f); // individual walking speed
         npc.number = knownNumbers[i % 32];
         npc.isAlive = true;
         npc.fallAngle = 0.0f;
-        npc.reactionDelay = 0.08f + ((rand() % 20) / 100.0f);
-        npc.willMakeMistake = (rand() % 100 < 25); // ~25% chance of making a fatal error
-        npc.mistakeTriggerTime = 0.6f + ((rand() % 240) / 100.0f); // Staggered kill time in Red Light
         npc.hasMovedDuringRed = false;
 
         npcs.push_back(npc);
@@ -307,7 +306,7 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
 
     for (auto& npc : npcs) {
         if (!npc.isAlive) {
-            // Tumble to floor
+            // Animate falling to ground
             if (npc.fallAngle < 90.0f) {
                 npc.fallAngle += 280.0f * dt;
                 if (npc.fallAngle > 90.0f) npc.fallAngle = 90.0f;
@@ -315,43 +314,36 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
             continue;
         }
 
-        // Check if finished
+        // Reached the safe finish line
         if (npc.z >= FINISH_Z) {
             npc.legAngle = 0.0f;
             npc.armAngle = 0.0f;
             continue;
         }
 
-        bool shouldMove = false;
         if (!isRed) {
-            // Green Light: Reset red-light mistake state & advance
+            // GREEN LIGHT: Reset red state, advance forward and swing limbs
             npc.hasMovedDuringRed = false;
-            shouldMove = true;
-        } else {
-            // Red Light: Staggered elimination checks
-            if (doll.headAngle > 100.0f) {
-                if (npc.willMakeMistake && !npc.hasMovedDuringRed) {
-                    npc.mistakeTriggerTime -= dt;
-                    if (npc.mistakeTriggerTime <= 0.0f) {
-                        // This NPC flinches and gets eliminated!
-                        npc.isAlive = false;
-                        npc.hasMovedDuringRed = true;
-                        GuardsManager::triggerShot(guards, npc.x, npc.z);
-                        ContestantsManager::spawnBloodParticles(particles, npc.x, npc.y, npc.z);
-                        AudioManager::playEliminationSound();
-                    }
-                }
-            }
-        }
-
-        if (shouldMove && npc.isAlive) {
             npc.z += npc.speed;
             npc.walkTime += dt;
             npc.legAngle = WALK_AMPLITUDE * sinf(WALK_OMEGA * npc.walkTime);
             npc.armAngle = -npc.legAngle;
         } else {
+            // RED LIGHT: Freeze all movement immediately
             npc.legAngle = 0.0f;
             npc.armAngle = 0.0f;
+
+            // Elimination: When the doll turns to scan (headAngle > 100°),
+            // a few NPCs fail to freeze in time (~18% chance per red light cycle)
+            if (doll.headAngle > 100.0f && !npc.hasMovedDuringRed) {
+                npc.hasMovedDuringRed = true;
+                if ((rand() % 100) < 18) {
+                    npc.isAlive = false;
+                    GuardsManager::triggerShot(guards, npc.x, npc.z);
+                    ContestantsManager::spawnBloodParticles(particles, npc.x, npc.y, npc.z);
+                    AudioManager::playEliminationSound();
+                }
+            }
         }
     }
 
@@ -366,27 +358,28 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
 }
 
 void ContestantsManager::drawPlayer(const Player& player) {
-    glPushMatrix();
-    glTranslatef(player.x, player.y, player.z);
-    glRotatef(player.facingAngle, 0.0f, 1.0f, 0.0f);
-    glScalef(1.15f, 1.15f, 1.15f);
-
-    drawContestantFigure(player.legAngle, player.armAngle, player.playerNumber, player.isAlive, player.deathTimer * 90.0f, true);
-
-    glPopMatrix();
+    drawCharacter(player.x, player.y, player.z, player.facingAngle,
+                  player.legAngle, player.armAngle, player.playerNumber,
+                  player.isAlive, player.deathTimer * 90.0f);
 }
 
 void ContestantsManager::drawNPCs(const std::vector<NPCContestant>& npcs) {
     for (const auto& npc : npcs) {
-        glPushMatrix();
-        glTranslatef(npc.x, npc.y, npc.z);
-        glRotatef(npc.facingAngle, 0.0f, 1.0f, 0.0f);
-        glScalef(1.10f, 1.10f, 1.10f);
-
-        drawContestantFigure(npc.legAngle, npc.armAngle, npc.number, npc.isAlive, npc.fallAngle);
-
-        glPopMatrix();
+        drawCharacter(npc.x, npc.y, npc.z, npc.facingAngle,
+                      npc.legAngle, npc.armAngle, npc.number,
+                      npc.isAlive, npc.fallAngle, 1.10f);
     }
+}
+
+void ContestantsManager::drawCharacter(float x, float y, float z, float facingAngle,
+                                       float legAngle, float armAngle, int number,
+                                       bool isAlive, float fallAngle, float scale) {
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    glRotatef(facingAngle, 0.0f, 1.0f, 0.0f);
+    glScalef(scale, scale, scale);
+    drawContestantFigure(legAngle, armAngle, number, isAlive, fallAngle);
+    glPopMatrix();
 }
 
 void ContestantsManager::spawnBloodParticles(std::vector<Particle>& particles, float x, float y, float z) {
@@ -439,9 +432,8 @@ void ContestantsManager::drawParticles(const std::vector<Particle>& particles) {
     if (particles.empty()) return;
 
     glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    GLCompat::enableBlend();
+    GLCompat::setDepthWrite(false);
 
     for (const auto& p : particles) {
         glColor4f(p.r, p.g, p.b, p.a);

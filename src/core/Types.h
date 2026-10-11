@@ -35,11 +35,25 @@ struct SpotLightData {
     float intensity = 2.0f;
 };
 
+// Extra point lamps (e.g. the wall lamps along both sides of the glass bridge hall).
+// They are ordinary point lights and switch on/off together with the main point light.
+const int MAX_FILL_LIGHTS = 4;
+
 struct SceneLighting {
     DirLightData dir;
-    PointLightData point;
+    PointLightData point;                  // Main point light (key 8)
+    PointLightData fill[MAX_FILL_LIGHTS];  // Extra point lamps, same equation as `point`
+    int numFill = 0;
     SpotLightData spot;
-    bool useGouraud = false; // false = Phong Shading (Per-Pixel), true = Gouraud Shading (Per-Vertex)
+
+    // Hemisphere ambient: surfaces facing up get `ambientSky`, facing down get `ambientGround`.
+    glm::vec3 ambientSky = glm::vec3(0.46f, 0.58f, 0.82f);
+    glm::vec3 ambientGround = glm::vec3(0.42f, 0.29f, 0.16f);
+
+    // Distance haze: far surfaces fade toward fogColor (adds depth to large spaces).
+    bool fogEnabled = false;
+    glm::vec3 fogColor = glm::vec3(0.6f, 0.7f, 0.85f);
+    float fogDensity = 0.0f;
 };
 
 enum GamePhase {
@@ -110,7 +124,6 @@ struct GBContestant {
     float jumpProgress;      // 0.0 to 1.0 during jump arc
     bool isJumping;
     float fallVelocity;
-    float fallY;
     float legAngle, armAngle;
     float aiThinkTimer;
 };
@@ -185,10 +198,7 @@ struct NPCContestant {
     int number;
     bool isAlive;
     float fallAngle;
-    float reactionDelay;
-    bool willMakeMistake;
-    float mistakeTriggerTime; // Random time during Red Light when they flinch/move
-    bool hasMovedDuringRed;
+    bool hasMovedDuringRed; // Set during Red Light if NPC moved/eliminated
 };
 
 struct Particle {

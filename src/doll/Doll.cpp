@@ -68,6 +68,15 @@ void DollManager::update(Doll& doll, float dt) {
 
 void DollManager::draw(const Doll& doll) {
     // 1. Draw the Colossal Young-hee Doll standing on the arena sand
+    drawDollOnly(doll);
+
+    // 2. Draw the Real, Seamless Colossal Dead Tree directly in front of the doll
+    // Positioned at (doll.x, doll.y, doll.z + 1.85f) so the doll hugs the trunk with both hands.
+    // When Red Light comes, ONLY her face/head rotates 180° to look back at the players!
+    DollTree::drawDeadTree(doll.x, doll.y, doll.z + 1.85f);
+}
+
+void DollManager::drawDollOnly(const Doll& doll) {
     glPushMatrix();
     glTranslatef(doll.x, doll.y, doll.z);
     glScalef(DOLL_SCALE, DOLL_SCALE, DOLL_SCALE);
@@ -85,9 +94,4 @@ void DollManager::draw(const Doll& doll) {
     glPopMatrix();
 
     glPopMatrix();
-
-    // 2. Draw the Real, Seamless Colossal Dead Tree directly in front of the doll
-    // Positioned at (doll.x, doll.y, doll.z + 1.85f) so the doll hugs the trunk with both hands.
-    // When Red Light comes, ONLY her face/head rotates 180° to look back at the players!
-    DollTree::drawDeadTree(doll.x, doll.y, doll.z + 1.85f);
 }

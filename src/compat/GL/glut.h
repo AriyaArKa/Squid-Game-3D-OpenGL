@@ -55,6 +55,10 @@ inline void glNormal3f(float x, float y, float z) {
     GLCompat::normal3f(x, y, z);
 }
 
+inline void glTexCoord2f(float u, float v) {
+    GLCompat::texCoord2f(u, v);
+}
+
 inline void glColor3f(float r, float g, float b) {
     GLCompat::color3f(r, g, b);
 }

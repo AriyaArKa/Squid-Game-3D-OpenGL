@@ -13,6 +13,11 @@ public:
                        int& aliveCount, float dt);
     static void drawPlayer(const Player& player);
     static void drawNPCs(const std::vector<NPCContestant>& npcs);
+    // One canonical contestant mesh used by both games. Round-specific code supplies
+    // only position and animation state; appearance and proportions stay identical.
+    static void drawCharacter(float x, float y, float z, float facingAngle,
+                              float legAngle, float armAngle, int number,
+                              bool isAlive, float fallAngle, float scale = 1.15f);
     static void drawParticles(const std::vector<Particle>& particles);
     static void spawnBloodParticles(std::vector<Particle>& particles, float x, float y, float z);
     static void updateParticles(std::vector<Particle>& particles, float dt);

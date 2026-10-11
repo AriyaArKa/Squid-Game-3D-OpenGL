@@ -1,8 +1,10 @@
 #include "environment/Environment.h"
 #include "render/Renderer.h"
 #include "core/Config.h"
+#include "render/SceneTextures.h"
 #include <GL/glut.h>
 #include <cmath>
+#include <glm/glm.hpp>
 
 // This file covers the arena "shell": the sand floor, the painted sky perimeter walls
 // (with their cloud clusters), the wheat-field trim, and the start/finish boundary lines.
@@ -17,7 +19,7 @@ namespace {
         glTranslatef(cx, cy, cz);
 
         // Fluffy cumulus cloud spheres
-        Renderer::setMaterial(0.82f, 0.84f, 0.88f, 10.0f);
+        Renderer::setMaterial(COLOR_ARENA_CLOUD, 28.0f);
 
         const float offsets[6][4] = {
             { 0.0f,   0.0f,  1.10f, 0.95f}, // Center main billow
@@ -56,6 +58,7 @@ void EnvironmentManager::init() {
 }
 
 void EnvironmentManager::draw(float gameTimer) {
+    drawSkyDome();
     drawArenaGround();
     drawPaintedSkyWalls();
     drawWheatFieldTrim();
@@ -64,8 +67,74 @@ void EnvironmentManager::draw(float gameTimer) {
     drawOverheadDigitalClock(gameTimer);
 }
 
+void EnvironmentManager::drawSkyDome() {
+    // A huge half-sphere around the arena, colored from a pale horizon to a deep blue zenith,
+    // drawn first without lighting, depth writes or haze so everything else covers it.
+    if (GLCompat::getInspect().colorByShape) return; // a backdrop, not a modelled object
+    const float R = 190.0f;
+    const int slices = 32, stacks = 10;
+    const float PI = 3.14159265f;
+
+    GLCompat::setUnlit(true);
+    GLCompat::setDepthWrite(false);
+    GLCompat::setFog(false);
+    Renderer::setMaterial(1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+
+    glBegin(GL_QUADS);
+    for (int i = 0; i < stacks; ++i) {
+        float e0 = (float)i / stacks * (PI * 0.5f) - 0.12f;       // start a little below the horizon
+        float e1 = (float)(i + 1) / stacks * (PI * 0.5f) - 0.12f;
+        float t0 = glm::clamp(e0 / (PI * 0.5f), 0.0f, 1.0f);
+        float t1 = glm::clamp(e1 / (PI * 0.5f), 0.0f, 1.0f);
+        glm::vec3 c0 = glm::mix(COLOR_SKY_HORIZON, COLOR_SKY_ZENITH, sqrtf(t0));
+        glm::vec3 c1 = glm::mix(COLOR_SKY_HORIZON, COLOR_SKY_ZENITH, sqrtf(t1));
+        for (int j = 0; j < slices; ++j) {
+            float a0 = (float)j / slices * 2.0f * PI;
+            float a1 = (float)(j + 1) / slices * 2.0f * PI;
+            glNormal3f(0.0f, -1.0f, 0.0f);
+            glColor3f(c0.r, c0.g, c0.b); glVertex3f(R * cosf(e0) * cosf(a0), R * sinf(e0), R * cosf(e0) * sinf(a0));
+            glColor3f(c0.r, c0.g, c0.b); glVertex3f(R * cosf(e0) * cosf(a1), R * sinf(e0), R * cosf(e0) * sinf(a1));
+            glColor3f(c1.r, c1.g, c1.b); glVertex3f(R * cosf(e1) * cosf(a1), R * sinf(e1), R * cosf(e1) * sinf(a1));
+            glColor3f(c1.r, c1.g, c1.b); glVertex3f(R * cosf(e1) * cosf(a0), R * sinf(e1), R * cosf(e1) * sinf(a0));
+        }
+    }
+    glEnd();
+
+    // Soft white clouds floating above the arena walls (flattened sphere clusters)
+    const float cloudAngles[8] = {20.0f, 62.0f, 105.0f, 150.0f, 196.0f, 240.0f, 285.0f, 330.0f};
+    Renderer::setMaterial(1.0f, 1.0f, 1.0f, 1.0f, 0.0f);
+    GLCompat::setAlpha(0.92f);
+    GLCompat::enableBlend();
+    for (int i = 0; i < 8; ++i) {
+        float a = glm::radians(cloudAngles[i]);
+        float dist = 150.0f, height = 34.0f + 10.0f * (float)(i % 3);
+        glPushMatrix();
+        glTranslatef(cosf(a) * dist, height, sinf(a) * dist);
+        glRotatef(-cloudAngles[i] + 90.0f, 0.0f, 1.0f, 0.0f); // face the arena
+        const float puffs[5][3] = {{0, 0, 9}, {-9, -1, 7}, {9, -1.5f, 7.5f}, {-4, 3, 6.5f}, {4.5f, 2.5f, 7}};
+        for (const auto& p : puffs) {
+            glPushMatrix();
+            glTranslatef(p[0], p[1], 0.0f);
+            glScalef(p[2], p[2] * 0.55f, p[2] * 0.4f);
+            glutSolidSphere(1.0, 12, 12);
+            glPopMatrix();
+        }
+        glPopMatrix();
+    }
+    GLCompat::disableBlend();
+    GLCompat::setAlpha(1.0f);
+
+    GLCompat::setFog(true);
+    GLCompat::setDepthWrite(true);
+    GLCompat::setUnlit(false);
+}
+
 void EnvironmentManager::drawArenaGround() {
-    // Multi-tiled sandy dirt floor with warm golden earth tones (Reference Images 1, 2, 3)
+    // Sand floor: a 24 x 32 grid of quads with the sand texture tiled every
+    // SAND_TILE units (texture coordinate = world position / SAND_TILE, GL_REPEAT wraps it).
+    const float SAND_TILE = 6.0f;
+    Renderer::setMaterial(COLOR_ARENA_SAND_TINT, 12.0f, 0.06f);
+    GLCompat::setTexture(&SceneTextures::sand());
     glPushMatrix();
     glTranslatef(0.0f, -0.05f, 0.0f);
 
@@ -85,20 +154,17 @@ void EnvironmentManager::drawArenaGround() {
             float z1 = -ARENA_HALF_LENGTH + j * stepZ;
             float z2 = z1 + stepZ;
 
-            // Deep warm courtyard dirt/sand tone (Matching Reference Image 4)
-            float noise = sinf(x1 * 0.8f) * cosf(z1 * 0.6f) * 0.030f;
-            float r = 0.64f + noise;
-            float g = 0.48f + noise * 0.8f;
-            float b = 0.30f + noise * 0.6f;
-
-            glColor3f(r, g, b);
-            glVertex3f(x1, 0.0f, z1);
-            glVertex3f(x2, 0.0f, z1);
-            glVertex3f(x2, 0.0f, z2);
-            glVertex3f(x1, 0.0f, z2);
+            // Gentle large-scale brightness variation on top of the texture
+            float shade = 1.0f + sinf(x1 * 0.8f) * cosf(z1 * 0.6f) * 0.04f;
+            glColor3f(COLOR_ARENA_SAND_TINT.r * shade, COLOR_ARENA_SAND_TINT.g * shade, COLOR_ARENA_SAND_TINT.b * shade);
+            glTexCoord2f(x1 / SAND_TILE, z1 / SAND_TILE); glVertex3f(x1, 0.0f, z1);
+            glTexCoord2f(x2 / SAND_TILE, z1 / SAND_TILE); glVertex3f(x2, 0.0f, z1);
+            glTexCoord2f(x2 / SAND_TILE, z2 / SAND_TILE); glVertex3f(x2, 0.0f, z2);
+            glTexCoord2f(x1 / SAND_TILE, z2 / SAND_TILE); glVertex3f(x1, 0.0f, z2);
         }
     }
     glEnd();
+    GLCompat::clearTexture();
 
     glPopMatrix();
 }
@@ -106,14 +172,15 @@ void EnvironmentManager::drawArenaGround() {
 void EnvironmentManager::drawPaintedSkyWalls() {
     // Giant walls enclosing the arena painted like the sky with clouds (Reference Images 1, 2, 3, 4)
     glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
+    Renderer::setMaterial(COLOR_ARENA_SKY, 8.0f, 0.03f);
 
     const float hw = ARENA_HALF_WIDTH;
     const float hl = ARENA_HALF_LENGTH;
     const float h  = WALL_HEIGHT;
 
     // Sky colors: Deep rich atmospheric storybook blue mural (Matching Reference Image 4)
-    const float skyTopR = 0.10f, skyTopG = 0.25f, skyTopB = 0.55f;
-    const float skyBotR = 0.22f, skyBotG = 0.40f, skyBotB = 0.65f;
+    const float skyTopR = COLOR_ARENA_SKY_TOP.r, skyTopG = COLOR_ARENA_SKY_TOP.g, skyTopB = COLOR_ARENA_SKY_TOP.b;
+    const float skyBotR = COLOR_ARENA_SKY.r, skyBotG = COLOR_ARENA_SKY.g, skyBotB = COLOR_ARENA_SKY.b;
 
     glBegin(GL_QUADS);
 
@@ -194,7 +261,7 @@ void EnvironmentManager::drawWheatFieldTrim() {
     glPushMatrix();
 
     // 1. Golden Yellow Wheat Field (Bottom layer, y = 0..3.2)
-    Renderer::setMaterial(0.72f, 0.55f, 0.18f, 15.0f);
+    Renderer::setMaterial(COLOR_ARENA_WHEAT, 22.0f);
 
     glBegin(GL_QUADS);
     // Far Wall base
@@ -227,7 +294,7 @@ void EnvironmentManager::drawWheatFieldTrim() {
     glEnd();
 
     // 2. Green Treetop Horizon Line (Upper layer, y = 3.2..4.2, as in Reference Image 1 & 2)
-    Renderer::setMaterial(0.38f, 0.54f, 0.22f, 20.0f);
+    Renderer::setMaterial(COLOR_ARENA_HORIZON, 26.0f);
 
     glBegin(GL_QUADS);
     // Far Wall trees
@@ -272,8 +339,8 @@ void EnvironmentManager::drawBoundaryLines() {
     glPopMatrix();
 
     // Finish Hot Pink Line (in front of doll at FINISH_Z, Reference Image 3!)
-    Renderer::setMaterial(0.96f, 0.18f, 0.52f, 50.0f);
-    Renderer::setEmissive(0.95f, 0.12f, 0.45f, 0.5f);
+    Renderer::setMaterial(COLOR_FINISH_LINE, 50.0f);
+    Renderer::setEmissive(COLOR_FINISH_LINE.r, COLOR_FINISH_LINE.g, COLOR_FINISH_LINE.b, 0.5f);
     glPushMatrix();
     glTranslatef(0.0f, 0.01f, FINISH_Z);
     glScalef(ARENA_HALF_WIDTH * 2.0f, 0.01f, 0.45f);

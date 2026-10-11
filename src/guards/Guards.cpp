@@ -3,6 +3,7 @@
 #include "audio/Audio.h"
 #include "core/Config.h"
 #include <GL/glut.h>
+#include "engine/GLCompat.h"
 #include <cmath>
 
 namespace {
@@ -25,10 +26,10 @@ namespace {
             glutSolidCube(1.0);
             glPopMatrix();
 
-            // Left side
+            // Left side (leans right so the two sides meet at the top: an upright triangle)
             glPushMatrix();
             glTranslatef(-0.042f, 0.012f, 0.0f);
-            glRotatef(30.0f, 0.0f, 0.0f, 1.0f);
+            glRotatef(-30.0f, 0.0f, 0.0f, 1.0f);
             glScalef(0.018f, 0.165f, 0.018f);
             glutSolidCube(1.0);
             glPopMatrix();
@@ -36,7 +37,7 @@ namespace {
             // Right side
             glPushMatrix();
             glTranslatef(0.042f, 0.012f, 0.0f);
-            glRotatef(-30.0f, 0.0f, 0.0f, 1.0f);
+            glRotatef(30.0f, 0.0f, 0.0f, 1.0f);
             glScalef(0.018f, 0.165f, 0.018f);
             glutSolidCube(1.0);
             glPopMatrix();
@@ -103,7 +104,7 @@ namespace {
         // Muzzle Flash
         if (isShooting) {
             glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
-            glDisable(GL_LIGHTING);
+            GLCompat::setUnlit(true);
             glColor3f(1.0f, 0.85f, 0.2f);
             glPushMatrix();
             glTranslatef(0.0f, 0.02f, 0.48f);
@@ -213,8 +214,8 @@ void GuardsManager::drawSingleGuard(const Guard& guard) {
     // Ground shadow
     Renderer::drawGroundShadow(0.0f, 0.0f, 0.45f, 0.40f, 0.35f);
 
-    // Authentic Squid Game hot magenta jumpsuit tone
-    const float pr = 0.88f, pg = 0.08f, pb = 0.42f;
+    // Authentic Squid Game hot magenta jumpsuit tone from central Config.h
+    const float pr = COLOR_GUARD_MAGENTA.r, pg = COLOR_GUARD_MAGENTA.g, pb = COLOR_GUARD_MAGENTA.b;
 
     // Boots (Black combat boots with rubber sole)
     Renderer::setMaterial(0.10f, 0.10f, 0.12f, 30.0f);

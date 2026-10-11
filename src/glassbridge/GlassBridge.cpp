@@ -52,7 +52,7 @@ void GlassBridgeManager::init(std::vector<GlassStep>& steps,
         bool isP456 = (qNum == playerQueueNum);
 
         contestants[i].queueNumber = qNum;
-        contestants[i].bibNumber = isP456 ? 456 : famousNumbers[i % 16];
+        contestants[i].bibNumber = isP456 ? PLAYER_NUMBER : famousNumbers[i % 16];
         contestants[i].isPlayer456 = isP456;
         contestants[i].isAlive = true;
         contestants[i].hasFinished = false;
@@ -77,7 +77,6 @@ void GlassBridgeManager::init(std::vector<GlassStep>& steps,
         contestants[i].jumpProgress = 0.0f;
         contestants[i].isJumping = false;
         contestants[i].fallVelocity = 0.0f;
-        contestants[i].fallY = 0.0f;
         contestants[i].legAngle = 0.0f;
         contestants[i].armAngle = 0.0f;
         contestants[i].aiThinkTimer = 1.0f + ((float)rand() / RAND_MAX) * 1.2f;

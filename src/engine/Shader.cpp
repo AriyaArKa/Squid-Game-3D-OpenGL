@@ -67,18 +67,34 @@ void Shader::Delete() {
     glDeleteProgram(ID);
 }
 
+GLint Shader::loc(const char* name) {
+    auto it = uniformCache.find(name);
+    if (it != uniformCache.end()) return it->second;
+    GLint location = glGetUniformLocation(ID, name);
+    uniformCache.emplace(name, location);
+    return location;
+}
+
 void Shader::SetMat4(const char* name, const glm::mat4& value) {
-    glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix4fv(loc(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::SetVec3(const char* name, const glm::vec3& value) {
-    glUniform3fv(glGetUniformLocation(ID, name), 1, glm::value_ptr(value));
+    glUniform3fv(loc(name), 1, glm::value_ptr(value));
+}
+
+void Shader::SetVec2(const char* name, const glm::vec2& value) {
+    glUniform2fv(loc(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetFloat(const char* name, float value) {
-    glUniform1f(glGetUniformLocation(ID, name), value);
+    glUniform1f(loc(name), value);
 }
 
 void Shader::SetBool(const char* name, bool value) {
-    glUniform1i(glGetUniformLocation(ID, name), value ? 1 : 0);
+    glUniform1i(loc(name), value ? 1 : 0);
+}
+
+void Shader::SetInt(const char* name, int value) {
+    glUniform1i(loc(name), value);
 }

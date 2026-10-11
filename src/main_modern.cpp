@@ -8,6 +8,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <string>
+#include <functional>
+#include <fstream>
 
 // Modern engine headers
 #include "engine/Shader.h"
@@ -19,6 +22,9 @@
 #include "core/Types.h"
 #include "audio/Audio.h"
 #include "render/Renderer.h"
+#include "render/LightFixtures.h"
+#include "render/SceneTextures.h"
+#include "tools/Showcase.h"
 #include "doll/Doll.h"
 #include "guards/Guards.h"
 #include "contestants/Contestants.h"
@@ -95,342 +101,48 @@ namespace {
     // -----------------------------------------------------------------------------------
     SceneLighting sceneLighting;
 
-    void drawArenaFloodlight(const PointLightData& pt) {
-        glPushMatrix();
-        glTranslatef(pt.position.x, 0.0f, pt.position.z);
-
-        // 1. Tall Steel Lattice/Pylon Pole from ground y=0 to y=pt.position.y
-        GLCompat::setMaterial(0.18f, 0.20f, 0.24f, 40.0f);
-        glPushMatrix();
-        glTranslatef(0.0f, pt.position.y * 0.5f, 0.0f);
-        GLCompat::drawBox(0.45f, pt.position.y, 0.45f);
-        glPopMatrix();
-
-        // 2. Mounting crossbar at top
-        glPushMatrix();
-        glTranslatef(0.0f, pt.position.y, 0.0f);
-        GLCompat::drawBox(2.4f, 0.25f, 0.6f);
-
-        // 3. Floodlight reflector housing
-        GLCompat::setMaterial(0.12f, 0.12f, 0.14f, 60.0f);
-        glPushMatrix();
-        glTranslatef(0.0f, -0.2f, 0.0f);
-        GLCompat::drawBox(2.0f, 0.6f, 0.5f);
-        glPopMatrix();
-
-        // 4. Glowing Lamp Face (Warm tungsten/golden if ON, dark if OFF)
-        if (pt.enabled) {
-            GLCompat::setMaterial(1.0f, 0.95f, 0.80f, 100.0f);
-            GLCompat::setEmissive(pt.color.r, pt.color.g, pt.color.b, 2.0f);
-        } else {
-            GLCompat::setMaterial(0.2f, 0.2f, 0.2f, 10.0f);
-            GLCompat::resetEmission();
-        }
-        glPushMatrix();
-        glTranslatef(0.0f, -0.25f, -0.26f);
-        GLCompat::drawBox(1.8f, 0.45f, 0.08f);
-        glPopMatrix();
-        GLCompat::resetEmission();
-
-        glPopMatrix();
-        glPopMatrix();
-    }
+    // Shape view (key I): paints every part with the color of its basic shape kind
+    // (box, sphere, cylinder, ...) so you can see what each model is built from.
+    bool shapeView = false;
 
     // -----------------------------------------------------------------------------------
     // DIRECTIONAL LIGHT SUN VISUALS (Visible glowing Sun disc & stage floodlight array)
     // -----------------------------------------------------------------------------------
     float sunAzimuth = 45.0f;    // degrees around Y (Upper-Right Sky)
     float sunElevation = 38.0f;  // degrees above ground (directly visible above arena wall)
-    bool  showSunRays = true;
+    // Volumetric helper geometry is optional; the clean cinematic preset starts
+    // with it hidden so translucent cones/spheres never wash out the set.
+    bool  showSunRays = false;
 
     void updateSunDirection() {
-        float elRad = glm::radians(sunElevation);
-        float azRad = glm::radians(sunAzimuth);
-        // Position on sky dome
-        float y = sinf(elRad);
-        float x = cosf(elRad) * sinf(azRad);
-        float z = cosf(elRad) * cosf(azRad);
-        // Direction from sun pointing down to arena center
-        sceneLighting.dir.direction = -glm::normalize(glm::vec3(x, y, z));
+        LightFixtures::updateSunDirection(sceneLighting.dir, sunElevation, sunAzimuth);
     }
 
-    void drawBridgeChandelier(const PointLightData& pt) {
-        glPushMatrix();
-        glTranslatef(pt.position.x, pt.position.y, pt.position.z);
+    // ---------------------------------------------------------------------------------
+    // REPORT CAPTURE MODE  (game_modern.exe --capture <folder> [name-prefix])
+    // Plays a fixed list of "shots" (game moments, camera angles, single models), saves
+    // each one as a .bmp and quits. Used to make every screenshot in the report.
+    // ---------------------------------------------------------------------------------
+    struct CaptureShot {
+        std::string name;
+        std::function<void()> setup;           // puts the game in the wanted state
+        int frames = 90;                       // frames to run before saving (lets cameras settle)
+        bool ui = false;                       // keep the HUD in the picture
+        std::string showcase;                  // render one model instead of the game
+        bool parts = false;                    // showcase: shape-colored exploded view
+        std::function<void(int)> onFrame;      // optional per-frame hook (frame number)
+    };
+    bool captureMode = false;
+    std::string captureDir;
+    std::vector<CaptureShot> captureShots;
+    size_t captureIndex = 0;
+    int captureFrame = 0;
+    bool captureFreeze = false;      // pause game logic so a posed moment stays still
+    bool captureDimAmbient = false;  // light demos: weak ambient so each light's effect shows
+    bool captureCamOverride = false; // use captureEye/captureLook instead of the game camera
+    glm::vec3 captureEye(0.0f), captureLook(0.0f);
+    float captureFov = 50.0f;
 
-        // 4 Rigid suspension rigging cables extending up to structural ceiling trusses (Y=28.5)
-        GLCompat::setMaterial(0.22f, 0.24f, 0.26f, 40.0f);
-        for (int c = 0; c < 4; ++c) {
-            float ca = (float)c * 1.570796f; // 90 deg intervals
-            float cx = cosf(ca) * 1.5f;
-            float cz = sinf(ca) * 1.5f;
-            glPushMatrix();
-            glTranslatef(cx, 2.75f, cz);
-            GLCompat::drawBox(0.06f, 5.5f, 0.06f);
-            glPopMatrix();
-        }
-
-        // Heavy industrial dual concentric octagonal chandelier rings
-        GLCompat::setMaterial(0.28f, 0.25f, 0.20f, 60.0f); // Aged bronze/dark brass
-        GLCompat::drawTorus(0.14f, 2.2f, 12, 24);
-        GLCompat::drawTorus(0.12f, 1.3f, 10, 20);
-
-        // 8 Perimeter warm bulb pendants around outer ring
-        for (int i = 0; i < 8; ++i) {
-            float ang = (float)i * 0.785398f; // 45 deg intervals
-            float bx = cosf(ang) * 2.2f;
-            float bz = sinf(ang) * 2.2f;
-            glPushMatrix();
-            glTranslatef(bx, -0.22f, bz);
-            if (pt.enabled) {
-                GLCompat::setMaterial(1.0f, 0.92f, 0.70f, 100.0f);
-                GLCompat::setEmissive(pt.color.r * 1.2f, pt.color.g * 1.2f, pt.color.b * 1.2f, 2.0f);
-            } else {
-                GLCompat::setMaterial(0.2f, 0.2f, 0.2f, 10.0f);
-                GLCompat::resetEmission();
-            }
-            GLCompat::drawSphere(0.25f, 10, 10);
-            glPopMatrix();
-        }
-
-        // Central Colossal Luminous Core (Point Light Source)
-        if (pt.enabled) {
-            GLCompat::setMaterial(1.0f, 0.96f, 0.82f, 100.0f);
-            GLCompat::setEmissive(pt.color.r * 1.8f, pt.color.g * 1.6f, pt.color.b * 1.3f, 3.5f);
-            GLCompat::drawSphere(0.95f, 20, 20);
-
-            // Radiant Omnidirectional Amber Glow Halo
-            GLCompat::setUnlit(true);
-            GLCompat::enableBlend();
-            GLCompat::setDepthWrite(false);
-            GLCompat::setAlpha(0.26f);
-            GLCompat::setMaterial(1.0f, 0.85f, 0.45f, 10.0f);
-            GLCompat::drawSphere(2.8f, 16, 16);
-            GLCompat::setAlpha(0.10f);
-            GLCompat::drawSphere(5.2f, 16, 16);
-            GLCompat::disableBlend();
-            GLCompat::setDepthWrite(true);
-            GLCompat::setUnlit(false);
-            GLCompat::setAlpha(1.0f);
-            GLCompat::resetEmission();
-        } else {
-            GLCompat::setMaterial(0.15f, 0.15f, 0.18f, 10.0f);
-            GLCompat::resetEmission();
-            GLCompat::drawSphere(0.95f, 16, 16);
-        }
-
-        glPopMatrix();
-    }
-
-    void drawFollowSpotlight(const SpotLightData& sp) {
-        glPushMatrix();
-        glTranslatef(sp.position.x, sp.position.y, sp.position.z);
-
-        // Theater spotlight cylindrical projector housing
-        GLCompat::setMaterial(0.18f, 0.20f, 0.24f, 60.0f);
-        glPushMatrix();
-        glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-        GLCompat::drawCylinder(0.40f, 0.52f, 1.2f, 16);
-        glPopMatrix();
-
-        // Glowing projector lens
-        if (sp.enabled) {
-            GLCompat::setMaterial(0.95f, 0.98f, 1.0f, 100.0f);
-            GLCompat::setEmissive(sp.color.r * 1.8f, sp.color.g * 1.8f, sp.color.b * 1.8f, 3.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -1.22f, 0.0f);
-            glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-            GLCompat::drawDisk(0.0f, 0.50f, 16);
-            glPopMatrix();
-
-            // Downward Tracking Volumetric Spotlight Cone onto active contestant
-            if (showSunRays) {
-                GLCompat::setUnlit(true);
-                GLCompat::enableBlend();
-                GLCompat::setDepthWrite(false);
-                GLCompat::setAlpha(0.14f);
-                GLCompat::setMaterial(sp.color.r, sp.color.g, sp.color.b, 10.0f);
-                glPushMatrix();
-                glTranslatef(0.0f, -4.2f, 0.0f);
-                GLCompat::drawCylinder(0.48f, 3.0f, 7.8f, 16);
-                glPopMatrix();
-                GLCompat::disableBlend();
-                GLCompat::setDepthWrite(true);
-                GLCompat::setUnlit(false);
-                GLCompat::setAlpha(1.0f);
-            }
-            GLCompat::resetEmission();
-        } else {
-            GLCompat::setMaterial(0.2f, 0.2f, 0.2f, 10.0f);
-            GLCompat::resetEmission();
-            glPushMatrix();
-            glTranslatef(0.0f, -1.22f, 0.0f);
-            glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-            GLCompat::drawDisk(0.0f, 0.50f, 16);
-            glPopMatrix();
-        }
-
-        glPopMatrix();
-    }
-
-    void drawSun(const DirLightData& dir) {
-        // Place sun high in the sky in the exact opposite direction of sunlight travel
-        glm::vec3 sunDir = -glm::normalize(dir.direction);
-        float sunDist = 65.0f; // High above arena walls (WALL_HEIGHT = 22.0f)
-        glm::vec3 sunPos = sunDir * sunDist;
-
-        glPushMatrix();
-        glTranslatef(sunPos.x, sunPos.y, sunPos.z);
-
-        if (dir.enabled) {
-            // 1. Brilliant Luminous Solar Core
-            GLCompat::setMaterial(1.0f, 0.98f, 0.90f, 100.0f);
-            GLCompat::setEmissive(1.8f, 1.60f, 1.15f, 3.5f);
-            GLCompat::drawSphere(4.2f, 22, 22);
-
-            // 2. Radiant Atmospheric Solar Corona / Halos
-            GLCompat::setUnlit(true);
-            GLCompat::enableBlend();
-            GLCompat::setDepthWrite(false);
-
-            GLCompat::setAlpha(0.40f);
-            GLCompat::setMaterial(1.0f, 0.88f, 0.40f, 10.0f);
-            GLCompat::drawSphere(7.2f, 18, 18);
-
-            GLCompat::setAlpha(0.20f);
-            GLCompat::setMaterial(1.0f, 0.72f, 0.25f, 10.0f);
-            GLCompat::drawSphere(11.5f, 18, 18);
-
-            // 3. Radiant Solar Flare Rays / Spikes
-            if (showSunRays) {
-                GLCompat::setAlpha(0.30f);
-                GLCompat::setMaterial(1.0f, 0.90f, 0.50f, 5.0f);
-                for (int ray = 0; ray < 8; ++ray) {
-                    float rayAngle = ray * 45.0f;
-                    glPushMatrix();
-                    glRotatef(rayAngle, sunDir.x, sunDir.y, sunDir.z);
-                    glRotatef(rayAngle * 0.5f, 0.0f, 1.0f, 0.0f);
-                    GLCompat::drawBox(0.35f, 18.0f, 0.35f);
-                    glPopMatrix();
-                }
-
-                // 4. Directional Sunbeam Shaft pointing down into arena
-                GLCompat::setAlpha(0.12f);
-                GLCompat::setMaterial(1.0f, 0.95f, 0.70f, 5.0f);
-                glPushMatrix();
-                // Draw a subtle translucent shaft along light direction towards arena
-                glm::vec3 shaftVec = dir.direction * 35.0f;
-                glTranslatef(shaftVec.x * 0.5f, shaftVec.y * 0.5f, shaftVec.z * 0.5f);
-                GLCompat::drawBox(6.0f, 35.0f, 6.0f);
-                glPopMatrix();
-            }
-
-            GLCompat::disableBlend();
-            GLCompat::setDepthWrite(true);
-            GLCompat::setUnlit(false);
-            GLCompat::setAlpha(1.0f);
-            GLCompat::resetEmission();
-        } else {
-            // Eclipsed / Dimmed Sun when Directional Light is toggled OFF (Key 0)
-            GLCompat::setMaterial(0.12f, 0.12f, 0.15f, 15.0f);
-            GLCompat::resetEmission();
-            GLCompat::drawSphere(4.2f, 16, 16);
-        }
-
-        glPopMatrix();
-    }
-
-    void drawStageSunBank(const DirLightData& dir) {
-        // Place overhead stage light array on ceiling trusses directly above bridge
-        glm::vec3 bridgeCenter(0.0f, GB_BRIDGE_HEIGHT, 28.0f);
-        glm::vec3 normDir = glm::normalize(dir.direction);
-        glm::vec3 lightOffset = -normDir * 18.0f;
-        glm::vec3 lightSourcePos = bridgeCenter + lightOffset;
-        lightSourcePos.y = 28.2f; // Structural ceiling truss level (Y=28.5)
-        if (lightSourcePos.x < -16.0f) lightSourcePos.x = -16.0f;
-        if (lightSourcePos.x >  16.0f) lightSourcePos.x =  16.0f;
-        if (lightSourcePos.z <  -8.0f) lightSourcePos.z =  -8.0f;
-        if (lightSourcePos.z >  64.0f) lightSourcePos.z =  64.0f;
-
-        glPushMatrix();
-        glTranslatef(lightSourcePos.x, lightSourcePos.y, lightSourcePos.z);
-
-        // 1. Heavy Industrial Steel Stage Floodlight Gantry Rack
-        GLCompat::setMaterial(0.18f, 0.20f, 0.24f, 40.0f);
-        GLCompat::drawBox(8.0f, 1.2f, 3.2f);
-
-        // 2. Structural safety rigging suspension arms up to ceiling
-        GLCompat::setMaterial(0.12f, 0.14f, 0.16f, 30.0f);
-        glPushMatrix();
-        glTranslatef(0.0f, 0.95f, 0.0f);
-        GLCompat::drawBox(7.2f, 0.8f, 0.4f);
-        glPopMatrix();
-
-        // 3. 4 Heavy Stage Floodlight Projectors across the gantry
-        const float lampSpacing = 2.0f;
-        for (int lamp = 0; lamp < 4; ++lamp) {
-            float lx = -3.0f + (float)lamp * lampSpacing;
-            glPushMatrix();
-            glTranslatef(lx, -0.6f, 0.0f);
-
-            // Projector body can
-            GLCompat::setMaterial(0.14f, 0.16f, 0.18f, 50.0f);
-            GLCompat::drawBox(1.5f, 0.8f, 1.8f);
-
-            // Glowing Projector Lens / Reflector Dish
-            glPushMatrix();
-            glTranslatef(0.0f, -0.42f, 0.0f);
-            if (dir.enabled) {
-                GLCompat::setMaterial(1.0f, 0.98f, 0.90f, 100.0f);
-                GLCompat::setEmissive(dir.color.r * 1.8f, dir.color.g * 1.8f, dir.color.b * 1.8f, 3.5f);
-            } else {
-                GLCompat::setMaterial(0.18f, 0.18f, 0.20f, 10.0f);
-                GLCompat::resetEmission();
-            }
-            GLCompat::drawBox(1.35f, 0.08f, 1.6f);
-            GLCompat::resetEmission();
-            glPopMatrix();
-
-            glPopMatrix();
-        }
-
-        // 4. Glowing Volumetric Stage Light Beams & Direction Indicator
-        if (dir.enabled && showSunRays) {
-            GLCompat::setUnlit(true);
-            GLCompat::enableBlend();
-            GLCompat::setDepthWrite(false);
-
-            // (a) Broad theatrical light shaft along light vector down towards bridge
-            GLCompat::setAlpha(0.15f);
-            GLCompat::setMaterial(dir.color.r, dir.color.g, dir.color.b, 10.0f);
-            glPushMatrix();
-            glm::vec3 shaftVec = normDir * 20.0f;
-            glTranslatef(shaftVec.x * 0.5f, shaftVec.y * 0.5f - 0.8f, shaftVec.z * 0.5f);
-            GLCompat::drawBox(8.5f, 20.0f, 8.5f);
-            glPopMatrix();
-
-            // (b) 3D Directional Light Vector Pointer / Guide Arrow (bright cyan beacons)
-            GLCompat::setAlpha(0.55f);
-            GLCompat::setMaterial(0.0f, 0.88f, 1.0f, 10.0f);
-            glPushMatrix();
-            glTranslatef(0.0f, -1.0f, 0.0f);
-            for (int seg = 1; seg <= 6; ++seg) {
-                glm::vec3 arrowPos = normDir * ((float)seg * 2.8f);
-                glPushMatrix();
-                glTranslatef(arrowPos.x, arrowPos.y, arrowPos.z);
-                GLCompat::drawSphere(0.24f, 8, 8);
-                glPopMatrix();
-            }
-            glPopMatrix();
-
-            GLCompat::disableBlend();
-            GLCompat::setDepthWrite(true);
-            GLCompat::setUnlit(false);
-            GLCompat::setAlpha(1.0f);
-        }
-
-        glPopMatrix();
-    }
 
     // Phase Switchers
     void startGlassBridge() {
@@ -597,10 +309,9 @@ namespace {
                 return;
             }
 
-            // Global Lighting & Shading Hotkeys (3-Type Lighting + Gouraud/Phong switch)
-            if (key == GLFW_KEY_F) {
-                sceneLighting.useGouraud = !sceneLighting.useGouraud;
-                Renderer::toggleShading();
+            // Global Lighting Hotkeys (3 light types) + Shape view
+            if (key == GLFW_KEY_I) {
+                shapeView = !shapeView;
                 return;
             }
             if (key == GLFW_KEY_8) {
@@ -652,7 +363,6 @@ namespace {
                     case GLFW_KEY_6: switchRLGLCamera(CAM_SIDE_RIGHT); break;
                     case GLFW_KEY_7: switchRLGLCamera(CAM_FINISH_LINE); break;
                     case GLFW_KEY_V: case GLFW_KEY_N: CameraManager::cycleMode(camMode); break;
-                    case GLFW_KEY_F: Renderer::toggleShading(); break;
                 }
             } else {
                 // Glass Bridge Hotkeys
@@ -677,7 +387,7 @@ namespace {
                     case GLFW_KEY_3: gbCamMode = GB_CAM_TOP_DOWN; break;
                     case GLFW_KEY_4: gbCamMode = GB_CAM_SIDE_PROFILE; break;
                     case GLFW_KEY_5: gbCamMode = GB_CAM_DESTINATION; break;
-                    case GLFW_KEY_TAB: case GLFW_KEY_F:
+                    case GLFW_KEY_TAB:
                         gbFastForward = !gbFastForward;
                         break;
                 }
@@ -694,6 +404,25 @@ namespace {
                 case GLFW_KEY_Q: keyStrafeLeft = isPress; break;
                 case GLFW_KEY_E: keyStrafeRight = isPress; break;
             }
+        }
+    }
+
+    void setupImGuiFonts(ImGuiIO& io) {
+        // The built-in ImGui font has no ●, ₩ glyphs (they showed as '?'). Use Windows'
+        // Segoe UI Semibold and merge the symbol font for those characters.
+        static const ImWchar textRanges[] = { 0x0020, 0x00FF, 0x2000, 0x206F, 0x20A0, 0x20CF, 0 };
+        static const ImWchar symbolRanges[] = { 0x20A0, 0x20CF, 0x25A0, 0x25FF, 0 };
+        const char* textFont = "C:/Windows/Fonts/seguisb.ttf";
+        const char* symbolFont = "C:/Windows/Fonts/seguisym.ttf";
+        if (std::ifstream(textFont).good()) {
+            io.Fonts->AddFontFromFileTTF(textFont, 16.0f, nullptr, textRanges);
+            if (std::ifstream(symbolFont).good()) {
+                ImFontConfig merge;
+                merge.MergeMode = true;
+                io.Fonts->AddFontFromFileTTF(symbolFont, 16.0f, &merge, symbolRanges);
+            }
+        } else {
+            io.Fonts->AddFontDefault();
         }
     }
 
@@ -728,10 +457,183 @@ namespace {
         colors[ImGuiCol_SeparatorHovered]     = ImVec4(1.00f, 0.08f, 0.48f, 0.90f);
         colors[ImGuiCol_SeparatorActive]      = ImVec4(1.00f, 0.08f, 0.48f, 1.00f);
     }
+
+    // ---------------------------------------------------------------------------------
+    // REPORT CAPTURE SHOTS
+    // ---------------------------------------------------------------------------------
+    // Round 1 posed mid-game: player 456 at playerZ, the NPCs spread out ahead of the start.
+    void poseRLGL(float playerZ, bool redLight) {
+        resetRLGL();
+        currentPhase = PHASE_RED_LIGHT_GREEN_LIGHT;
+        gameState = PLAYING;
+        gameTimer = 41.0f;
+        player.z = playerZ;
+        player.legAngle = 18.0f;
+        player.armAngle = -18.0f;
+        for (size_t i = 0; i < npcs.size(); ++i) {
+            npcs[i].z = START_Z + 7.0f + fmodf((float)i * 7.3f, 24.0f);
+            npcs[i].legAngle = (i % 2) ? 20.0f : -20.0f;
+            npcs[i].armAngle = -npcs[i].legAngle;
+        }
+        if (redLight) {
+            doll.lightState = RED_LIGHT;
+            doll.headAngle = doll.targetAngle = 180.0f;
+            for (auto& n : npcs) n.legAngle = n.armAngle = 0.0f;
+            player.legAngle = player.armAngle = 0.0f;
+            // two contestants who moved during the red light
+            npcs[5].isAlive = false;  npcs[5].fallAngle = 90.0f;
+            npcs[20].isAlive = false; npcs[20].fallAngle = 90.0f;
+        }
+        doll.stateTimer = 1.0e6f;
+        captureFreeze = true;
+    }
+
+    // Round 2 with Player 456 at `queueNumber`; skipTurns lets the AI play first.
+    void poseGB(int queueNumber, bool skipTurns, GlassBridgeCamMode mode) {
+        currentPhase = PHASE_GLASS_BRIDGE;
+        GlassBridgeManager::init(gbSteps, gbContestants, gbShards, gbPlayerQueueNum, gbActiveQueueIndex,
+                                 gbState, gbTimer, queueNumber);
+        if (skipTurns) GlassBridgeManager::skipToPlayerTurn(gbSteps, gbContestants, gbActiveQueueIndex, gbState);
+        gbTimer = 731.0f;
+        gbCamMode = mode;
+        gbCamInitialized = false;
+        sunAzimuth = 45.0f;
+        sunElevation = 50.0f;
+        captureFreeze = true;
+    }
+
+    void customCamera(glm::vec3 eye, glm::vec3 look, float fov) {
+        captureCamOverride = true;
+        captureEye = eye;
+        captureLook = look;
+        captureFov = fov;
+    }
+
+    void buildCaptureShots(const std::string& filter) {
+        std::vector<CaptureShot> all;
+        auto add = [&](const std::string& name, std::function<void()> setup, bool ui = false, int frames = 90) {
+            CaptureShot shot;
+            shot.name = name;
+            shot.setup = setup;
+            shot.ui = ui;
+            shot.frames = frames;
+            all.push_back(shot);
+        };
+        auto rlglDefaults = [] { sunAzimuth = 45.0f; sunElevation = 38.0f; };
+
+        // ---- Full game screenshots with the HUD
+        add("ui_rlgl_start", [=] { rlglDefaults(); resetRLGL(); currentPhase = PHASE_RED_LIGHT_GREEN_LIGHT; switchRLGLCamera(CAM_THIRD_PERSON); }, true);
+        add("ui_rlgl_green", [=] { rlglDefaults(); poseRLGL(-36.0f, false); switchRLGLCamera(CAM_THIRD_PERSON); }, true);
+        add("ui_rlgl_red", [=] { rlglDefaults(); poseRLGL(-36.0f, true); switchRLGLCamera(CAM_OVERHEAD); }, true);
+        add("ui_rlgl_won", [=] { rlglDefaults(); poseRLGL(46.0f, false); gameState = WON; switchRLGLCamera(CAM_FINISH_LINE); }, true);
+        add("ui_gb_turn", [] { poseGB(6, true, GB_CAM_FOLLOW); }, true);
+        add("ui_gb_won", [] { poseGB(16, true, GB_CAM_DESTINATION);
+                              gbContestants[15].hasFinished = true; gbContestants[15].currentStep = GB_NUM_STEPS;
+                              gbContestants[15].x = 0; gbContestants[15].z = GB_BRIDGE_START_Z + GB_NUM_STEPS * GB_STEP_LENGTH + 2.5f;
+                              gbState = GB_WON;
+                              customCamera({4.0f, 19.5f, 49.0f}, {0.0f, 17.2f, 60.0f}, 55.0f); }, true);
+
+        // ---- Round 1 camera modes (no HUD)
+        const CameraMode rlglModes[7] = {CAM_THIRD_PERSON, CAM_OVERHEAD, CAM_TOP_DOWN, CAM_DOLL_CLOSEUP,
+                                         CAM_SIDE_LEFT, CAM_SIDE_RIGHT, CAM_FINISH_LINE};
+        for (int i = 0; i < 7; ++i) {
+            CameraMode m = rlglModes[i];
+            add("rlgl_cam" + std::to_string(i + 1), [=] { rlglDefaults(); poseRLGL(-36.0f, i == 6); switchRLGLCamera(m); });
+        }
+        // ---- Round 2 camera modes (no HUD)
+        const GlassBridgeCamMode gbModes[5] = {GB_CAM_FOLLOW, GB_CAM_ORBIT_360, GB_CAM_TOP_DOWN, GB_CAM_SIDE_PROFILE, GB_CAM_DESTINATION};
+        for (int i = 0; i < 5; ++i) {
+            GlassBridgeCamMode m = gbModes[i];
+            add("gb_cam" + std::to_string(i + 1), [=] { poseGB(6, true, m); gbOrbitYaw = 35.0f; gbOrbitPitch = 22.0f; gbOrbitDist = 14.0f; });
+        }
+
+        // ---- Wide views
+        add("rlgl_wide", [=] { rlglDefaults(); poseRLGL(-36.0f, false); customCamera({11.0f, 13.0f, -62.0f}, {-1.0f, 3.0f, 20.0f}, 58.0f); });
+        add("gb_hall", [] { poseGB(6, true, GB_CAM_FOLLOW); customCamera({11.0f, 25.0f, -13.0f}, {-1.0f, 14.0f, 24.0f}, 62.0f); });
+        add("gb_sides", [] { poseGB(6, true, GB_CAM_FOLLOW); customCamera({0.0f, 21.0f, -3.0f}, {0.0f, 17.5f, 30.0f}, 74.0f); });
+
+        // ---- Glass shattering moment (the player jumps onto the weak pane of step 1)
+        {
+            CaptureShot shot;
+            shot.name = "gb_shatter";
+            shot.frames = 34;
+            shot.setup = [] {
+                poseGB(1, false, GB_CAM_SIDE_PROFILE);
+                captureFreeze = false;
+                gbContestants[0].z = 0.8f;
+                GlassSide weak = (gbSteps[0].safeSide == GLASS_LEFT) ? GLASS_RIGHT : GLASS_LEFT;
+                GlassBridgeManager::jumpPlayer(gbSteps, gbContestants, gbShards, weak, 0, gbState);
+                customCamera({-7.0f, 17.6f, 0.5f}, {0.6f, 15.6f, 3.2f}, 55.0f);
+            };
+            all.push_back(shot);
+        }
+
+        // ---- The three light types, one at a time (Round 2 and Round 1)
+        const char* lightNames[4] = {"dir", "point", "spot", "all"};
+        for (int i = 0; i < 4; ++i) {
+            add(std::string("light_gb_") + lightNames[i], [=] {
+                poseGB(1, false, GB_CAM_FOLLOW);
+                gbContestants[0].z = 0.8f;
+                sceneLighting.dir.enabled = (i == 0 || i == 3);
+                sceneLighting.point.enabled = (i == 1 || i == 3);
+                sceneLighting.spot.enabled = (i == 2 || i == 3);
+                captureDimAmbient = true;
+                customCamera({7.5f, 22.0f, -10.0f}, {-0.5f, 15.5f, 9.0f}, 58.0f);
+            });
+            add(std::string("light_rlgl_") + lightNames[i], [=] {
+                rlglDefaults();
+                poseRLGL(20.0f, true);
+                for (auto& n : npcs) n.z += 40.0f;
+                sceneLighting.dir.enabled = (i == 0 || i == 3);
+                sceneLighting.point.enabled = (i == 1 || i == 3);
+                sceneLighting.spot.enabled = (i == 2 || i == 3);
+                captureDimAmbient = true;
+                customCamera({-17.0f, 13.0f, 4.0f}, {2.0f, 2.5f, 34.0f}, 60.0f);
+            });
+        }
+
+        // ---- Phong highlight close-up and texture close-ups
+        add("phong_doll", [=] { poseRLGL(-36.0f, true); sunAzimuth = 200.0f; sunElevation = 32.0f;
+                                customCamera({1.3f, 7.0f, 54.2f}, {0.0f, 6.7f, 58.0f}, 34.0f); });
+        add("phong_players", [=] { rlglDefaults(); poseRLGL(-36.0f, false); customCamera({2.6f, 2.2f, -34.0f}, {0.0f, 1.4f, -36.0f}, 42.0f); });
+        add("tex_sand", [=] { rlglDefaults(); poseRLGL(-36.0f, false); customCamera({1.0f, 1.8f, -47.0f}, {4.0f, 0.0f, -40.0f}, 55.0f); });
+        add("tex_tree", [=] { rlglDefaults(); poseRLGL(-36.0f, false); customCamera({-7.5f, 3.2f, 55.5f}, {0.0f, 3.5f, 60.0f}, 55.0f); });
+        add("tex_wall", [] { poseGB(6, true, GB_CAM_FOLLOW); customCamera({-6.0f, 20.0f, 4.0f}, {-20.0f, 21.0f, 16.0f}, 62.0f); });
+
+        // ---- In-game shape view
+        add("shapes_rlgl", [=] { rlglDefaults(); poseRLGL(-36.0f, false); shapeView = true; customCamera({11.0f, 13.0f, -62.0f}, {-1.0f, 3.0f, 20.0f}, 58.0f); });
+        add("shapes_gb", [] { poseGB(6, true, GB_CAM_FOLLOW); shapeView = true; customCamera({11.0f, 25.0f, -13.0f}, {-1.0f, 14.0f, 24.0f}, 62.0f); });
+
+        // ---- Single models: normal look + split into basic shapes
+        for (const std::string& item : Showcase::itemNames()) {
+            bool basic = item.rfind("prim_", 0) == 0;
+            for (int parts = basic ? 1 : 0; parts <= 1; ++parts) {
+                CaptureShot shot;
+                shot.name = "obj_" + item + (parts ? "_parts" : "_full");
+                shot.showcase = item;
+                shot.parts = parts == 1;
+                shot.frames = 3;
+                shot.setup = [] { poseRLGL(-36.0f, false); };
+                all.push_back(shot);
+            }
+        }
+
+        for (CaptureShot& shot : all) {
+            if (filter.empty() || shot.name.rfind(filter, 0) == 0) captureShots.push_back(shot);
+        }
+    }
 }
 
-int main() {
-    srand((unsigned int)time(NULL));
+int main(int argc, char** argv) {
+    std::string captureFilter;
+    if (argc >= 3 && std::string(argv[1]) == "--capture") {
+        captureMode = true;
+        captureDir = argv[2];
+        if (argc >= 4) captureFilter = argv[3];
+        windowWidth = 1600;
+        windowHeight = 900;
+    }
+    srand(captureMode ? 456u : (unsigned int)time(NULL));
 
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
@@ -741,6 +643,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4); // 4x multisample anti-aliasing (smooth edges)
+    if (captureMode) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight,
                                           "Squid Game 3D: Red Light Green Light & Glass Bridge",
@@ -752,7 +656,7 @@ int main() {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable VSync
+    glfwSwapInterval(captureMode ? 0 : 1); // VSync (off while capturing, to finish faster)
 
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetScrollCallback(window, scrollCallback);
@@ -767,14 +671,17 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+    glEnable(GL_MULTISAMPLE);
     glClearColor(0.04f, 0.05f, 0.08f, 1.0f);
+    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 
     // Modern Engine Components
     Shader shader("src/shaders/default.vert", "src/shaders/default.frag");
     Camera camera(windowWidth, windowHeight, glm::vec3(0.0f, 2.5f, START_Z - 6.0f));
 
-    // Audio & Subsystems Initialization
-    AudioManager::init();
+    // Textures, Audio & Subsystems Initialization
+    SceneTextures::loadAll();
+    if (!captureMode) AudioManager::init(); // capture runs silently
     EnvironmentManager::init();
     resetRLGL();
     resetGlassBridge();
@@ -782,8 +689,11 @@ int main() {
     // Setup Dear ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = captureMode ? nullptr : "imgui.ini";
     setupSquidGameImGuiStyle();
+    setupImGuiFonts(io);
+    if (captureMode) buildCaptureShots(captureFilter);
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
@@ -800,11 +710,31 @@ int main() {
         lastTime = currentTime;
         if (dt > 0.05f) dt = 0.05f;
 
+        const CaptureShot* shot = nullptr;
+        if (captureMode) {
+            if (captureIndex >= captureShots.size()) break;
+            shot = &captureShots[captureIndex];
+            if (captureFrame == 0) {
+                // Every shot starts from the same clean defaults, then applies its own setup.
+                captureFreeze = false;
+                captureCamOverride = false;
+                captureDimAmbient = false;
+                shapeView = false;
+                sceneLighting.dir.enabled = sceneLighting.point.enabled = sceneLighting.spot.enabled = true;
+                showSunRays = false;
+                if (shot->setup) shot->setup();
+            }
+            if (shot->onFrame) shot->onFrame(captureFrame);
+            dt = 1.0f / 60.0f;
+            currentTime = captureFrame / 60.0;
+        }
+        const bool drawUI = !captureMode || shot->ui;
+
         // -------------------------------------------------------------------------------
         // UPDATE GAME LOGIC PER PHASE
         // -------------------------------------------------------------------------------
         if (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
-            if (gameState == PLAYING) {
+            if (gameState == PLAYING && !captureFreeze) {
                 gameTimer -= dt;
                 if (gameTimer <= 0.0f) {
                     gameTimer = 0.0f;
@@ -892,7 +822,7 @@ int main() {
 
             ContestantsManager::updateParticles(particles, dt);
             CameraManager::update(player, doll, camMode, dt);
-        } else {
+        } else if (!captureFreeze) {
             // Glass Bridge Phase update
             if (gbState == GB_PLAYING) {
                 gbTimer -= dt;
@@ -910,10 +840,22 @@ int main() {
         int leftBarW = UI_LEFT_BAR_WIDTH;
         int rightBarW = UI_RIGHT_BAR_WIDTH;
         int centerW = windowWidth - leftBarW - rightBarW;
-        if (centerW < 300) {
+        if (centerW < 300 || !drawUI) {
             leftBarW = 0; rightBarW = 0; centerW = windowWidth;
         }
 
+        // Shape view: color every part by its basic shape kind
+        GLCompat::InspectSettings inspectSettings;
+        inspectSettings.colorByShape = shapeView;
+        GLCompat::setInspect(inspectSettings);
+
+        // Round-specific clear colors keep any uncovered background consistent with
+        // the art direction: bright storybook sky versus a deep theatrical chamber.
+        if (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
+            glClearColor(COLOR_RLGL_CLEAR.r, COLOR_RLGL_CLEAR.g, COLOR_RLGL_CLEAR.b, 1.0f);
+        } else {
+            glClearColor(COLOR_GB_CLEAR.r, COLOR_GB_CLEAR.g, COLOR_GB_CLEAR.b, 1.0f);
+        }
         glViewport(0, 0, windowWidth, windowHeight);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -926,22 +868,36 @@ int main() {
                                           eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ, fov);
             camera.width = centerW;
             camera.height = windowHeight;
-            camera.SetView(glm::vec3(eyeX, eyeY, eyeZ),
-                           glm::vec3(lookX, lookY, lookZ),
-                           glm::vec3(upX, upY, upZ),
-                           fov, 0.1f, 280.0f);
+            if (captureCamOverride) {
+                camera.SetView(captureEye, captureLook, glm::vec3(0, 1, 0), captureFov, 0.1f, 280.0f);
+            } else {
+                camera.SetView(glm::vec3(eyeX, eyeY, eyeZ),
+                               glm::vec3(lookX, lookY, lookZ),
+                               glm::vec3(upX, upY, upZ),
+                               fov, 0.1f, 280.0f);
+            }
 
             // -------------------------------------------------------------
             // DYNAMIC 3-TYPE LIGHTING (RLGL Arena)
             // -------------------------------------------------------------
             // 1. Directional Light: Sun Key Light
             updateSunDirection();
-            sceneLighting.dir.color = glm::vec3(0.82f, 0.78f, 0.72f);
+            sceneLighting.dir.color = COLOR_RLGL_SUN;
+            sceneLighting.dir.ambientIntensity = 0.42f;
+            sceneLighting.dir.diffuseIntensity = 0.82f;
+            sceneLighting.dir.specularIntensity = 0.52f;
+            sceneLighting.ambientSky = glm::vec3(0.46f, 0.58f, 0.82f);
+            sceneLighting.ambientGround = glm::vec3(0.42f, 0.29f, 0.16f);
+            sceneLighting.numFill = 0;
+            sceneLighting.fogEnabled = true;
+            sceneLighting.fogColor = glm::vec3(0.62f, 0.76f, 0.92f); // light sky haze
+            sceneLighting.fogDensity = 0.0045f;
+            if (captureDimAmbient) sceneLighting.dir.ambientIntensity = 0.12f;
 
             // 2. Point Light: High Arena Floodlight Tower
             sceneLighting.point.position = glm::vec3(18.0f, 16.0f, 15.0f);
-            sceneLighting.point.color = glm::vec3(1.0f, 0.88f, 0.62f);
-            sceneLighting.point.intensity = 1.35f;
+            sceneLighting.point.color = COLOR_RLGL_POINT;
+            sceneLighting.point.intensity = 1.15f;
 
             // 3. Spot Light: Young-hee Doll Eye Scanning Searchlight
             float rad = glm::radians(doll.headAngle);
@@ -965,8 +921,8 @@ int main() {
             ContestantsManager::drawParticles(particles);
 
             // Draw physical light source fixtures: Sun celestial orb & Arena Floodlight Tower
-            drawSun(sceneLighting.dir);
-            drawArenaFloodlight(sceneLighting.point);
+            LightFixtures::drawDirectionalSun(sceneLighting.dir, sunElevation, sunAzimuth, showSunRays);
+            LightFixtures::drawArenaFloodlight(sceneLighting.point);
         } else {
             // Glass Bridge Scene with Exponential Camera Smoothing
             float rawEyeX, rawEyeY, rawEyeZ;
@@ -993,22 +949,49 @@ int main() {
 
             camera.width = centerW;
             camera.height = windowHeight;
-            camera.SetView(gbSmoothEye,
-                           gbSmoothLook,
-                           glm::vec3(rawUpX, rawUpY, rawUpZ),
-                           rawFov, 0.1f, 300.0f);
+            if (captureCamOverride) {
+                camera.SetView(captureEye, captureLook, glm::vec3(0, 1, 0), captureFov, 0.1f, 300.0f);
+            } else {
+                camera.SetView(gbSmoothEye,
+                               gbSmoothLook,
+                               glm::vec3(rawUpX, rawUpY, rawUpZ),
+                               rawFov, 0.1f, 300.0f);
+            }
 
             // -------------------------------------------------------------
             // DYNAMIC 3-TYPE LIGHTING (Glass Bridge)
             // -------------------------------------------------------------
             // 1. Directional Light: Stage Overhead Key Light
             updateSunDirection();
-            sceneLighting.dir.color = glm::vec3(0.85f, 0.82f, 0.76f);
+            sceneLighting.dir.color = COLOR_GB_FLOOD;
+            sceneLighting.dir.ambientIntensity = 0.50f;
+            sceneLighting.dir.diffuseIntensity = 0.72f;
+            sceneLighting.dir.specularIntensity = 0.60f;
+            sceneLighting.ambientSky = glm::vec3(0.66f, 0.70f, 0.84f);  // cool light from the ceiling troughs
+            sceneLighting.ambientGround = glm::vec3(0.34f, 0.35f, 0.42f);
+            sceneLighting.fogEnabled = true;
+            sceneLighting.fogColor = COLOR_GB_FOG;
+            sceneLighting.fogDensity = 0.0075f;
+            if (captureDimAmbient) sceneLighting.dir.ambientIntensity = 0.12f;
+
+            // Extra point lights: 4 warm lamps on the two side walls light up both sides.
+            const float lampZ[2] = {14.0f, 42.0f};
+            sceneLighting.numFill = 4;
+            for (int i = 0; i < 4; ++i) {
+                PointLightData& lamp = sceneLighting.fill[i];
+                float side = (i < 2) ? -1.0f : 1.0f;
+                lamp.position = glm::vec3(side * 18.4f, GB_BRIDGE_HEIGHT + 7.5f, lampZ[i % 2]);
+                lamp.color = COLOR_GB_LAMP;
+                lamp.constant = 1.0f;
+                lamp.linear = 0.030f;
+                lamp.quadratic = 0.0040f;
+                lamp.intensity = 1.25f;
+            }
 
             // 2. Point Light: Suspended Glass Bridge Chandelier at bridge center
             sceneLighting.point.position = glm::vec3(0.0f, GB_BRIDGE_HEIGHT + 7.0f, 28.0f);
-            sceneLighting.point.color = glm::vec3(1.0f, 0.88f, 0.65f);
-            sceneLighting.point.intensity = 1.6f;
+            sceneLighting.point.color = COLOR_GB_POINT;
+            sceneLighting.point.intensity = 1.25f;
 
             // 3. Spot Light: Theatrical Follow-Spotlight tracking active jumper
             glm::vec3 activePos(0.0f, GB_BRIDGE_HEIGHT, 0.0f);
@@ -1019,59 +1002,40 @@ int main() {
             }
             sceneLighting.spot.position = glm::vec3(activePos.x, GB_BRIDGE_HEIGHT + 8.5f, activePos.z);
             sceneLighting.spot.direction = glm::vec3(0.0f, -1.0f, 0.0f);
-            sceneLighting.spot.color = glm::vec3(0.85f, 0.95f, 1.0f); // Crisp theatrical follow beam
-            sceneLighting.spot.intensity = 3.2f;
+            sceneLighting.spot.color = COLOR_GB_SPOT; // Crisp theatrical follow beam
+            sceneLighting.spot.intensity = 2.35f;
 
             GLCompat::beginFrame(shader, camera, sceneLighting);
 
-            GlassBridgeManager::drawEnvironment((float)currentTime);
+            GlassBridgeManager::drawEnvironment();
             GlassBridgeManager::drawBridge(gbSteps, (float)currentTime, gbContestants, gbActiveQueueIndex);
-            GlassBridgeManager::drawContestants(gbContestants, gbActiveQueueIndex);
+            GlassBridgeManager::drawContestants(gbContestants);
             GlassBridgeManager::drawShards(gbShards);
 
             // Draw physical light fixtures: Overhead Stage Floodlights, Chandelier & Follow-Spotlight
-            drawStageSunBank(sceneLighting.dir);
-            drawBridgeChandelier(sceneLighting.point);
-            drawFollowSpotlight(sceneLighting.spot);
+            LightFixtures::drawOverheadFloodlightArray(sceneLighting.dir, sunElevation, sunAzimuth, showSunRays);
+            LightFixtures::drawBridgeChandelier(sceneLighting.point);
+            LightFixtures::drawFollowSpotlight(sceneLighting.spot, showSunRays);
+            for (int i = 0; i < sceneLighting.numFill; ++i) {
+                LightFixtures::drawWallLamp(sceneLighting.fill[i], sceneLighting.point.enabled,
+                                            sceneLighting.fill[i].position.x < 0.0f ? -1.0f : 1.0f);
+            }
         }
 
-        // =========================================================================
-        // PASS 2: CORNER CCTV SURVEILLANCE PIP (CAM 01: DOLL) - RLGL Only
-        // =========================================================================
-        if (leftBarW > 100 && currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
-            int pipPad = 12;
-            int pipW = leftBarW - pipPad * 2;
-            int pipH = (int)(pipW * 0.85f);
-            int pipX = pipPad;
-            int pipY = windowHeight - pipH - 105;
+        GLCompat::setInspect(GLCompat::InspectSettings());
 
+        // Showcase shot: one model alone on a light background (report figures)
+        if (shot && !shot->showcase.empty()) {
+            const int side = windowHeight;
             glEnable(GL_SCISSOR_TEST);
-            glScissor(pipX, pipY, pipW, pipH);
-            glViewport(pipX, pipY, pipW, pipH);
+            glScissor(0, 0, side, side);
+            glClearColor(0.955f, 0.960f, 0.970f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            glClearColor(0.26f, 0.52f, 0.82f, 1.0f);
-            CameraManager::getDollCloseupVectors(doll, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ, fov);
-            camera.width = pipW;
-            camera.height = pipH;
-            camera.SetView(glm::vec3(eyeX, eyeY, eyeZ),
-                           glm::vec3(lookX, lookY, lookZ),
-                           glm::vec3(upX, upY, upZ),
-                           fov, 0.05f, 260.0f);
-
-            SceneLighting pipLighting = sceneLighting;
-            pipLighting.dir.direction = glm::vec3(-0.35f, -1.0f, -0.4f);
-            pipLighting.dir.color = glm::vec3(1.15f, 1.12f, 1.08f);
-
-            GLCompat::beginFrame(shader, camera, pipLighting);
-            EnvironmentManager::draw(false);
-            DollManager::draw(doll);
-            GuardsManager::draw(guards);
-            ContestantsManager::drawNPCs(npcs);
-            ContestantsManager::drawPlayer(player);
-
             glDisable(GL_SCISSOR_TEST);
-            glClearColor(0.04f, 0.05f, 0.08f, 1.0f);
+            std::string counts = Showcase::render(shot->showcase, shot->parts, shader, camera, 0, 0, side, side);
+            if (captureFrame + 1 >= shot->frames) {
+                std::ofstream(captureDir + "/" + shot->name + ".txt") << counts;
+            }
         }
 
         // =========================================================================
@@ -1082,14 +1046,18 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        bool pipRectVisible = false;
+        int pipRectX = 0, pipRectY = 0, pipRectW = 0, pipRectH = 0;
+        if (drawUI) {
 
         // 0. TOP PHASE NAVIGATOR & SQUID GAME BROADCAST HEADER (Glass Bridge Phase Only)
         if (currentPhase == PHASE_GLASS_BRIDGE) {
             ImGui::SetNextWindowPos(ImVec2((float)leftBarW + 12.0f, 6.0f));
-            ImGui::SetNextWindowSize(ImVec2((float)centerW - 24.0f, 68.0f));
+            ImGui::SetNextWindowSize(ImVec2((float)centerW - 24.0f, 76.0f));
+            ImGui::SetNextWindowBgAlpha(0.78f); // dark strip keeps the header readable on the light hall
             ImGui::Begin("TopNavBar", nullptr,
                          ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground);
+                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
 
             // Row 1: Squid Game Brand Header with Glowing Gold Piggy Bank Bounty
             ImGui::TextColored(ImVec4(1.00f, 0.08f, 0.48f, 1.0f), "S Q U I D   G A M E");
@@ -1165,6 +1133,11 @@ int main() {
                 // Empty space reserved for 3D PiP viewport with CCTV corner brackets
                 ImVec2 pipMin = ImGui::GetCursorScreenPos();
                 ImVec2 pipMax(pipMin.x + (float)pipW, pipMin.y + (float)pipH);
+                pipRectVisible = true;
+                pipRectX = (int)pipMin.x;
+                pipRectY = windowHeight - (int)pipMax.y; // ImGui y grows down, OpenGL y grows up
+                pipRectW = pipW;
+                pipRectH = pipH;
                 ImDrawList* dl = ImGui::GetWindowDrawList();
                 dl->AddRect(pipMin, pipMax, IM_COL32(0, 220, 240, 180), 2.0f, 0, 1.5f);
                 float cLen = 14.0f;
@@ -1262,8 +1235,8 @@ int main() {
                     if (!npc.isAlive) continue;
                     float normX = (npc.x + ARENA_HALF_WIDTH) / (ARENA_HALF_WIDTH * 2.0f);
                     float normZ = (npc.z - START_Z) / totalDist;
-                    if (normX < 0.0f) normX = 0.0f; if (normX > 1.0f) normX = 1.0f;
-                    if (normZ < 0.0f) normZ = 0.0f; if (normZ > 1.0f) normZ = 1.0f;
+                    normX = glm::clamp(normX, 0.0f, 1.0f);
+                    normZ = glm::clamp(normZ, 0.0f, 1.0f);
                     float dotX = radarPos.x + 10.0f + normX * (radarW - 20.0f);
                     float dotY = radarPos.y + radarH - 12.0f - normZ * (radarH - 24.0f);
                     dl->AddCircleFilled(ImVec2(dotX, dotY), 2.5f, IM_COL32(0, 235, 120, 220));
@@ -1273,8 +1246,8 @@ int main() {
                 {
                     float normX = (player.x + ARENA_HALF_WIDTH) / (ARENA_HALF_WIDTH * 2.0f);
                     float normZ = (player.z - START_Z) / totalDist;
-                    if (normX < 0.0f) normX = 0.0f; if (normX > 1.0f) normX = 1.0f;
-                    if (normZ < 0.0f) normZ = 0.0f; if (normZ > 1.0f) normZ = 1.0f;
+                    normX = glm::clamp(normX, 0.0f, 1.0f);
+                    normZ = glm::clamp(normZ, 0.0f, 1.0f);
                     float dotX = radarPos.x + 10.0f + normX * (radarW - 20.0f);
                     float dotY = radarPos.y + radarH - 12.0f - normZ * (radarH - 24.0f);
                     dl->AddCircleFilled(ImVec2(dotX, dotY), 5.0f, IM_COL32(255, 220, 0, 255));
@@ -1436,7 +1409,7 @@ int main() {
                 if (gbFastForward) {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.02f, 0.85f, 0.45f, 1.0f));
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                    if (ImGui::Button(">> FAST-FORWARD: ON (TAB/F)", ImVec2(-1, 34))) {
+                    if (ImGui::Button(">> FAST-FORWARD: ON (TAB)", ImVec2(-1, 34))) {
                         gbFastForward = false;
                     }
                     ImGui::PopStyleColor(2);
@@ -1444,7 +1417,7 @@ int main() {
                     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.15f, 0.20f, 0.95f));
                     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.80f, 1.0f, 0.8f));
                     ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.5f);
-                    if (ImGui::Button(">> FAST-FORWARD AI (TAB/F)", ImVec2(-1, 34))) {
+                    if (ImGui::Button(">> FAST-FORWARD AI (TAB)", ImVec2(-1, 34))) {
                         gbFastForward = true;
                     }
                     ImGui::PopStyleVar();
@@ -1526,7 +1499,7 @@ int main() {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.85f, 1.0f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
-                if (ImGui::BeginChild("MoveCard", ImVec2(-1, 52), true)) {
+                if (ImGui::BeginChild("MoveCard", ImVec2(-1, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
                     ImGui::TextColored(ImVec4(0.0f, 0.88f, 1.0f, 1.0f), "W / S : FORWARD / BACK");
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "A / D : TURN LEFT / RIGHT");
                 }
@@ -1540,7 +1513,7 @@ int main() {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.02f, 0.85f, 0.45f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
-                if (ImGui::BeginChild("SpeedCard", ImVec2(-1, 52), true)) {
+                if (ImGui::BeginChild("SpeedCard", ImVec2(-1, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
                     ImGui::TextColored(ImVec4(0.0f, 0.95f, 0.50f, 1.0f), "Z/X/C : WALK / JOG / SPRINT");
                     ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "G     : CYCLE SPEED GEAR");
                 }
@@ -1554,7 +1527,7 @@ int main() {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.00f, 0.08f, 0.48f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
-                if (ImGui::BeginChild("SystemCard", ImVec2(-1, 68), true)) {
+                if (ImGui::BeginChild("SystemCard", ImVec2(-1, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "MOUSE DRAG  : 360° ORBIT");
                     ImGui::TextColored(ImVec4(0.0f, 0.85f, 1.0f, 1.0f), "MOUSE WHEEL : ZOOM IN / OUT");
                     ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "P : GLASS BRIDGE | R : RESTART");
@@ -1609,7 +1582,7 @@ int main() {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.85f, 1.0f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
-                if (ImGui::BeginChild("ActionCard", ImVec2(-1, 84), true)) {
+                if (ImGui::BeginChild("ActionCard", ImVec2(-1, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
                     ImGui::TextColored(ImVec4(0.0f, 0.88f, 1.0f, 1.0f), "A / LEFT  : JUMP LEFT");
                     ImGui::TextColored(ImVec4(1.00f, 0.08f, 0.48f, 1.0f), "D / RIGHT : JUMP RIGHT");
                     ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "S : SKIP TO MY TURN");
@@ -1624,7 +1597,7 @@ int main() {
                 ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.00f, 0.08f, 0.48f, 1.0f));
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 1.8f);
                 ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
-                if (ImGui::BeginChild("SystemCard", ImVec2(-1, 68), true)) {
+                if (ImGui::BeginChild("SystemCard", ImVec2(-1, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY)) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "MOUSE DRAG  : 360° ORBIT");
                     ImGui::TextColored(ImVec4(0.0f, 0.85f, 1.0f, 1.0f), "MOUSE WHEEL : ZOOM IN / OUT");
                     ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "P : SWITCH GAME | R : RESTART");
@@ -1646,26 +1619,23 @@ int main() {
             ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 2.0f);
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 4.0f);
 
-            if (ImGui::BeginChild("LightingCard", ImVec2(-1, 335), true)) {
-                ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "LIGHTING & SHADING LAB");
+            if (ImGui::BeginChild("LightingCard", ImVec2(-1, 0), true)) {
+                ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "LIGHTING & SHADING");
+                ImGui::TextColored(ImVec4(0.20f, 1.0f, 0.60f, 1.0f), "Phong shading (per pixel)");
                 ImGui::Spacing();
 
-                // 1. Shading Model Switch (Gouraud vs Phong)
-                bool isGouraud = sceneLighting.useGouraud;
-                if (isGouraud) {
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.85f, 0.45f, 0.05f, 1.0f));
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                    if (ImGui::Button("[F] GOURAUD (PER-VERTEX)", ImVec2(-1, 26))) {
-                        sceneLighting.useGouraud = false;
+                // Shape view: shows which basic shapes each model is made of
+                if (ImGui::Checkbox("Shape view [I]", &shapeView)) {}
+                if (shapeView) {
+                    const GLCompat::ShapeKind kinds[] = {
+                        GLCompat::SHAPE_BOX, GLCompat::SHAPE_SPHERE, GLCompat::SHAPE_CYLINDER,
+                        GLCompat::SHAPE_CONE, GLCompat::SHAPE_DISK, GLCompat::SHAPE_TORUS,
+                        GLCompat::SHAPE_POLYGON
+                    };
+                    for (GLCompat::ShapeKind k : kinds) {
+                        glm::vec3 c = GLCompat::shapeColor(k);
+                        ImGui::TextColored(ImVec4(c.r, c.g, c.b, 1.0f), "  %s", GLCompat::shapeName(k));
                     }
-                    ImGui::PopStyleColor(2);
-                } else {
-                    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.02f, 0.80f, 0.45f, 1.0f));
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                    if (ImGui::Button("[F] PHONG (PER-PIXEL)", ImVec2(-1, 26))) {
-                        sceneLighting.useGouraud = true;
-                    }
-                    ImGui::PopStyleColor(2);
                 }
 
                 ImGui::Spacing();
@@ -1709,7 +1679,7 @@ int main() {
 
                 // (b) Point Light (Omnidirectional + Attenuation)
                 const char* ptName = (currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) ?
-                                     "2. Arena Tower Pt [8]" : "2. Chandelier Pt [8]";
+                                     "2. Tower Point Light [8]" : "2. Chandelier + Wall Lamps [8]";
                 if (ImGui::Checkbox(ptName, &sceneLighting.point.enabled)) {}
 
                 // (c) Spot Light (Cone Cutoff + Attenuation)
@@ -1718,13 +1688,35 @@ int main() {
                 if (ImGui::Checkbox(spName, &sceneLighting.spot.enabled)) {}
 
                 ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.75f, 1.0f), "Hotkeys: F:Shade | 0/8/9:Lights");
+                ImGui::TextColored(ImVec4(0.70f, 0.70f, 0.75f, 1.0f), "Hotkeys: 0/8/9 lights | I shapes");
             }
             ImGui::EndChild();
             ImGui::PopStyleVar(2);
             ImGui::PopStyleColor(2);
 
             ImGui::End();
+        }
+
+        // 2b. FLOATING SHADING MODE HUD BADGE (Top right of 3D Scene Viewport)
+        {
+            float badgeX = (float)(windowWidth - rightBarW - 180);
+            ImGui::SetNextWindowPos(ImVec2(badgeX, (float)windowHeight - 44.0f));
+            ImGui::SetNextWindowSize(ImVec2(170.0f, 34.0f));
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.04f, 0.06f, 0.10f, 0.88f));
+            ImGui::PushStyleColor(ImGuiCol_Border, shapeView ? ImVec4(0.22f, 0.50f, 0.95f, 0.9f) : ImVec4(0.10f, 0.90f, 0.50f, 0.9f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1.5f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+            ImGui::Begin("ShadingBadge", nullptr,
+                         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar);
+            if (shapeView) {
+                ImGui::TextColored(ImVec4(0.45f, 0.70f, 1.0f, 1.0f), "SHAPE VIEW  [I]");
+            } else {
+                ImGui::TextColored(ImVec4(0.20f, 1.0f, 0.60f, 1.0f), "PHONG SHADING");
+            }
+            ImGui::End();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor(2);
         }
 
         // 3. CENTER SCREEN STATE OVERLAYS (Waiting / Eliminated / Won)
@@ -1854,8 +1846,53 @@ int main() {
             }
         }
 
+        } // drawUI
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // =========================================================================
+        // PASS 3: CCTV DOLL CAM (picture-in-picture, RLGL only)
+        // Drawn after the HUD into the frame the left panel reserved for it, so the
+        // panel's background can't cover it.
+        // =========================================================================
+        if (pipRectVisible && currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(pipRectX, pipRectY, pipRectW, pipRectH);
+            glViewport(pipRectX, pipRectY, pipRectW, pipRectH);
+            glClearColor(COLOR_RLGL_CLEAR.r, COLOR_RLGL_CLEAR.g, COLOR_RLGL_CLEAR.b, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            CameraManager::getDollCloseupVectors(doll, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ, fov);
+            camera.width = pipRectW;
+            camera.height = pipRectH;
+            camera.SetView(glm::vec3(eyeX, eyeY, eyeZ),
+                           glm::vec3(lookX, lookY, lookZ),
+                           glm::vec3(upX, upY, upZ),
+                           fov, 0.05f, 260.0f);
+
+            GLCompat::setInspect(inspectSettings);
+            GLCompat::beginFrame(shader, camera, sceneLighting);
+            EnvironmentManager::draw(gameTimer);
+            DollManager::draw(doll);
+            GuardsManager::draw(guards);
+            ContestantsManager::drawNPCs(npcs);
+            ContestantsManager::drawPlayer(player);
+            ContestantsManager::drawParticles(particles);
+            GLCompat::setInspect(GLCompat::InspectSettings());
+
+            glDisable(GL_SCISSOR_TEST);
+            glViewport(0, 0, windowWidth, windowHeight);
+        }
+
+        if (captureMode) {
+            if (++captureFrame >= shot->frames) {
+                int w = shot->showcase.empty() ? windowWidth : windowHeight;
+                std::string path = captureDir + "/" + shot->name + ".bmp";
+                if (Capture::saveBMP(path, 0, 0, w, windowHeight)) std::cout << "saved " << path << std::endl;
+                captureFrame = 0;
+                captureIndex++;
+            }
+        }
 
         glfwSwapBuffers(window);
     }

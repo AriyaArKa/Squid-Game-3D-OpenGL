@@ -41,10 +41,16 @@ public:
                                  GlassBridgeState& state);
 
     // 3D Scene Rendering
-    static void drawEnvironment(float animTimer);
+    static void drawEnvironment();      // everything below, plus the four guards
+    static void drawHall();             // walls, ceiling, pit floor, lamps, neon symbols, trusses
+    static void drawSafetyNet();
+    static void drawStartPlatform();
+    static void drawFinishPlatform();
     static void drawGuard(float x, float y, float z, float angleY, char maskShape);
-    static void drawBridge(const std::vector<GlassStep>& steps, float animTimer, const std::vector<GBContestant>& contestants, int activeQueueIndex);
-    static void drawContestants(const std::vector<GBContestant>& contestants, int activeQueueIndex);
+    // stepCount < GB_NUM_STEPS draws only the first few steps (used by the shape showcase)
+    static void drawBridge(const std::vector<GlassStep>& steps, float animTimer, const std::vector<GBContestant>& contestants,
+                           int activeQueueIndex, int stepCount = GB_NUM_STEPS);
+    static void drawContestants(const std::vector<GBContestant>& contestants);
     static void drawShards(const std::vector<GlassShard>& shards);
 
     // Particle FX

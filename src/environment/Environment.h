@@ -9,10 +9,12 @@ class EnvironmentManager {
 public:
     static void init();
     static void draw(float gameTimer);
+    static void drawSkyDome();
     static void drawArenaGround();
     static void drawPaintedSkyWalls();
     static void drawWheatFieldTrim();
     static void drawBackgroundHouses();
+    static void drawVillageHouse(float x, float z, float rotY); // one house (used 9 times)
     static void drawBoundaryLines();
     static void drawOverheadDigitalClock(float remainingSeconds);
 };

@@ -1,6 +1,7 @@
 #include "doll/DollHead.h"
 #include "render/Renderer.h"
 #include <GL/glut.h>
+#include "engine/GLCompat.h"
 #include <cmath>
 
 namespace {
@@ -249,13 +250,12 @@ void DollHead::drawHead(const Doll& doll) {
     glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_LIGHTING);
 
     glColor4f(0.92f, 0.45f, 0.52f, 0.32f); // 32% opacity soft circular blush
     for (int s = -1; s <= 1; s += 2) {
         glPushMatrix();
-        glTranslatef(s * 0.20f, -0.06f, 0.395f);
-        glScalef(0.075f, 0.060f, 0.015f);
+        glTranslatef(s * 0.20f, -0.06f, 0.392f);
+        glScalef(0.075f, 0.060f, 0.034f); // thick enough to sit clearly outside the face (no z-fighting)
         glutSolidSphere(1.0, 14, 14);
         glPopMatrix();
     }
@@ -320,28 +320,24 @@ void DollHead::drawHead(const Doll& doll) {
     drawPigtail(true);  // Left
     drawPigtail(false); // Right
 
-    // 11. Laser Scanning Cones during Red Light
+    // 11. Laser Scanning Beams during Red Light
+    // The face looks along the head's local +Z, so the beams start at each eye and run
+    // along +Z (toward the players once the head has turned 180 degrees).
     if (isRed && doll.headAngle > 140.0f) {
         glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-        glDepthMask(GL_FALSE);
+        GLCompat::setUnlit(true);
+        GLCompat::enableAdditiveBlend();
+        GLCompat::setDepthWrite(false);
 
-        float pulse = 0.40f + 0.15f * sinf(doll.scanAlpha * 14.0f);
+        float pulse = 0.26f + 0.10f * sinf(doll.scanAlpha * 14.0f);
 
         glColor4f(1.0f, 0.08f, 0.08f, pulse);
-        glPushMatrix();
-        glTranslatef(-0.165f, 0.078f, 0.395f);
-        glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
-        Renderer::drawCone(0.035f, 42.0f, 14);
-        glPopMatrix();
-
-        glPushMatrix();
-        glTranslatef(0.165f, 0.078f, 0.395f);
-        glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
-        Renderer::drawCone(0.035f, 42.0f, 14);
-        glPopMatrix();
+        for (int s = -1; s <= 1; s += 2) {
+            glPushMatrix();
+            glTranslatef(s * 0.165f, 0.078f, 0.42f);
+            Renderer::drawCylinder(0.010f, 0.07f, 34.0f, 10); // thin laser, slightly widening
+            glPopMatrix();
+        }
 
         glPopAttrib();
     }

@@ -2,23 +2,15 @@
 #include <cmath>
 #include "engine/GLCompat.h"
 
-namespace {
-    bool smoothMode = true;
-}
-
 void Renderer::initGL() {}
 void Renderer::setupLighting() {}
 
-void Renderer::toggleShading() {
-    GLCompat::toggleGouraudShading();
-}
-
-bool Renderer::isSmoothShading() {
-    return !GLCompat::isGouraudShading(); // Smooth = Phong, Flat/Per-vertex = Gouraud
-}
-
 void Renderer::setMaterial(float r, float g, float b, float shininess, float spec) {
     GLCompat::setMaterial(r, g, b, shininess, spec);
+}
+
+void Renderer::setMaterial(const glm::vec3& color, float shininess, float spec) {
+    setMaterial(color.r, color.g, color.b, shininess, spec);
 }
 
 void Renderer::setEmissive(float r, float g, float b, float intensity) {

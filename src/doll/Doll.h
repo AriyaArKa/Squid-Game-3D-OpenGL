@@ -10,7 +10,8 @@ class DollManager {
 public:
     static void init(Doll& doll);
     static void update(Doll& doll, float dt);
-    static void draw(const Doll& doll);
+    static void draw(const Doll& doll);       // doll + tree
+    static void drawDollOnly(const Doll& doll); // just the doll (used by the shape showcase)
 };
 
 #endif // DOLL_H

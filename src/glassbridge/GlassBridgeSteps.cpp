@@ -6,9 +6,11 @@
 // 3D DRAW: BRIDGE STRUCTURE, STEEL TRUSSES & 16 GLASS PANELS
 // -----------------------------------------------------------------------------------
 void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float animTimer,
-                                    const std::vector<GBContestant>& contestants, int activeQueueIndex) {
+                                    const std::vector<GBContestant>& contestants, int activeQueueIndex,
+                                    int stepCount) {
+    if (stepCount > (int)steps.size()) stepCount = (int)steps.size();
     float bridgeStart = GB_BRIDGE_START_Z - 1.0f; // ~2.0f
-    float bridgeEnd = GB_BRIDGE_START_Z + (float)GB_NUM_STEPS * GB_STEP_LENGTH + 0.5f; // ~56.3f
+    float bridgeEnd = GB_BRIDGE_START_Z + (float)stepCount * GB_STEP_LENGTH + 0.5f; // ~56.3f for 16 steps
     float bridgeLength = bridgeEnd - bridgeStart;
     float bridgeCenterZ = (bridgeStart + bridgeEnd) * 0.5f;
 
@@ -25,22 +27,22 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
         float bx = (float)side * 2.75f;
 
         // (a) Lower Heavy Steel Stringer (I-beam carrying the bridge)
-        GLCompat::setMaterial(0.22f, 0.24f, 0.28f, 40.0f);
+        GLCompat::setMaterial(COLOR_GB_STEEL_BEAM, 64.0f);
         GLCompat::pushMatrix();
         GLCompat::translatef(bx, GB_BRIDGE_HEIGHT - 0.22f, bridgeCenterZ);
         GLCompat::drawBox(0.24f, 0.42f, bridgeLength);
         GLCompat::popMatrix();
 
         // (b) Upper Tubular Steel Handrail
-        GLCompat::setMaterial(0.35f, 0.38f, 0.42f, 50.0f);
+        GLCompat::setMaterial(COLOR_GB_STEEL_LIGHT, 78.0f);
         GLCompat::pushMatrix();
         GLCompat::translatef(bx, GB_BRIDGE_HEIGHT + 1.05f, bridgeCenterZ);
         GLCompat::drawBox(0.08f, 0.08f, bridgeLength);
         GLCompat::popMatrix();
 
         // (c) Continuous Sleek Squid Game Hot Pink Neon Runner Strip on the handrail
-        GLCompat::setMaterial(0.95f, 0.12f, 0.48f, 60.0f);
-        GLCompat::setEmissive(0.95f, 0.12f, 0.48f, 1.2f);
+        GLCompat::setMaterial(COLOR_GB_PINK_RAIL, 60.0f);
+        GLCompat::setEmissive(COLOR_GB_PINK_RAIL.r, COLOR_GB_PINK_RAIL.g, COLOR_GB_PINK_RAIL.b, 1.2f);
         GLCompat::pushMatrix();
         GLCompat::translatef(bx - (float)side * 0.06f, GB_BRIDGE_HEIGHT + 1.02f, bridgeCenterZ);
         GLCompat::drawBox(0.03f, 0.03f, bridgeLength);
@@ -48,8 +50,8 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
         GLCompat::resetEmission();
 
         // (d) Vertical Stanchions at each of the 16 steps
-        GLCompat::setMaterial(0.26f, 0.28f, 0.32f, 35.0f);
-        for (int i = 0; i <= GB_NUM_STEPS; ++i) {
+        GLCompat::setMaterial(COLOR_GB_STEEL_LIGHT, 56.0f);
+        for (int i = 0; i <= stepCount; ++i) {
             float pz = GB_BRIDGE_START_Z + (float)i * GB_STEP_LENGTH - GB_STEP_LENGTH * 0.5f;
             GLCompat::pushMatrix();
             GLCompat::translatef(bx, GB_BRIDGE_HEIGHT + 0.45f, pz);
@@ -61,7 +63,7 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
     // -----------------------------------------------------------------------------------
     // 2. CENTRAL STEEL DIVIDER SPINE (Between Left and Right glass panes)
     // -----------------------------------------------------------------------------------
-    GLCompat::setMaterial(0.18f, 0.20f, 0.24f, 30.0f);
+    GLCompat::setMaterial(COLOR_GB_STEEL_BEAM, 58.0f);
     GLCompat::pushMatrix();
     GLCompat::translatef(0.0f, GB_BRIDGE_HEIGHT - 0.22f, bridgeCenterZ);
     GLCompat::drawBox(0.18f, 0.35f, bridgeLength);
@@ -70,13 +72,13 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
     // -----------------------------------------------------------------------------------
     // 3. THE 16 GLASS STEP PAIRS
     // -----------------------------------------------------------------------------------
-    for (int i = 0; i < GB_NUM_STEPS; ++i) {
+    for (int i = 0; i < stepCount; ++i) {
         float sz = GB_BRIDGE_START_Z + (float)i * GB_STEP_LENGTH;
         const GlassStep& step = steps[i];
         bool isTargetForActive = (i == targetStep);
 
         // Transverse Steel Crossbeam supporting this step
-        GLCompat::setMaterial(0.22f, 0.24f, 0.28f, 35.0f);
+        GLCompat::setMaterial(COLOR_GB_STEEL_BEAM, 60.0f);
         GLCompat::pushMatrix();
         GLCompat::translatef(0.0f, GB_BRIDGE_HEIGHT - 0.25f, sz);
         GLCompat::drawBox(5.6f, 0.20f, 0.35f);
@@ -107,8 +109,8 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
                 GLCompat::setDepthWrite(false);
 
                 // Polished translucent tempered glass slab
-                GLCompat::setMaterial(0.65f, 0.85f, 0.95f, 90.0f, 0.90f);
-                GLCompat::setAlpha(0.35f);
+                GLCompat::setMaterial(COLOR_GB_GLASS, 120.0f, 1.0f);
+                GLCompat::setAlpha(0.42f);
 
                 GLCompat::pushMatrix();
                 GLCompat::translatef(px, GB_BRIDGE_HEIGHT - 0.02f, sz);
@@ -117,7 +119,7 @@ void GlassBridgeManager::drawBridge(const std::vector<GlassStep>& steps, float a
 
                 // Revealed Safe Panel: Emerald Green Glow
                 if (isRevealed) {
-                    GLCompat::setEmissive(0.10f, 0.95f, 0.40f, 1.2f);
+                    GLCompat::setEmissive(COLOR_GB_SAFE.r, COLOR_GB_SAFE.g, COLOR_GB_SAFE.b, 1.2f);
                     GLCompat::setAlpha(0.70f);
                     GLCompat::pushMatrix();
                     GLCompat::translatef(px, GB_BRIDGE_HEIGHT + 0.04f, sz);

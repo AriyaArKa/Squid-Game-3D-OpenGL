@@ -86,9 +86,9 @@ void GlassBridgeManager::getCameraVectors(const std::vector<GBContestant>& conte
         }
 
         case GB_CAM_TOP_DOWN: {
-            // Aerial Plan View looking straight down
+            // Aerial Plan View looking straight down (from just under the ceiling trusses)
             eyeX = 0.0f;
-            eyeY = GB_BRIDGE_HEIGHT + 24.0f;
+            eyeY = GB_BRIDGE_HEIGHT + 11.5f;
             eyeZ = (focusZ > 8.0f) ? focusZ : 24.0f;
 
             lookX = 0.0f;
@@ -96,7 +96,7 @@ void GlassBridgeManager::getCameraVectors(const std::vector<GBContestant>& conte
             lookZ = eyeZ + 0.01f;
 
             upX = 0.0f; upY = 0.0f; upZ = 1.0f;
-            fov = 60.0f;
+            fov = 78.0f;
             break;
         }
 
