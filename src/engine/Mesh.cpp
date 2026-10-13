@@ -24,7 +24,7 @@ void Mesh::Draw(Shader& shader, const glm::mat4& model,
                 const glm::vec3& color, float shininess, const glm::vec3& emissive,
                 float alpha, bool unlit, float specularStrength) {
     shader.Activate();
-    shader.SetMat4("model", model);
+    shader.SetModel(model);
     shader.SetVec3("materialColor", color);
     shader.SetFloat("shininess", shininess);
     shader.SetVec3("emissive", emissive);
@@ -39,7 +39,7 @@ void Mesh::Draw(Shader& shader, const glm::mat4& model,
 }
 
 void Mesh::DrawGeometry(Shader& shader, const glm::mat4& model) {
-    shader.SetMat4("model", model);
+    shader.SetModel(model);
     vao.Bind();
     glDrawElements(drawMode, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0);
     vao.Unbind();

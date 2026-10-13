@@ -94,6 +94,8 @@ report/                       # Project report (PDF) and its LaTeX source
 - **`7`**: Toggle **Wall Lamps (4x)** (Glass Bridge).
 - **`9`**: Toggle **Spot Light** (Doll Eye Searchlight in RLGL / Follow-Spotlight in Glass Bridge).
 - **`P`**: Switch Phase between **Round 1 (RLGL)** and **Round 2 (Glass Bridge)**.
+- **`F3`**: Toggle **VSync** (uncap framerate for ultra-low input latency).
+- **`F4`**: Toggle **CCTV Doll Cam (PiP)**.
 - **`R`**: Reset current game round.
 - **`Esc`**: Exit application.
 

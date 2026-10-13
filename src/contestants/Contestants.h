@@ -17,7 +17,8 @@ public:
     // only position and animation state; appearance and proportions stay identical.
     static void drawCharacter(float x, float y, float z, float facingAngle,
                               float legAngle, float armAngle, int number,
-                              bool isAlive, float fallAngle, float scale = 1.15f);
+                              bool isAlive, float fallAngle, float scale = 1.15f,
+                              bool drawDigits = true);
     static void drawParticles(const std::vector<Particle>& particles);
     static void spawnBloodParticles(std::vector<Particle>& particles, float x, float y, float z);
     static void updateParticles(std::vector<Particle>& particles, float dt);

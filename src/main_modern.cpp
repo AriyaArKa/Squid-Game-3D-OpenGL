@@ -37,9 +37,21 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
+// Force high-performance dedicated GPU on dual-GPU laptops (NVIDIA Optimus & AMD PowerXpress)
+#ifdef _WIN32
+extern "C" {
+    __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
 namespace {
     // Current Active Game Phase
     GamePhase currentPhase = PHASE_RED_LIGHT_GREEN_LIGHT;
+
+    // Performance & Display Settings
+    bool enableVSync = false;
+    bool enableDollPiP = true;
 
     // -----------------------------------------------------------------------------------
     // ROUND 1: RED LIGHT, GREEN LIGHT STATE
@@ -226,7 +238,6 @@ namespace {
             aliveCount--;
             GuardsManager::triggerShot(guards, player.x, player.z);
             ContestantsManager::spawnBloodParticles(particles, player.x, player.y, player.z);
-            AudioManager::playEliminationSound();
             AudioManager::playGameOverMusic();
         }
     }
@@ -325,6 +336,17 @@ namespace {
             }
             if (key == GLFW_KEY_0) {
                 sceneLighting.dir.enabled = !sceneLighting.dir.enabled;
+                return;
+            }
+
+            // Performance Hotkeys: F3 for VSync toggle, F4 for CCTV PiP toggle
+            if (key == GLFW_KEY_F3) {
+                enableVSync = !enableVSync;
+                glfwSwapInterval(enableVSync ? 1 : 0);
+                return;
+            }
+            if (key == GLFW_KEY_F4) {
+                enableDollPiP = !enableDollPiP;
                 return;
             }
 
@@ -663,7 +685,7 @@ int main(int argc, char** argv) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x multisample anti-aliasing (smooth edges)
+    glfwWindowHint(GLFW_SAMPLES, 2); // 2x multisample anti-aliasing (smooth edges with high fillrate on laptop GPUs)
     if (captureMode) glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight,
@@ -676,7 +698,7 @@ int main(int argc, char** argv) {
     }
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(captureMode ? 0 : 1); // VSync (off while capturing, to finish faster)
+    glfwSwapInterval(captureMode ? 0 : (enableVSync ? 1 : 0)); // Adaptive / uncapped VSync for responsive input
 
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
     glfwSetScrollCallback(window, scrollCallback);
@@ -766,8 +788,9 @@ int main(int argc, char** argv) {
                 ContestantsManager::update(player, npcs, guards, doll, particles, aliveCount, dt);
 
                 if (player.isAlive) {
-                    if (keyTurnLeft)  player.facingAngle -= TURN_SPEED;
-                    if (keyTurnRight) player.facingAngle += TURN_SPEED;
+                    float dtScale = dt * 60.0f; // Normalize to 60 FPS tick for frame-rate independent smooth movement
+                    if (keyTurnLeft)  player.facingAngle -= TURN_SPEED * dtScale;
+                    if (keyTurnRight) player.facingAngle += TURN_SPEED * dtScale;
 
                     float rad = player.facingAngle * 3.14159265f / 180.0f;
                     float forwardX = sinf(rad);
@@ -798,23 +821,23 @@ int main(int argc, char** argv) {
 
                     bool isMoving = false;
                     if (keyForward) {
-                        player.x += forwardX * currentSpeed;
-                        player.z += forwardZ * currentSpeed;
+                        player.x += forwardX * currentSpeed * dtScale;
+                        player.z += forwardZ * currentSpeed * dtScale;
                         isMoving = true;
                     }
                     if (keyBackward) {
-                        player.x -= forwardX * currentSpeed * 0.70f;
-                        player.z -= forwardZ * currentSpeed * 0.70f;
+                        player.x -= forwardX * currentSpeed * 0.70f * dtScale;
+                        player.z -= forwardZ * currentSpeed * 0.70f * dtScale;
                         isMoving = true;
                     }
                     if (keyStrafeLeft) {
-                        player.x -= rightX * currentSpeed * 0.80f;
-                        player.z -= rightZ * currentSpeed * 0.80f;
+                        player.x -= rightX * currentSpeed * 0.80f * dtScale;
+                        player.z -= rightZ * currentSpeed * 0.80f * dtScale;
                         isMoving = true;
                     }
                     if (keyStrafeRight) {
-                        player.x += rightX * currentSpeed * 0.80f;
-                        player.z += rightZ * currentSpeed * 0.80f;
+                        player.x += rightX * currentSpeed * 0.80f * dtScale;
+                        player.z += rightZ * currentSpeed * 0.80f * dtScale;
                         isMoving = true;
                     }
 
@@ -1150,27 +1173,32 @@ int main(int argc, char** argv) {
                 ImGui::SameLine(ImGui::GetWindowWidth() - 95.0f);
                 ImGui::TextColored(ImVec4(0.9f, 0.9f, 0.95f, 1.0f), "CAM 01 : DOLL");
 
-                // Empty space reserved for 3D PiP viewport with CCTV corner brackets
-                ImVec2 pipMin = ImGui::GetCursorScreenPos();
-                ImVec2 pipMax(pipMin.x + (float)pipW, pipMin.y + (float)pipH);
-                pipRectVisible = true;
-                pipRectX = (int)pipMin.x;
-                pipRectY = windowHeight - (int)pipMax.y; // ImGui y grows down, OpenGL y grows up
-                pipRectW = pipW;
-                pipRectH = pipH;
                 ImDrawList* dl = ImGui::GetWindowDrawList();
-                dl->AddRect(pipMin, pipMax, IM_COL32(0, 220, 240, 180), 2.0f, 0, 1.5f);
-                float cLen = 14.0f;
-                dl->AddLine(pipMin, ImVec2(pipMin.x + cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(pipMin, ImVec2(pipMin.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x - cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x + cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(pipMax, ImVec2(pipMax.x - cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
-                dl->AddLine(pipMax, ImVec2(pipMax.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
 
-                ImGui::Dummy(ImVec2((float)pipW, (float)pipH + 6.0f));
+                // Empty space reserved for 3D PiP viewport with CCTV corner brackets
+                if (enableDollPiP) {
+                    ImVec2 pipMin = ImGui::GetCursorScreenPos();
+                    ImVec2 pipMax(pipMin.x + (float)pipW, pipMin.y + (float)pipH);
+                    pipRectVisible = true;
+                    pipRectX = (int)pipMin.x;
+                    pipRectY = windowHeight - (int)pipMax.y; // ImGui y grows down, OpenGL y grows up
+                    pipRectW = pipW;
+                    pipRectH = pipH;
+                    dl->AddRect(pipMin, pipMax, IM_COL32(0, 220, 240, 180), 2.0f, 0, 1.5f);
+                    float cLen = 14.0f;
+                    dl->AddLine(pipMin, ImVec2(pipMin.x + cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(pipMin, ImVec2(pipMin.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x - cLen, pipMin.y), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(ImVec2(pipMax.x, pipMin.y), ImVec2(pipMax.x, pipMin.y + cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x + cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(ImVec2(pipMin.x, pipMax.y), ImVec2(pipMin.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(pipMax, ImVec2(pipMax.x - cLen, pipMax.y), IM_COL32(0, 255, 255, 255), 2.5f);
+                    dl->AddLine(pipMax, ImVec2(pipMax.x, pipMax.y - cLen), IM_COL32(0, 255, 255, 255), 2.5f);
+
+                    ImGui::Dummy(ImVec2((float)pipW, (float)pipH + 6.0f));
+                } else {
+                    pipRectVisible = false;
+                }
 
                 // Cyan Bordered Digital Clock Box
                 int minutes = (int)gameTimer / 60;
@@ -1551,6 +1579,13 @@ int main(int argc, char** argv) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "MOUSE DRAG  : 360° ORBIT");
                     ImGui::TextColored(ImVec4(0.0f, 0.85f, 1.0f, 1.0f), "MOUSE WHEEL : ZOOM IN / OUT");
                     ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "P : GLASS BRIDGE | R : RESTART");
+                    ImGui::Separator();
+                    ImGui::TextColored(ImVec4(0.02f, 0.95f, 0.55f, 1.0f), "FPS: %.1f (%.1f ms)", io.Framerate, 1000.0f / io.Framerate);
+                    if (ImGui::Checkbox("VSYNC (F3)", &enableVSync)) {
+                        glfwSwapInterval(enableVSync ? 1 : 0);
+                    }
+                    ImGui::SameLine();
+                    ImGui::Checkbox("CCTV PIP (F4)", &enableDollPiP);
                 }
                 ImGui::EndChild();
                 ImGui::PopStyleVar(2);
@@ -1875,10 +1910,9 @@ int main(int argc, char** argv) {
 
         // =========================================================================
         // PASS 3: CCTV DOLL CAM (picture-in-picture, RLGL only)
-        // Drawn after the HUD into the frame the left panel reserved for it, so the
-        // panel's background can't cover it.
+        // Optimized closeup feed: renders only what the camera actually sees!
         // =========================================================================
-        if (pipRectVisible && currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
+        if (enableDollPiP && pipRectVisible && currentPhase == PHASE_RED_LIGHT_GREEN_LIGHT) {
             glEnable(GL_SCISSOR_TEST);
             glScissor(pipRectX, pipRectY, pipRectW, pipRectH);
             glViewport(pipRectX, pipRectY, pipRectW, pipRectH);
@@ -1895,12 +1929,9 @@ int main(int argc, char** argv) {
 
             GLCompat::setInspect(inspectSettings);
             GLCompat::beginFrame(shader, camera, sceneLighting);
-            EnvironmentManager::draw(gameTimer);
+            EnvironmentManager::drawArenaGround();
             DollManager::draw(doll);
             GuardsManager::draw(guards);
-            ContestantsManager::drawNPCs(npcs);
-            ContestantsManager::drawPlayer(player);
-            ContestantsManager::drawParticles(particles);
             GLCompat::setInspect(GLCompat::InspectSettings());
 
             glDisable(GL_SCISSOR_TEST);

@@ -1,8 +1,10 @@
 #include "engine/Shader.h"
+#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 std::string Shader::readFile(const char* path) {
     std::ifstream file(path);
@@ -57,6 +59,18 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+
+    // Pre-cache high frequency uniform locations to avoid string allocations in draw loop
+    locModel = glGetUniformLocation(ID, "model");
+    locMaterialColor = glGetUniformLocation(ID, "materialColor");
+    locShininess = glGetUniformLocation(ID, "shininess");
+    locMaterialSpecularStrength = glGetUniformLocation(ID, "materialSpecularStrength");
+    locEmissive = glGetUniformLocation(ID, "emissive");
+    locAlphaValue = glGetUniformLocation(ID, "alphaValue");
+    locUnlit = glGetUniformLocation(ID, "unlit");
+    locUseTexture = glGetUniformLocation(ID, "useTexture");
+    locDiffuseTexture = glGetUniformLocation(ID, "diffuseTexture");
+    locTexRepeat = glGetUniformLocation(ID, "texRepeat");
 }
 
 void Shader::Activate() {
@@ -75,26 +89,76 @@ GLint Shader::loc(const char* name) {
     return location;
 }
 
+void Shader::SetModel(const glm::mat4& model) {
+    if (locModel >= 0) {
+        glUniformMatrix4fv(locModel, 1, GL_FALSE, glm::value_ptr(model));
+    }
+}
+
 void Shader::SetMat4(const char* name, const glm::mat4& value) {
+    if (strcmp(name, "model") == 0) {
+        SetModel(value);
+        return;
+    }
     glUniformMatrix4fv(loc(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::SetMat3(const char* name, const glm::mat3& value) {
+    glUniformMatrix3fv(loc(name), 1, GL_FALSE, glm::value_ptr(value));
+}
+
 void Shader::SetVec3(const char* name, const glm::vec3& value) {
+    if (strcmp(name, "materialColor") == 0 && locMaterialColor >= 0) {
+        glUniform3fv(locMaterialColor, 1, glm::value_ptr(value));
+        return;
+    }
+    if (strcmp(name, "emissive") == 0 && locEmissive >= 0) {
+        glUniform3fv(locEmissive, 1, glm::value_ptr(value));
+        return;
+    }
     glUniform3fv(loc(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetVec2(const char* name, const glm::vec2& value) {
+    if (strcmp(name, "texRepeat") == 0 && locTexRepeat >= 0) {
+        glUniform2fv(locTexRepeat, 1, glm::value_ptr(value));
+        return;
+    }
     glUniform2fv(loc(name), 1, glm::value_ptr(value));
 }
 
 void Shader::SetFloat(const char* name, float value) {
+    if (strcmp(name, "shininess") == 0 && locShininess >= 0) {
+        glUniform1f(locShininess, value);
+        return;
+    }
+    if (strcmp(name, "materialSpecularStrength") == 0 && locMaterialSpecularStrength >= 0) {
+        glUniform1f(locMaterialSpecularStrength, value);
+        return;
+    }
+    if (strcmp(name, "alphaValue") == 0 && locAlphaValue >= 0) {
+        glUniform1f(locAlphaValue, value);
+        return;
+    }
     glUniform1f(loc(name), value);
 }
 
 void Shader::SetBool(const char* name, bool value) {
+    if (strcmp(name, "unlit") == 0 && locUnlit >= 0) {
+        glUniform1i(locUnlit, value ? 1 : 0);
+        return;
+    }
+    if (strcmp(name, "useTexture") == 0 && locUseTexture >= 0) {
+        glUniform1i(locUseTexture, value ? 1 : 0);
+        return;
+    }
     glUniform1i(loc(name), value ? 1 : 0);
 }
 
 void Shader::SetInt(const char* name, int value) {
+    if (strcmp(name, "diffuseTexture") == 0 && locDiffuseTexture >= 0) {
+        glUniform1i(locDiffuseTexture, value);
+        return;
+    }
     glUniform1i(loc(name), value);
 }

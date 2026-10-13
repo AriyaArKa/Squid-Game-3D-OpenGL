@@ -67,33 +67,44 @@ namespace {
         return buf;
     }
 
-    void appendDollNote(std::vector<short>& out, float freq, float durationSec, float attackSec = 0.03f, float decaySec = 0.05f) {
+    void appendDollNote(std::vector<short>& out, float freq, float durationSec, float attackSec = 0.04f, float decaySec = 0.08f) {
         int count = (int)(durationSec * SAMPLE_RATE);
         int attackCount = (int)(attackSec * SAMPLE_RATE);
         int decayCount = (int)(decaySec * SAMPLE_RATE);
+        if (attackCount < 1) attackCount = 1;
+        if (decayCount < 1) decayCount = 1;
+
+        double phase = 0.0;
+        double vibratoPhase = 0.0;
 
         for (int i = 0; i < count; ++i) {
-            float t = (float)i / SAMPLE_RATE;
             float env = 1.0f;
             if (i < attackCount) {
-                env = (float)i / attackCount;
+                float x = (float)i / (float)attackCount;
+                env = 0.5f * (1.0f - cosf(PI * x)); // Smooth raised-cosine attack (zero clicks)
             } else if (i > count - decayCount) {
-                env = (float)(count - i) / decayCount;
+                float x = (float)(count - i) / (float)decayCount;
+                env = 0.5f * (1.0f - cosf(PI * x)); // Smooth raised-cosine release
             }
 
-            float vibrato = 1.0f + 0.008f * sinf(2.0f * PI * 5.5f * t);
-            float f = freq * vibrato;
-            
-            float s = 0.65f * sinf(2.0f * PI * f * t)
-                    + 0.25f * sinf(2.0f * PI * f * 2.0f * t)
-                    + 0.10f * sinf(2.0f * PI * f * 3.0f * t);
-            
-            s += 0.08f * sinf(2.0f * PI * 800.0f * t) * env;
+            // Continuous phase accumulation: eliminates FM derivative glitching
+            float vibrato = 1.0f + 0.012f * (float)sin(vibratoPhase);
+            vibratoPhase += (2.0 * PI * 5.0) / (double)SAMPLE_RATE;
+            if (vibratoPhase > 2.0 * PI) vibratoPhase -= 2.0 * PI;
 
-            short sample = (short)(s * env * 22000.0f);
+            phase += (2.0 * PI * (double)(freq * vibrato)) / (double)SAMPLE_RATE;
+            if (phase > 2.0 * PI) phase -= 2.0 * PI;
+
+            // Warm music-box chime timbre: fundamental + gentle harmonics
+            float s = 0.72f * (float)sin(phase)
+                    + 0.22f * (float)sin(2.0 * phase)
+                    + 0.06f * (float)sin(3.0 * phase);
+
+            short sample = (short)(s * env * 21000.0f);
             out.push_back(sample);
         }
-        int gap = (int)(0.02f * SAMPLE_RATE);
+        // Seamless smooth 15ms silence between syllables
+        int gap = (int)(0.015f * SAMPLE_RATE);
         for (int i = 0; i < gap; ++i) out.push_back(0);
     }
 
@@ -108,25 +119,23 @@ namespace {
         appendDollNote(samples, 392.0f, 0.35f); // eot
         appendDollNote(samples, 440.0f, 0.40f); // seum
         appendDollNote(samples, 392.0f, 0.38f); // ni
-        appendDollNote(samples, 329.6f, 0.85f, 0.03f, 0.30f); // da
+        appendDollNote(samples, 329.6f, 0.85f, 0.04f, 0.25f); // da
         return createWav(samples);
     }
 
     WavBuffer generateGunshot() {
         std::vector<short> samples;
-        float duration = 0.6f;
+        float duration = 0.45f;
         int count = (int)(duration * SAMPLE_RATE);
         for (int i = 0; i < count; ++i) {
             float t = (float)i / SAMPLE_RATE;
             float noise = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
-            float crackEnv = expf(-t * 40.0f);
-            float lowBoom = sinf(2.0f * PI * (80.0f - 30.0f * t) * t) * expf(-t * 7.0f);
-            float ring = sinf(2.0f * PI * 1600.0f * t) * expf(-t * 18.0f);
-
-            float s = noise * crackEnv * 0.8f + lowBoom * 0.5f + ring * 0.2f;
+            float crack = noise * expf(-t * 50.0f);
+            float lowBoom = sinf(2.0f * PI * 85.0f * t) * expf(-t * 10.0f);
+            float s = crack * 0.75f + lowBoom * 0.50f;
             if (s > 1.0f) s = 1.0f;
             if (s < -1.0f) s = -1.0f;
-            samples.push_back((short)(s * 31000.0f));
+            samples.push_back((short)(s * 28000.0f));
         }
         return createWav(samples);
     }
@@ -146,31 +155,32 @@ namespace {
 
     WavBuffer generateHeadTurnClick() {
         std::vector<short> samples;
-        float duration = 0.28f;
+        float duration = 0.20f;
         int count = (int)(duration * SAMPLE_RATE);
         for (int i = 0; i < count; ++i) {
             float t = (float)i / SAMPLE_RATE;
-            float noise = ((float)rand() / RAND_MAX) * 2.0f - 1.0f;
-            float motor = sinf(2.0f * PI * (700.0f - 250.0f * t) * t) * expf(-t * 5.0f);
-            float ratchet = sinf(2.0f * PI * 950.0f * t) * ((i % 80 < 40) ? 1.0f : 0.0f) * expf(-t * 8.0f);
-            float s = (noise * 0.20f + motor * 0.50f + ratchet * 0.60f);
+            // Clean crisp mechanical doll rotation sound: dual click + gentle servo hum
+            float click1 = expf(-t * 90.0f) * sinf(2.0f * PI * 1700.0f * t);
+            float t2 = t - 0.07f;
+            float click2 = (t2 > 0.0f) ? (expf(-t2 * 110.0f) * sinf(2.0f * PI * 2100.0f * t2)) : 0.0f;
+            float servo = 0.12f * sinf(2.0f * PI * 320.0f * t) * (1.0f - t / duration);
+            float s = click1 * 0.70f + click2 * 0.60f + servo;
             if (s > 1.0f) s = 1.0f;
             if (s < -1.0f) s = -1.0f;
-            samples.push_back((short)(s * 26000.0f));
+            samples.push_back((short)(s * 22000.0f));
         }
         return createWav(samples);
     }
 
     WavBuffer generateEliminationSound() {
         std::vector<short> samples;
-        float duration = 0.85f;
+        float duration = 0.40f;
         int count = (int)(duration * SAMPLE_RATE);
         for (int i = 0; i < count; ++i) {
             float t = (float)i / SAMPLE_RATE;
-            float freq = 650.0f - 400.0f * (t / duration);
-            float env = expf(-t * 3.5f);
-            float s = sinf(2.0f * PI * freq * t) * env;
-            samples.push_back((short)(s * 24000.0f));
+            float env = expf(-t * 7.0f);
+            float s = (sinf(2.0f * PI * 380.0f * t) * 0.65f + sinf(2.0f * PI * 190.0f * t) * 0.35f) * env;
+            samples.push_back((short)(s * 22000.0f));
         }
         return createWav(samples);
     }

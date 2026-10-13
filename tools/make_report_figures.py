@@ -204,6 +204,31 @@ def textures():
     save(img, "textures.png")
 
 
+def multiview_grid(item, out_name):
+    views = ["front", "side", "top", "iso"]
+    imgs = {}
+    for v in views:
+        p = os.path.join(SRC, f"view_{item}_{v}.bmp")
+        if os.path.exists(p):
+            im = Image.open(p).convert("RGB")
+            imgs[v] = trim(im, pad=16)
+            save(imgs[v], f"view_{item}_{v}.png")
+    if len(imgs) == 4:
+        cell_w, cell_h = 420, 380
+        label_h = 44
+        total_w = cell_w * 4
+        comp = Image.new("RGB", (total_w, cell_h + label_h), BG)
+        d = ImageDraw.Draw(comp)
+        f = font(26, bold=True)
+        labels = ["(a) Front", "(b) Side", "(c) Top", "(d) Isometric"]
+        for i, (v, lab) in enumerate(zip(views, labels)):
+            fitted = fit(imgs[v], cell_w - 24, cell_h - 20)
+            x = i * cell_w
+            comp.paste(fitted, (x + 12, 10))
+            d.text((x + cell_w // 2, cell_h + 12), lab, fill=INK, font=f, anchor="mt")
+        save(comp, out_name)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
 
@@ -218,11 +243,12 @@ def main():
     basic_shapes()
     textures()
 
-    # --- object decompositions
+    # --- object decompositions and multi-view projections
     summary = {}
     for item in ["player", "guard", "gbguard", "doll", "dollhead", "tree", "house", "clock",
                  "bridge", "platform", "floodlight", "chandelier", "spotlight", "gantry", "walllamp"]:
         summary[item] = decomposition(item, f"decomp_{item}.png")
+        multiview_grid(item, f"views_{item}.png")
     scene_pair("rlgl_wide", "shapes_rlgl", "decomp_arena.jpg")
     scene_pair("gb_hall", "shapes_gb", "decomp_hall.jpg")
 

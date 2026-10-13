@@ -2,3 +2,6 @@ bin/
 *.exe
 *.o
 report/captures/
+
+# Microsoft Office temporary lock files
+~$*

@@ -53,7 +53,6 @@ void DollManager::update(Doll& doll, float dt) {
             doll.chantProgress = 0.0f;
 
             AudioManager::restartSong();
-            AudioManager::playHeadTurnClick();
         }
     }
 

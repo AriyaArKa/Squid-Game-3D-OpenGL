@@ -49,7 +49,7 @@ namespace {
     }
 
     // Classic proportional human contestant figure with custom numbers
-    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle) {
+    void drawContestantFigure(float legAngle, float armAngle, int number, bool isAlive, float fallAngle, bool drawDigits = true) {
         // Tracksuit & Body Colors from central Config.h
         const float tr = COLOR_TRACKSUIT.r, tg = COLOR_TRACKSUIT.g, tb = COLOR_TRACKSUIT.b;
         const float wr = COLOR_TRACKSUIT_WHITE.r, wg = COLOR_TRACKSUIT_WHITE.g, wb = COLOR_TRACKSUIT_WHITE.b;
@@ -158,11 +158,13 @@ namespace {
         glScalef(0.20f, 0.12f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number on chest for all contestants
-        glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.016f);
-        draw3DigitNumber(number, 0.048f);
-        glPopMatrix();
+        // Printed 3-digit number on chest for close contestants
+        if (drawDigits) {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, 0.016f);
+            draw3DigitNumber(number, 0.048f);
+            glPopMatrix();
+        }
         glPopMatrix();
 
         // --- WHITE BACK BADGE WITH CONTESTANT NUMBER ---
@@ -175,11 +177,13 @@ namespace {
         glScalef(0.32f, 0.18f, 0.02f);
         glutSolidCube(1.0);
         glPopMatrix();
-        // Printed 3-digit number on back for EVERY contestant
-        glPushMatrix();
-        glTranslatef(0.0f, 0.0f, 0.016f);
-        draw3DigitNumber(number, 0.076f);
-        glPopMatrix();
+        // Printed 3-digit number on back for close contestants
+        if (drawDigits) {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.0f, 0.016f);
+            draw3DigitNumber(number, 0.076f);
+            glPopMatrix();
+        }
         glPopMatrix();
 
         glPopMatrix(); // End Torso
@@ -324,7 +328,8 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
         if (!isRed) {
             // GREEN LIGHT: Reset red state, advance forward and swing limbs
             npc.hasMovedDuringRed = false;
-            npc.z += npc.speed;
+            float dtScale = dt * 60.0f;
+            npc.z += npc.speed * dtScale;
             npc.walkTime += dt;
             npc.legAngle = WALK_AMPLITUDE * sinf(WALK_OMEGA * npc.walkTime);
             npc.armAngle = -npc.legAngle;
@@ -341,7 +346,6 @@ void ContestantsManager::update(Player& player, std::vector<NPCContestant>& npcs
                     npc.isAlive = false;
                     GuardsManager::triggerShot(guards, npc.x, npc.z);
                     ContestantsManager::spawnBloodParticles(particles, npc.x, npc.y, npc.z);
-                    AudioManager::playEliminationSound();
                 }
             }
         }
@@ -367,18 +371,19 @@ void ContestantsManager::drawNPCs(const std::vector<NPCContestant>& npcs) {
     for (const auto& npc : npcs) {
         drawCharacter(npc.x, npc.y, npc.z, npc.facingAngle,
                       npc.legAngle, npc.armAngle, npc.number,
-                      npc.isAlive, npc.fallAngle, 1.10f);
+                      npc.isAlive, npc.fallAngle, 1.10f, true);
     }
 }
 
 void ContestantsManager::drawCharacter(float x, float y, float z, float facingAngle,
                                        float legAngle, float armAngle, int number,
-                                       bool isAlive, float fallAngle, float scale) {
+                                       bool isAlive, float fallAngle, float scale,
+                                       bool drawDigits) {
     glPushMatrix();
     glTranslatef(x, y, z);
     glRotatef(facingAngle, 0.0f, 1.0f, 0.0f);
     glScalef(scale, scale, scale);
-    drawContestantFigure(legAngle, armAngle, number, isAlive, fallAngle);
+    drawContestantFigure(legAngle, armAngle, number, isAlive, fallAngle, drawDigits);
     glPopMatrix();
 }
 

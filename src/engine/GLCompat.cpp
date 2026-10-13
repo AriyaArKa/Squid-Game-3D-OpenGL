@@ -430,7 +430,7 @@ void GLCompat::endPrimitive() {
                 glBufferData(GL_ARRAY_BUFFER, immVerts.size() * sizeof(Vertex), immVerts.data(), GL_STREAM_DRAW);
             }
             activeShader->Activate();
-            activeShader->SetMat4("model", glm::mat4(1.0f));
+            activeShader->SetModel(glm::mat4(1.0f));
             applyMaterial(kind);
             curColor = savedColor;
 
