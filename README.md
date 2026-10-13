@@ -1,6 +1,14 @@
 # Squid Game: OpenGL Trials
 
 <p align="center">
+  <a href="https://www.youtube.com/watch?v=USH72iWsIZ4" target="_blank">
+    <img src="https://img.shields.io/badge/YouTube-Watch%20Showcase-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="YouTube Showcase">
+  </a>
+  <img src="https://img.shields.io/badge/OpenGL-3.3%20Core-5586A4?style=for-the-badge&logo=opengl&logoColor=white" alt="OpenGL 3.3">
+  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++ 17">
+</p>
+
+<p align="center">
   <img src="docs/report/source/figures/rlgl_wide.jpg" alt="Wide overview of the Red Light, Green Light arena with the doll and contestants" title="Squid Game: OpenGL Trials game overview" width="900">
 </p>
 
@@ -12,8 +20,17 @@ An interactive, Squid Game-inspired 3D simulation built from scratch with C++ an
 
 ## Feature tour
 
-[![Watch the Squid Game: OpenGL Trials feature tour](docs/report/source/figures/rlgl_wide.jpg)](docs/media/feature-tour.mp4 "Open the feature tour video")
-<p align="center"><em>Click the preview above to open and play the full feature tour video.</em></p>
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=USH72iWsIZ4" target="_blank" title="Click to watch Squid Game: OpenGL Trials showcase on YouTube">
+    <img src="https://img.youtube.com/vi/USH72iWsIZ4/maxresdefault.jpg" alt="Watch Squid Game: OpenGL Trials video tour" width="850">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=USH72iWsIZ4" target="_blank">
+    <strong>▶ Click here to watch the full gameplay & technical showcase on YouTube</strong>
+  </a>
+</p>
 
 ## Highlights
 
