@@ -285,14 +285,14 @@ namespace {
 
         char testPath1[MAX_PATH], testPath2[MAX_PATH];
         sprintf(testPath1, "%ssquid_song.mp3", exeDir);
-        sprintf(testPath2, "%s..\\bin\\squid_song.mp3", exeDir);
+        sprintf(testPath2, "%sassets\\audio\\squid_song.mp3", exeDir);
 
         const char* candidatePaths[] = {
             testPath1,
             testPath2,
             "squid_song.mp3",
-            "bin\\squid_song.mp3",
-            "bin/squid_song.mp3",
+            "assets\\audio\\squid_song.mp3",
+            "assets/audio/squid_song.mp3",
             "src\\bgmusic\\squid_song.mp3",
             "src/bgmusic/squid_song.mp3"
         };

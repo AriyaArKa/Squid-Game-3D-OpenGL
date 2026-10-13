@@ -1,7 +1,7 @@
 """Builds the report's figures from the game's own screenshots.
 
-    bin/game_modern.exe --capture report/captures     (makes the raw .bmp shots)
-    python tools/make_report_figures.py                (writes report/source/figures/)
+    build/bin/squid_game_opengl.exe --capture docs/report/captures
+    python tools/make_report_figures.py                (writes docs/report/source/figures/)
 
 Everything shown in the report therefore comes straight out of the real program.
 """
@@ -9,8 +9,8 @@ import os
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-SRC = os.path.join(ROOT, "report", "captures")
-OUT = os.path.join(ROOT, "report", "source", "figures")
+SRC = os.path.join(ROOT, "docs", "report", "captures")
+OUT = os.path.join(ROOT, "docs", "report", "source", "figures")
 
 BG = (244, 245, 247)
 INK = (34, 38, 46)

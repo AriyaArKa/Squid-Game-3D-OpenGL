@@ -1,150 +1,185 @@
-# Squid Game 3D — Computer Graphics Project
+# Squid Game: OpenGL Trials
 
-A comprehensive 3D Computer Graphics project built with **C++**, **OpenGL 3.3 Core**, and **Dear ImGui**, featuring:
-- **Round 1: Red Light, Green Light** (Colossal Young-hee Doll hugging dead tree, head rotation, Pink Soldiers with weapons, 32 NPC contestants with individual movement and elimination physics).
-- **Round 2: Squid Game Glass Bridge** (16-step modular bridge with tempered vs normal glass, 3D shattering shard physics, 16 queued contestants with numbered bibs).
-- **3-Type Lighting Lab**: Directional Light (Sun / Stage Floodlight Array), Point Lights (Arena Floodlight Tower / Chandelier, 4 Wall Lamps), and Spot Light (Doll Searchlight / Tracking Follow-Spot).
-- **Phong Shading**: lighting (ambient + diffuse + Blinn-Phong specular) is computed for every pixel in the fragment shader.
-- **Texture Mapping**: three seamless image textures - sand (arena floor), bark (dead tree) and concrete (glass bridge hall walls & platforms).
-- **Shape View (`I`)**: paints every part by its basic shape (box, sphere, cylinder, cone, disk, torus, polygon) to show how each model is built.
-- **Hierarchical Modeling & Transformations**: `glPushMatrix`, `glPopMatrix`, `glTranslatef`, `glRotatef`, `glScalef`.
+<p align="center">
+  <img src="docs/media/banner.jpg" alt="Gameplay showcase of the Squid Game OpenGL Trials arena" title="Squid Game: OpenGL Trials gameplay showcase" width="900">
+</p>
 
----
+<p align="center"><em>Figure 1 - Real-time OpenGL rendering with the doll, contestants, arena lighting, and environment models.</em></p>
 
-## ⚡ Professor Viva & Instant Modification Cheat-Sheet
-> **"If your teacher asks you to change anything, here is how you do it in 1 second!"**
+## Feature tour
 
-| Teacher Asks | File to Open | Variable / Function to Edit |
-| :--- | :--- | :--- |
-| **Change Tracksuit Color** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `COLOR_TRACKSUIT = glm::vec3(r, g, b);` |
-| **Change Guard Jumpsuit Color** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `COLOR_GUARD_MAGENTA = glm::vec3(r, g, b);` |
-| **Change Sand / Wall / Sky Color** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `COLOR_ARENA_SAND`, `COLOR_ARENA_WALLS`, `COLOR_ARENA_SKY` |
-| **Change Glass Bridge Railing Color** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `COLOR_GB_PINK_RAIL = glm::vec3(r, g, b);` |
-| **Change RLGL Timer (e.g. 60s to 90s)** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `GAME_TIME_LIMIT = 90.0f;` |
-| **Change Glass Bridge Timer** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `GB_TIME_LIMIT = 960.0f;` |
-| **Change Player Movement Speeds** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `SPEED_SLOW_WALK`, `SPEED_EASY_RUN`, `SPEED_FAST_SPRINT` |
-| **Change Glass Bridge Step Count (16)** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h) | `GB_NUM_STEPS = 16;` |
-| **Where is Phong Shading?** | [`src/shaders/default.vert`](file:///d:/4-1/grapgics%20project/src/shaders/default.vert)<br>[`src/shaders/default.frag`](file:///d:/4-1/grapgics%20project/src/shaders/default.frag) | `default.vert`: only transforms vertices.<br>`default.frag`: per-pixel normal re-normalization, diffuse + Blinn-Phong specular for every light. |
-| **Where are the Textures?** | [`src/render/SceneTextures.cpp`](file:///d:/4-1/grapgics%20project/src/render/SceneTextures.cpp)<br>[`assets/textures/`](file:///d:/4-1/grapgics%20project/assets/textures) | `GLCompat::setTexture(&SceneTextures::sand(), uRepeat, vRepeat)`; images made by `tools/make_textures.py`. |
-| **Make the Glass Bridge hall brighter/darker** | [`src/core/Config.h`](file:///d:/4-1/grapgics%20project/src/core/Config.h)<br>[`src/main_modern.cpp`](file:///d:/4-1/grapgics%20project/src/main_modern.cpp) | `COLOR_GB_WALL`, `COLOR_GB_LAMP`; `ambientIntensity` and the 4 wall-lamp `fill[]` lights in the Glass Bridge lighting block. |
-| **Where are the 3 Types of Lighting?** | [`src/core/Types.h`](file:///d:/4-1/grapgics%20project/src/core/Types.h)<br>[`src/render/LightFixtures.cpp`](file:///d:/4-1/grapgics%20project/src/render/LightFixtures.cpp) | Structs in `Types.h`. 3D physical meshes in `LightFixtures.cpp`. |
-| **Where is Red Light Green Light logic?** | [`src/contestants/Contestants.cpp`](file:///d:/4-1/grapgics%20project/src/contestants/Contestants.cpp) | `ContestantsManager::update`: Green light walks ($z += \text{speed}$, $\sin(\omega t)$), Red light freezes. |
-| **Where is Glass Bridge logic?** | [`src/glassbridge/GlassBridge.cpp`](file:///d:/4-1/grapgics%20project/src/glassbridge/GlassBridge.cpp) | `GlassBridgeManager::update` and `jumpPlayer`: parabolic jump arc, 50/50 safe glass step logic. |
+<p align="center">
+  <video src="docs/media/feature-tour.mp4" poster="docs/media/banner.jpg" title="Squid Game: OpenGL Trials feature tour" controls preload="metadata" width="900">
+    Your browser cannot play the embedded video. <a href="docs/media/feature-tour.mp4">Download the feature tour video</a>.
+  </video>
+</p>
 
----
+<p align="center"><a href="docs/media/feature-tour.mp4">Download or open the full feature tour (MP4)</a></p>
 
-## 🏗️ Architecture & Clean File Structure
+An interactive, Squid Game-inspired 3D simulation built from scratch with C++ and modern OpenGL. Play **Red Light, Green Light** and **Glass Bridge**, explore the scenes through cinematic cameras, and inspect how each model is assembled from reusable geometric primitives.
 
-All code is strictly separated into single-responsibility modules:
+> This is an independent educational project. It is not affiliated with, endorsed by, or sponsored by Netflix or the creators of *Squid Game*.
 
-```
-src/
-├── main_modern.cpp           # Clean application entry point, game loops, Dear ImGui HUD
-├── core/
-│   ├── Config.h              # ⭐ CENTRAL CONFIGURATION (All colors, speeds, dimensions & timers)
-│   └── Types.h               # Core data structures (Player, Doll, Guards, NPCs, Lights)
-├── shaders/
-│   ├── default.vert          # Vertex shader (moves vertices; passes normal, color, UV on)
-│   └── default.frag          # Fragment shader (Phong per-pixel lighting, textures, haze)
-├── render/
-│   ├── Renderer.h / .cpp     # High-level material, primitive and lighting dispatcher
-│   ├── SceneTextures.h / .cpp# The 3 image textures (sand, bark, concrete)
-│   └── LightFixtures.h / .cpp# 3D physical light meshes (Sun, Chandelier, Spotlight, Gantry, Wall lamps)
-├── contestants/
-│   └── Contestants.h / .cpp  # Player 456 + NPC contestants, clean movement & elimination
-├── doll/
-│   ├── Doll.cpp              # Doll manager & 180° head turning state machine
-│   ├── DollHead.cpp          # 3D hair, facial features, red scanning eyes
-│   ├── DollBody.cpp          # Orange dress, yellow collar shirt, legs, arms
-│   └── DollTree.cpp          # Colossal dead gnarled tree trunk & branches
-├── guards/
-│   └── Guards.h / .cpp       # Pink Soldiers (Circle/Triangle/Square masks, weapons, aiming)
-├── environment/
-│   ├── Environment.cpp       # Grand arena sand floor, painted sky walls
-│   ├── EnvironmentHouses.cpp # Surrounding stadium architecture
-│   └── EnvironmentClock.cpp  # Digital 7-segment countdown clock
-├── glassbridge/
-│   ├── GlassBridge.h         # Glass Bridge subsystem interface
-│   ├── GlassBridge.cpp       # Game loop, queue manager, jump physics
-│   ├── GlassBridgeEnvironment.cpp # Grand stage walls, ceiling trusses, safety net
-│   ├── GlassBridgeSteps.cpp  # Steel I-beams, neon rails, 16 glass panel pairs
-│   ├── GlassBridgeContestants.cpp # Waiting queue, 3D bib numerals, guards
-│   ├── GlassBridgeShards.cpp # Real-time glass shattering particle physics
-│   └── GlassBridgeCamera.cpp # 7 cinematic camera modes (Follow, Runway, Aerial...)
-├── camera/
-│   └── Camera.h / .cpp       # RLGL 360° orbit and view vectors
-├── tools/
-│   └── Showcase.h / .cpp     # Renders one model alone (normal + split into shapes) for the report
-└── engine/                   # Modern OpenGL Core Profile engine (Shader, VAO, VBO, EBO, Mesh, Texture, GLCompat)
+## Highlights
 
-assets/textures/              # sand.png, bark.png, concrete.png
-tools/make_textures.py        # Generates the three seamless textures
-tools/make_report_figures.py  # Turns captured screenshots into the report's figures
-report/                       # Project report (PDF) and its LaTeX source
+- Two playable rounds: Red Light, Green Light and Glass Bridge
+- OpenGL 3.3 Core rendering with per-fragment Blinn-Phong lighting
+- Directional, point, wall, and tracking spot lights
+- Procedural models built from boxes, spheres, cylinders, cones, disks, and tori
+- Textured sand, bark, and concrete environments
+- 32 autonomous contestants, elimination animation, jumping, and glass-shard physics
+- Multiple cinematic cameras plus a picture-in-picture doll camera
+- Dear ImGui HUD and live controls
+- Shape Inspector mode for learning and project demonstrations
+
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| Language | C++17 and C |
+| Graphics | OpenGL 3.3 Core, GLAD, GLFW, GLM |
+| Interface | Dear ImGui |
+| Audio | Windows MCI (`winmm`) |
+| Build | CMake 3.20+ or MinGW-w64 `g++` |
+
+## Quick start
+
+### Requirements
+
+- Windows 10 or later
+- A GPU and driver with OpenGL 3.3 support
+- CMake 3.20+
+- A C++17 compiler
+- GLFW and GLM development packages
+
+With MSYS2 MinGW-w64, install the required toolchain:
+
+```bash
+pacman -S --needed mingw-w64-x86_64-toolchain \
+  mingw-w64-x86_64-cmake \
+  mingw-w64-x86_64-glfw \
+  mingw-w64-x86_64-glm
 ```
 
----
+Build from an MSYS2 MinGW 64-bit shell:
 
-## 🎮 Controls & Hotkeys
+```bash
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
 
-### Global Hotkeys
-- **`I`**: Toggle **Shape View** (color every part by its basic shape kind).
-- **`0`**: Toggle **Directional Light** (Sun in RLGL / Stage Floodlight Array in Glass Bridge).
-- **`8`**: Toggle **Point Light** (Arena Floodlight Tower in RLGL / Chandelier in Glass Bridge).
-- **`7`**: Toggle **Wall Lamps (4x)** (Glass Bridge).
-- **`9`**: Toggle **Spot Light** (Doll Eye Searchlight in RLGL / Follow-Spotlight in Glass Bridge).
-- **`P`**: Switch Phase between **Round 1 (RLGL)** and **Round 2 (Glass Bridge)**.
-- **`F3`**: Toggle **VSync** (uncap framerate for ultra-low input latency).
-- **`F4`**: Toggle **CCTV Doll Cam (PiP)**.
-- **`R`**: Reset current game round.
-- **`Esc`**: Exit application.
-
-### Round 1: Red Light, Green Light
-- **W / S or ↑ / ↓**: Walk Forward / Backward.
-- **A / D or ← / →**: Turn Left / Right.
-- **Z / X / C**: Select walk speed (Precision Walk / Easy Jog / Fast Sprint).
-- **1 – 7**: Switch RLGL Cameras (Third-Person, Overhead Free Cam, Aerial Top-Down, Doll Closeup, Stadium Left/Right, Finish Line).
-- **Mouse Drag & Scroll**: 360° free orbit and camera zoom.
-
-### Round 2: Glass Bridge
-- **A / Left Arrow / Q**: Jump to **Left Glass Panel**.
-- **D / Right Arrow / E**: Jump to **Right Glass Panel**.
-- **TAB**: Toggle Fast-Forward AI turns.
-- **S**: Skip directly to Player 456's turn with instant simulated progression.
-- **1 – 5**: Switch Glass Bridge Cameras (Follow, 360° Orbit, Aerial Top-Down, Side Profile, Destination).
-
----
-
-## 🛠️ Build & Run (MSYS2 MinGW-w64)
+Run the game from the repository root:
 
 ```powershell
-# Press Ctrl+Shift+B in VS Code, or run directly from powershell:
-g++ -O2 -DMODERN_OPENGL `
-    -I src/compat -I src -I src/vendor/glad/include -I src/vendor/imgui -I src/vendor/imgui/backends `
-    src/main_modern.cpp `
-    src/engine/Shader.cpp src/engine/Camera.cpp src/engine/VAO.cpp src/engine/VBO.cpp src/engine/EBO.cpp `
-    src/engine/Mesh.cpp src/engine/Primitives.cpp src/engine/GLCompat.cpp src/engine/Texture.cpp `
-    src/audio/Audio.cpp src/render/Renderer.cpp src/render/LightFixtures.cpp `
-    src/render/SceneTextures.cpp src/tools/Showcase.cpp `
-    src/doll/Doll.cpp src/doll/DollHead.cpp src/doll/DollBody.cpp src/doll/DollTree.cpp `
-    src/guards/Guards.cpp src/contestants/Contestants.cpp `
-    src/environment/Environment.cpp src/environment/EnvironmentHouses.cpp src/environment/EnvironmentClock.cpp `
-    src/camera/Camera.cpp `
-    src/glassbridge/GlassBridge.cpp src/glassbridge/GlassBridgeEnvironment.cpp `
-    src/glassbridge/GlassBridgeSteps.cpp src/glassbridge/GlassBridgeContestants.cpp `
-    src/glassbridge/GlassBridgeShards.cpp src/glassbridge/GlassBridgeCamera.cpp `
-    src/vendor/glad/src/gl.c src/vendor/imgui/imgui.cpp src/vendor/imgui/imgui_draw.cpp `
-    src/vendor/imgui/imgui_tables.cpp src/vendor/imgui/imgui_widgets.cpp `
-    src/vendor/imgui/backends/imgui_impl_glfw.cpp src/vendor/imgui/backends/imgui_impl_opengl3.cpp `
-    -o bin/game_modern.exe -lglfw3 -lopengl32 -lwinmm -lgdi32
-
-# Run (from the project folder, so shaders and textures are found):
-.\bin\game_modern.exe
+.\build\bin\squid_game_opengl.exe
 ```
 
-### Regenerating the report screenshots
+The build copies shaders and available runtime assets beside the executable, so it can also be launched directly from `build/bin`.
+
+### Optional soundtrack
+
+Music is not distributed with the repository. To use a locally owned MP3, place it at:
+
+```text
+assets/audio/squid_song.mp3
+```
+
+The file is intentionally ignored by Git. The simulation works without it.
+
+## Controls
+
+### Global
+
+| Key | Action |
+| --- | --- |
+| `P` | Switch between the two rounds |
+| `I` | Toggle Shape Inspector |
+| `0` | Toggle directional light |
+| `7` | Toggle wall lights in Glass Bridge |
+| `8` | Toggle point light |
+| `9` | Toggle spot light |
+| `F3` | Toggle VSync |
+| `F4` | Toggle picture-in-picture doll camera |
+| `R` | Reset the current round |
+| `Esc` | Exit |
+
+### Red Light, Green Light
+
+| Key | Action |
+| --- | --- |
+| `W` / `S` or `Up` / `Down` | Move forward or backward |
+| `A` / `D` or `Left` / `Right` | Turn left or right |
+| `Z` / `X` / `C` | Select walk, jog, or sprint speed |
+| `1`-`7` | Select a camera |
+| Mouse drag / wheel | Orbit / zoom |
+
+### Glass Bridge
+
+| Key | Action |
+| --- | --- |
+| `A`, `Left`, or `Q` | Jump to the left panel |
+| `D`, `Right`, or `E` | Jump to the right panel |
+| `Tab` | Toggle fast-forward for AI turns |
+| `S` | Skip to Player 456's turn |
+| `1`-`5` | Select a camera |
+
+## Project structure
+
+```text
+.
+|-- assets/              Runtime textures and optional local audio
+|-- docs/
+|   |-- media/           README media
+|   |-- presentation/    Project presentation
+|   `-- report/          Report PDF, LaTeX source, and figures
+|-- src/
+|   |-- audio/           Sound effects and music playback
+|   |-- camera/          Round 1 camera controller
+|   |-- compat/          Compatibility drawing interface
+|   |-- contestants/     Player and NPC simulation
+|   |-- core/            Shared configuration and data types
+|   |-- doll/            Doll, head, body, and tree models
+|   |-- engine/          OpenGL abstractions and primitives
+|   |-- environment/     Arena, architecture, and clock
+|   |-- glassbridge/     Bridge gameplay, cameras, and physics
+|   |-- guards/          Guard models and behavior
+|   |-- render/          Scene rendering, lights, and textures
+|   |-- shaders/         GLSL vertex and fragment shaders
+|   |-- tools/           In-game showcase renderer
+|   `-- vendor/          Vendored GLAD, Dear ImGui, and stb_image
+|-- tools/               Asset and report-generation scripts
+`-- CMakeLists.txt       Portable project build definition
+```
+
+Most gameplay tuning values live in [`src/core/Config.h`](src/core/Config.h). Rendering starts in [`src/main_modern.cpp`](src/main_modern.cpp), while the lighting pipeline is implemented in [`src/shaders/default.vert`](src/shaders/default.vert) and [`src/shaders/default.frag`](src/shaders/default.frag).
+
+## Documentation
+
+- [Project report](docs/report/Squid-Game-3D-Project-Report.pdf)
+- [Presentation](docs/presentation/Squid-Game-3D-Presentation.pptx)
+- [LaTeX report source](docs/report/source/report.tex)
+
+## Regenerating assets and report figures
+
+Generate the procedural textures:
+
+```bash
+python tools/make_textures.py
+```
+
+Capture the scripted report shots and assemble the figures:
+
 ```powershell
-.\bin\game_modern.exe --capture report\captures        # plays ~110 scripted shots, saves .bmp files, quits
-.\bin\game_modern.exe --capture report\captures obj_   # optional: only shots whose name starts with "obj_"
-python tools\make_report_figures.py                     # converts/combines them into report\source\figures
+.\build\bin\squid_game_opengl.exe --capture docs\report\captures
+python tools\make_report_figures.py
 ```
+
+Python figure generation requires Pillow and NumPy.
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes focused, follow the existing module boundaries, and verify a clean Release build before opening a pull request. For larger features, open an issue first so the design can be discussed.
+
+## License
+
+No project license has been granted yet. The vendored libraries retain their respective licenses. Add a project-level `LICENSE` before redistributing or reusing the original source code.

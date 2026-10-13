@@ -131,7 +131,7 @@ namespace {
     }
 
     // ---------------------------------------------------------------------------------
-    // REPORT CAPTURE MODE  (game_modern.exe --capture <folder> [name-prefix])
+    // REPORT CAPTURE MODE  (squid_game_opengl.exe --capture <folder> [name-prefix])
     // Plays a fixed list of "shots" (game moments, camera angles, single models), saves
     // each one as a .bmp and quits. Used to make every screenshot in the report.
     // ---------------------------------------------------------------------------------

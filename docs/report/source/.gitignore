@@ -1,0 +1,6 @@
+# LaTeX build files
+*.aux
+*.log
+*.toc
+*.out
+report.pdf

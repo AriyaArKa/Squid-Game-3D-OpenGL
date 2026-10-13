@@ -1,68 +1,29 @@
 {
+    "version": "2.0.0",
     "tasks": [
+        {
+            "label": "configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S", ".",
+                "-B", "build",
+                "-G", "MinGW Makefiles",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "problemMatcher": []
+        },
         {
             "label": "build",
             "type": "shell",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
-            "args": [
-                "-O2",
-                "-DMODERN_OPENGL",
-                "-I", "${workspaceFolder}/src/compat",
-                "-I", "${workspaceFolder}/src",
-                "-I", "${workspaceFolder}/src/vendor/glad/include",
-                "-I", "${workspaceFolder}/src/vendor/imgui",
-                "-I", "${workspaceFolder}/src/vendor/imgui/backends",
-                "${workspaceFolder}/src/main_modern.cpp",
-                "${workspaceFolder}/src/engine/Shader.cpp",
-                "${workspaceFolder}/src/engine/Camera.cpp",
-                "${workspaceFolder}/src/engine/VAO.cpp",
-                "${workspaceFolder}/src/engine/VBO.cpp",
-                "${workspaceFolder}/src/engine/EBO.cpp",
-                "${workspaceFolder}/src/engine/Mesh.cpp",
-                "${workspaceFolder}/src/engine/Primitives.cpp",
-                "${workspaceFolder}/src/engine/GLCompat.cpp",
-                "${workspaceFolder}/src/engine/Texture.cpp",
-                "${workspaceFolder}/src/audio/Audio.cpp",
-                "${workspaceFolder}/src/render/Renderer.cpp",
-                "${workspaceFolder}/src/render/LightFixtures.cpp",
-                "${workspaceFolder}/src/render/SceneTextures.cpp",
-                "${workspaceFolder}/src/tools/Showcase.cpp",
-                "${workspaceFolder}/src/doll/Doll.cpp",
-                "${workspaceFolder}/src/doll/DollHead.cpp",
-                "${workspaceFolder}/src/doll/DollBody.cpp",
-                "${workspaceFolder}/src/doll/DollTree.cpp",
-                "${workspaceFolder}/src/guards/Guards.cpp",
-                "${workspaceFolder}/src/contestants/Contestants.cpp",
-                "${workspaceFolder}/src/environment/Environment.cpp",
-                "${workspaceFolder}/src/environment/EnvironmentHouses.cpp",
-                "${workspaceFolder}/src/environment/EnvironmentClock.cpp",
-                "${workspaceFolder}/src/camera/Camera.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridge.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridgeEnvironment.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridgeSteps.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridgeContestants.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridgeShards.cpp",
-                "${workspaceFolder}/src/glassbridge/GlassBridgeCamera.cpp",
-                "${workspaceFolder}/src/vendor/glad/src/gl.c",
-                "${workspaceFolder}/src/vendor/imgui/imgui.cpp",
-                "${workspaceFolder}/src/vendor/imgui/imgui_draw.cpp",
-                "${workspaceFolder}/src/vendor/imgui/imgui_tables.cpp",
-                "${workspaceFolder}/src/vendor/imgui/imgui_widgets.cpp",
-                "${workspaceFolder}/src/vendor/imgui/backends/imgui_impl_glfw.cpp",
-                "${workspaceFolder}/src/vendor/imgui/backends/imgui_impl_opengl3.cpp",
-                "-o",
-                "${workspaceFolder}/bin/game_modern.exe",
-                "-lglfw3",
-                "-lopengl32",
-                "-lwinmm",
-                "-lgdi32"
-            ],
+            "command": "cmake",
+            "args": ["--build", "build", "--parallel"],
+            "dependsOn": "configure",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "problemMatcher": ["$gcc"]
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

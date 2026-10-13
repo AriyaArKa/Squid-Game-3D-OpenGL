@@ -1,7 +1,23 @@
-bin/
+# Build output
+/build/
+/bin/
 *.exe
 *.o
-report/captures/
+*.obj
 
-# Microsoft Office temporary lock files
+# Runtime state and local media
+/imgui.ini
+/assets/audio/*.mp3
+
+# Generated report files
+/docs/report/captures/
+/docs/report/source/*.aux
+/docs/report/source/*.log
+/docs/report/source/*.out
+/docs/report/source/*.toc
+/docs/report/source/report.pdf
+
+# Editor, operating-system, and Office artifacts
+.DS_Store
+Thumbs.db
 ~$*
