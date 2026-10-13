@@ -6,16 +6,16 @@
 
 <p align="center"><em>Game overview - the doll, contestants, arena lighting, and environment models rendered in real time.</em></p>
 
+An interactive, Squid Game-inspired 3D simulation built from scratch with C++ and modern OpenGL. Play **Red Light, Green Light** and **Glass Bridge**, explore the scenes through cinematic cameras, and inspect how each model is assembled from reusable geometric primitives.
+
+> This is an independent educational project. It is not affiliated with, endorsed by, or sponsored by Netflix or the creators of *Squid Game*.
+
 ## Feature tour
 
 <video src="docs/media/feature-tour.mp4" title="Squid Game: OpenGL Trials feature tour" autoplay muted loop controls playsinline width="900">
   Your browser cannot play the video. <a href="docs/media/feature-tour.mp4">Open the feature tour video</a>.
 </video>
 <p align="center"><em>The feature tour starts muted automatically; use the controls to pause, seek, or enable sound.</em></p>
-
-An interactive, Squid Game-inspired 3D simulation built from scratch with C++ and modern OpenGL. Play **Red Light, Green Light** and **Glass Bridge**, explore the scenes through cinematic cameras, and inspect how each model is assembled from reusable geometric primitives.
-
-> This is an independent educational project. It is not affiliated with, endorsed by, or sponsored by Netflix or the creators of *Squid Game*.
 
 ## Highlights
 
@@ -29,168 +29,91 @@ An interactive, Squid Game-inspired 3D simulation built from scratch with C++ an
 - Dear ImGui HUD and live controls
 - Shape Inspector mode for learning and project demonstrations
 
-## At-a-glance showcase
+## Visual report: large model studies
 
-These large previews make the main game systems readable immediately. The complete report gallery follows below.
+This section follows the structure of the written report. Each study gives the model a readable presentation image, a decomposition view, and the supporting technical views. The tree study is shown in full because it is the main landmark of the Red Light, Green Light arena.
 
-<p align="center"><img src="docs/report/source/figures/rlgl_wide.jpg" alt="Full Red Light, Green Light game overview" width="900"></p>
-<p align="center"><em>Red Light, Green Light - arena scale, contestant crowd, doll, clock, and floodlight.</em></p>
+### 1. Dead tree - complete model study
 
-<p align="center"><img src="docs/report/source/figures/phong_doll.jpg" alt="Close-up of the Young-hee doll face with Phong shading" width="900"></p>
-<p align="center"><em>Doll close-up - face geometry, eye searchlight, and per-pixel Phong highlights.</em></p>
+<p align="center"><img src="docs/report/source/figures/views_tree.png" alt="Dead tree model turntable showing multiple angles" width="760"></p>
+<p align="center"><em>Turntable overview - the complete gnarled tree asset used behind the doll.</em></p>
 
-<p align="center"><img src="docs/report/source/figures/gb_hall.jpg" alt="Wide Glass Bridge hall with glass panels and stage lighting" width="900"></p>
-<p align="center"><em>Glass Bridge - modular panels, hall architecture, rails, and cinematic stage lighting.</em></p>
+<p align="center"><img src="docs/report/source/figures/decomp_tree.png" alt="Dead tree separated into trunk, branches, and geometric parts" width="760"></p>
+<p align="center"><em>Model decomposition - hierarchical parts built from reusable cylinders and branch segments.</em></p>
 
-<p align="center"><img src="docs/report/source/figures/gb_shatter.jpg" alt="Tempered glass panel breaking into animated shards" width="900"></p>
-<p align="center"><em>Glass physics - a failed panel breaks into animated shards during the bridge round.</em></p>
+<p align="center"><img src="docs/report/source/figures/view_tree_front.png" alt="Dead tree front orthographic view" width="760"></p>
+<p align="center"><em>Front view - silhouette, trunk placement, and branch spacing.</em></p>
 
-## Complete report gallery
+<p align="center"><img src="docs/report/source/figures/view_tree_iso.png" alt="Dead tree isometric orthographic view" width="760"></p>
+<p align="center"><em>Isometric view - depth relationships between the trunk and branches.</em></p>
 
-The gallery below contains the figures generated for the project report. Every image is linked from the repository, so visitors can inspect the complete game at a glance without downloading the PDF.
+<p align="center"><img src="docs/report/source/figures/view_tree_side.png" alt="Dead tree side orthographic view" width="760"></p>
+<p align="center"><em>Side view - profile used to validate the arena composition.</em></p>
 
-### Gameplay, environments, and interface
+<p align="center"><img src="docs/report/source/figures/view_tree_top.png" alt="Dead tree top orthographic view" width="760"></p>
+<p align="center"><em>Top view - branch spread and ground footprint.</em></p>
 
-<table>
-<tr>
-<td><img src="docs/report/source/figures/rlgl_wide.jpg" alt="Wide view of the Red Light, Green Light arena" width="240"></td>
-<td><img src="docs/report/source/figures/gb_hall.jpg" alt="Glass Bridge hall environment" width="240"></td>
-<td><img src="docs/report/source/figures/gb_sides.jpg" alt="Glass Bridge side view" width="240"></td>
-<td><img src="docs/report/source/figures/gb_shatter.jpg" alt="Glass panel shattering effect" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/ui_rlgl_start.jpg" alt="Red Light, Green Light start screen" width="240"></td>
-<td><img src="docs/report/source/figures/ui_rlgl_green.jpg" alt="Green light gameplay HUD" width="240"></td>
-<td><img src="docs/report/source/figures/ui_rlgl_red.jpg" alt="Red light gameplay HUD" width="240"></td>
-<td><img src="docs/report/source/figures/ui_rlgl_won.jpg" alt="Red Light, Green Light victory screen" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/ui_gb_turn.jpg" alt="Glass Bridge player turn HUD" width="240"></td>
-<td><img src="docs/report/source/figures/ui_gb_won.jpg" alt="Glass Bridge victory screen" width="240"></td>
-<td><img src="docs/report/source/figures/basic_shapes.png" alt="Basic geometric primitives used by the renderer" width="240"></td>
-<td></td>
-</tr>
-</table>
+### 2. Young-hee doll and face
 
-### Lighting and shading
+<p align="center"><img src="docs/report/source/figures/phong_doll.jpg" alt="Young-hee doll face with red eye searchlight and Phong highlights" width="760"></p>
+<p align="center"><em>Face close-up - eye searchlights, smooth highlights, hair, cheeks, and facial geometry.</em></p>
 
-<table>
-<tr>
-<td><img src="docs/report/source/figures/lights_rlgl.jpg" alt="Red Light, Green Light lighting setup" width="300"></td>
-<td><img src="docs/report/source/figures/lights_gb.jpg" alt="Glass Bridge lighting setup" width="300"></td>
-<td><img src="docs/report/source/figures/phong_doll.jpg" alt="Phong shading on the Young-hee doll" width="300"></td>
-<td><img src="docs/report/source/figures/phong_players.jpg" alt="Phong shading on player models" width="300"></td>
-</tr>
-</table>
+<p align="center"><img src="docs/report/source/figures/decomp_doll.png" alt="Young-hee doll body decomposition" width="760"></p>
+<p align="center"><em>Body decomposition - head, hair, dress, collar, limbs, and support parts.</em></p>
 
-### Textures and materials
+<p align="center"><img src="docs/report/source/figures/decomp_dollhead.png" alt="Young-hee doll head decomposition" width="760"></p>
+<p align="center"><em>Head decomposition - face, eyes, pupils, brows, hair, and mouth components.</em></p>
 
-<table>
-<tr>
-<td><img src="docs/report/source/figures/textures.png" alt="Project texture atlas overview" width="300"></td>
-<td><img src="docs/report/source/figures/tex_sand.jpg" alt="Sand floor texture" width="300"></td>
-<td><img src="docs/report/source/figures/tex_tree.jpg" alt="Bark texture used on the tree" width="300"></td>
-<td><img src="docs/report/source/figures/tex_wall.jpg" alt="Concrete wall texture" width="300"></td>
-</tr>
-</table>
+### 3. Players and guards
 
-### Model construction and decomposition
+<p align="center"><img src="docs/report/source/figures/views_player.png" alt="Player model turntable" width="760"></p>
+<p align="center"><em>Player 456 - reusable contestant mesh and numbered tracksuit presentation.</em></p>
 
-<table>
-<tr>
-<td><img src="docs/report/source/figures/decomp_arena.jpg" alt="Arena decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_hall.jpg" alt="Glass Bridge hall decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_doll.png" alt="Doll model decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_dollhead.png" alt="Doll head decomposition" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/decomp_tree.png" alt="Dead tree decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_player.png" alt="Player model decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_guard.png" alt="Guard model decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_gbguard.png" alt="Glass Bridge guard decomposition" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/decomp_house.png" alt="House decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_clock.png" alt="Countdown clock decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_bridge.png" alt="Bridge decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_platform.png" alt="Platform decomposition" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/decomp_chandelier.png" alt="Chandelier decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_floodlight.png" alt="Floodlight decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_spotlight.png" alt="Spotlight decomposition" width="240"></td>
-<td><img src="docs/report/source/figures/decomp_gantry.png" alt="Gantry decomposition" width="240"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/decomp_walllamp.png" alt="Wall lamp decomposition" width="240"></td>
-</tr>
-</table>
+<p align="center"><img src="docs/report/source/figures/decomp_player.png" alt="Player model decomposition" width="760"></p>
+<p align="center"><em>Player construction - body, head, limbs, clothing, and bib assembled hierarchically.</em></p>
 
-### Camera and model turntables
+<p align="center"><img src="docs/report/source/figures/views_guard.png" alt="Pink guard model turntable" width="760"></p>
+<p align="center"><em>Pink guard - mask, jumpsuit, weapon, and stance variations.</em></p>
 
-<table>
-<tr>
-<td><img src="docs/report/source/figures/cameras_rlgl.jpg" alt="Red Light, Green Light camera lineup" width="300"></td>
-<td><img src="docs/report/source/figures/cameras_gb.jpg" alt="Glass Bridge camera lineup" width="300"></td>
-<td><img src="docs/report/source/figures/views_doll.png" alt="Doll model turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_bridge.png" alt="Bridge model turntable" width="300"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/views_player.png" alt="Player model turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_guard.png" alt="Guard model turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_tree.png" alt="Tree model turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_house.png" alt="House model turntable" width="300"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/views_dollhead.png" alt="Doll head turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_clock.png" alt="Clock turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_platform.png" alt="Platform turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_gbguard.png" alt="Glass Bridge guard turntable" width="300"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/views_chandelier.png" alt="Chandelier turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_floodlight.png" alt="Floodlight turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_spotlight.png" alt="Spotlight turntable" width="300"></td>
-<td><img src="docs/report/source/figures/views_gantry.png" alt="Gantry turntable" width="300"></td>
-</tr>
-<tr>
-<td><img src="docs/report/source/figures/views_walllamp.png" alt="Wall lamp turntable" width="300"></td>
-</tr>
-</table>
+<p align="center"><img src="docs/report/source/figures/decomp_guard.png" alt="Pink guard model decomposition" width="760"></p>
+<p align="center"><em>Guard construction - geometric mask, body, hands, boots, and weapon parts.</em></p>
 
-<details>
-<summary><strong>Open all orthographic model views</strong></summary>
+### 4. Glass Bridge and gameplay environment
 
-The report also includes front, side, top, and isometric views for every modeled asset. These links preserve the complete technical reference without making the landing page excessively tall.
+<p align="center"><img src="docs/report/source/figures/gb_hall.jpg" alt="Glass Bridge hall with panels, rails, and lighting" width="760"></p>
+<p align="center"><em>Glass Bridge hall - the complete gameplay space and stage lighting composition.</em></p>
 
-<table>
-<tr>
-<td><a href="docs/report/source/figures/view_doll_front.png">Doll front</a> · <a href="docs/report/source/figures/view_doll_side.png">side</a> · <a href="docs/report/source/figures/view_doll_top.png">top</a> · <a href="docs/report/source/figures/view_doll_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_dollhead_front.png">Doll head front</a> · <a href="docs/report/source/figures/view_dollhead_side.png">side</a> · <a href="docs/report/source/figures/view_dollhead_top.png">top</a> · <a href="docs/report/source/figures/view_dollhead_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_tree_front.png">Tree front</a> · <a href="docs/report/source/figures/view_tree_side.png">side</a> · <a href="docs/report/source/figures/view_tree_top.png">top</a> · <a href="docs/report/source/figures/view_tree_iso.png">isometric</a></td>
-</tr>
-<tr>
-<td><a href="docs/report/source/figures/view_player_front.png">Player front</a> · <a href="docs/report/source/figures/view_player_side.png">side</a> · <a href="docs/report/source/figures/view_player_top.png">top</a> · <a href="docs/report/source/figures/view_player_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_guard_front.png">Guard front</a> · <a href="docs/report/source/figures/view_guard_side.png">side</a> · <a href="docs/report/source/figures/view_guard_top.png">top</a> · <a href="docs/report/source/figures/view_guard_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_gbguard_front.png">Bridge guard front</a> · <a href="docs/report/source/figures/view_gbguard_side.png">side</a> · <a href="docs/report/source/figures/view_gbguard_top.png">top</a> · <a href="docs/report/source/figures/view_gbguard_iso.png">isometric</a></td>
-</tr>
-<tr>
-<td><a href="docs/report/source/figures/view_house_front.png">House front</a> · <a href="docs/report/source/figures/view_house_side.png">side</a> · <a href="docs/report/source/figures/view_house_top.png">top</a> · <a href="docs/report/source/figures/view_house_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_clock_front.png">Clock front</a> · <a href="docs/report/source/figures/view_clock_side.png">side</a> · <a href="docs/report/source/figures/view_clock_top.png">top</a> · <a href="docs/report/source/figures/view_clock_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_bridge_front.png">Bridge front</a> · <a href="docs/report/source/figures/view_bridge_side.png">side</a> · <a href="docs/report/source/figures/view_bridge_top.png">top</a> · <a href="docs/report/source/figures/view_bridge_iso.png">isometric</a></td>
-</tr>
-<tr>
-<td><a href="docs/report/source/figures/view_platform_front.png">Platform front</a> · <a href="docs/report/source/figures/view_platform_side.png">side</a> · <a href="docs/report/source/figures/view_platform_top.png">top</a> · <a href="docs/report/source/figures/view_platform_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_chandelier_front.png">Chandelier front</a> · <a href="docs/report/source/figures/view_chandelier_side.png">side</a> · <a href="docs/report/source/figures/view_chandelier_top.png">top</a> · <a href="docs/report/source/figures/view_chandelier_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_floodlight_front.png">Floodlight front</a> · <a href="docs/report/source/figures/view_floodlight_side.png">side</a> · <a href="docs/report/source/figures/view_floodlight_top.png">top</a> · <a href="docs/report/source/figures/view_floodlight_iso.png">isometric</a></td>
-</tr>
-<tr>
-<td><a href="docs/report/source/figures/view_spotlight_front.png">Spotlight front</a> · <a href="docs/report/source/figures/view_spotlight_side.png">side</a> · <a href="docs/report/source/figures/view_spotlight_top.png">top</a> · <a href="docs/report/source/figures/view_spotlight_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_gantry_front.png">Gantry front</a> · <a href="docs/report/source/figures/view_gantry_side.png">side</a> · <a href="docs/report/source/figures/view_gantry_top.png">top</a> · <a href="docs/report/source/figures/view_gantry_iso.png">isometric</a></td>
-<td><a href="docs/report/source/figures/view_walllamp_front.png">Wall lamp front</a> · <a href="docs/report/source/figures/view_walllamp_side.png">side</a> · <a href="docs/report/source/figures/view_walllamp_top.png">top</a> · <a href="docs/report/source/figures/view_walllamp_iso.png">isometric</a></td>
-</tr>
-</table>
-</details>
+<p align="center"><img src="docs/report/source/figures/views_bridge.png" alt="Glass Bridge structural model turntable" width="760"></p>
+<p align="center"><em>Bridge structure - modular steel frame, paired glass panels, and safety rails.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/decomp_bridge.png" alt="Glass Bridge model decomposition" width="760"></p>
+<p align="center"><em>Bridge decomposition - the reusable step, rail, beam, and panel components.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/gb_shatter.jpg" alt="Glass Bridge panel breaking into shards" width="760"></p>
+<p align="center"><em>Shatter simulation - failed glass panels generate animated shards and a falling reaction.</em></p>
+
+### 5. Lighting fixtures, architecture, and materials
+
+<p align="center"><img src="docs/report/source/figures/lights_rlgl.jpg" alt="Red Light Green Light directional, point, and spot lighting" width="760"></p>
+<p align="center"><em>Round 1 lighting - directional sun, floodlight tower, and doll searchlight.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/lights_gb.jpg" alt="Glass Bridge directional, point, and wall lighting" width="760"></p>
+<p align="center"><em>Round 2 lighting - floodlights, chandelier, wall lamps, and tracking spot.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/textures.png" alt="Sand, bark, and concrete project texture sheet" width="760"></p>
+<p align="center"><em>Materials - the three seamless textures used throughout both rounds.</em></p>
+
+## Report figure archive
+
+The large studies above are the readable presentation layer. Supplementary report outputs - camera layouts, UI states, lighting comparisons, material swatches, turntables, and orthographic sheets - remain available in the [report figures directory](docs/report/source/figures/) and the [full project report](docs/report/Squid-Game-3D-Project-Report.pdf).
+
+Useful technical references:
+
+- [Round 1 camera layouts](docs/report/source/figures/cameras_rlgl.jpg) and [Round 2 camera layouts](docs/report/source/figures/cameras_gb.jpg)
+- [Red Light, Green Light UI sequence](docs/report/source/figures/ui_rlgl_start.jpg), [green light](docs/report/source/figures/ui_rlgl_green.jpg), [red light](docs/report/source/figures/ui_rlgl_red.jpg), and [round result](docs/report/source/figures/ui_rlgl_won.jpg)
+- [Glass Bridge turn HUD](docs/report/source/figures/ui_gb_turn.jpg) and [Glass Bridge result](docs/report/source/figures/ui_gb_won.jpg)
+- [Primitive shape reference](docs/report/source/figures/basic_shapes.png)
+- [Sand](docs/report/source/figures/tex_sand.jpg), [bark](docs/report/source/figures/tex_tree.jpg), and [concrete](docs/report/source/figures/tex_wall.jpg) material samples
 
 ## Rendering details
 
@@ -224,7 +147,7 @@ Round 1 provides seven views: third-person gameplay, overhead free camera, aeria
 
 ### Texture pipeline
 
-The project ships three seamless PNG textures in [`assets/textures`](assets/textures): sand for the arena floor, bark for the dead tree, and concrete for the Glass Bridge hall and platforms. `SceneTextures` loads them through the vendored `stb_image` decoder, and the renderer applies configurable UV repeat values so a small texture can cover large surfaces without stretching. The generated texture source is [`tools/make_textures.py`](tools/make_textures.py); the material examples are shown in the gallery above.
+The project ships three seamless PNG textures in [`assets/textures`](assets/textures): sand for the arena floor, bark for the dead tree, and concrete for the Glass Bridge hall and platforms. `SceneTextures` loads them through the vendored `stb_image` decoder, and the renderer applies configurable UV repeat values so a small texture can cover large surfaces without stretching. The generated texture source is [`tools/make_textures.py`](tools/make_textures.py); the material examples are shown in the visual studies above.
 
 ## Tech stack
 
