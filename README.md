@@ -1,15 +1,17 @@
 # Squid Game: OpenGL Trials
 
 <p align="center">
-  <img src="docs/media/banner.jpg" alt="Gameplay showcase of the Squid Game OpenGL Trials arena" title="Squid Game: OpenGL Trials gameplay showcase" width="900">
+  <img src="docs/report/source/figures/rlgl_wide.jpg" alt="Wide overview of the Red Light, Green Light arena with the doll and contestants" title="Squid Game: OpenGL Trials game overview" width="900">
 </p>
 
-<p align="center"><em>Figure 1 - Real-time OpenGL rendering with the doll, contestants, arena lighting, and environment models.</em></p>
+<p align="center"><em>Game overview - the doll, contestants, arena lighting, and environment models rendered in real time.</em></p>
 
 ## Feature tour
 
-[![Watch the Squid Game: OpenGL Trials feature tour](docs/media/banner.jpg)](docs/media/feature-tour.mp4 "Play the feature tour video")
-<p align="center"><em>Click the image above to play or open the full feature tour video.</em></p>
+<video src="docs/media/feature-tour.mp4" title="Squid Game: OpenGL Trials feature tour" autoplay muted loop controls playsinline width="900">
+  Your browser cannot play the video. <a href="docs/media/feature-tour.mp4">Open the feature tour video</a>.
+</video>
+<p align="center"><em>The feature tour starts muted automatically; use the controls to pause, seek, or enable sound.</em></p>
 
 An interactive, Squid Game-inspired 3D simulation built from scratch with C++ and modern OpenGL. Play **Red Light, Green Light** and **Glass Bridge**, explore the scenes through cinematic cameras, and inspect how each model is assembled from reusable geometric primitives.
 
@@ -27,7 +29,23 @@ An interactive, Squid Game-inspired 3D simulation built from scratch with C++ an
 - Dear ImGui HUD and live controls
 - Shape Inspector mode for learning and project demonstrations
 
-## Visual gallery
+## At-a-glance showcase
+
+These large previews make the main game systems readable immediately. The complete report gallery follows below.
+
+<p align="center"><img src="docs/report/source/figures/rlgl_wide.jpg" alt="Full Red Light, Green Light game overview" width="900"></p>
+<p align="center"><em>Red Light, Green Light - arena scale, contestant crowd, doll, clock, and floodlight.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/phong_doll.jpg" alt="Close-up of the Young-hee doll face with Phong shading" width="900"></p>
+<p align="center"><em>Doll close-up - face geometry, eye searchlight, and per-pixel Phong highlights.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/gb_hall.jpg" alt="Wide Glass Bridge hall with glass panels and stage lighting" width="900"></p>
+<p align="center"><em>Glass Bridge - modular panels, hall architecture, rails, and cinematic stage lighting.</em></p>
+
+<p align="center"><img src="docs/report/source/figures/gb_shatter.jpg" alt="Tempered glass panel breaking into animated shards" width="900"></p>
+<p align="center"><em>Glass physics - a failed panel breaks into animated shards during the bridge round.</em></p>
+
+## Complete report gallery
 
 The gallery below contains the figures generated for the project report. Every image is linked from the repository, so visitors can inspect the complete game at a glance without downloading the PDF.
 
@@ -50,7 +68,7 @@ The gallery below contains the figures generated for the project report. Every i
 <td><img src="docs/report/source/figures/ui_gb_turn.jpg" alt="Glass Bridge player turn HUD" width="240"></td>
 <td><img src="docs/report/source/figures/ui_gb_won.jpg" alt="Glass Bridge victory screen" width="240"></td>
 <td><img src="docs/report/source/figures/basic_shapes.png" alt="Basic geometric primitives used by the renderer" width="240"></td>
-<td><img src="docs/report/source/figures/kuet_logo.png" alt="KUET project report logo" width="240"></td>
+<td></td>
 </tr>
 </table>
 
