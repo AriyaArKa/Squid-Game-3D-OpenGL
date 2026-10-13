@@ -8,21 +8,13 @@
   <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++ 17">
 </p>
 
-<p align="center">
-  <img src="docs/report/source/figures/rlgl_wide.jpg" alt="Wide overview of the Red Light, Green Light arena with the doll and contestants" title="Squid Game: OpenGL Trials game overview" width="900">
-</p>
-
-<p align="center"><em>Game overview - the doll, contestants, arena lighting, and environment models rendered in real time.</em></p>
-
 An interactive, Squid Game-inspired 3D simulation built from scratch with C++ and modern OpenGL. Play **Red Light, Green Light** and **Glass Bridge**, explore the scenes through cinematic cameras, and inspect how each model is assembled from reusable geometric primitives.
 
-> This is an independent educational project. It is not affiliated with, endorsed by, or sponsored by Netflix or the creators of *Squid Game*.
-
-## Feature tour
+## 🎬 Feature tour
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=USH72iWsIZ4" target="_blank" title="Click to watch Squid Game: OpenGL Trials showcase on YouTube">
-    <img src="https://img.youtube.com/vi/USH72iWsIZ4/maxresdefault.jpg" alt="Watch Squid Game: OpenGL Trials video tour" width="850">
+    <img src="https://img.youtube.com/vi/USH72iWsIZ4/maxresdefault.jpg" alt="Watch Squid Game: OpenGL Trials video tour" width="880">
   </a>
 </p>
 
@@ -31,6 +23,16 @@ An interactive, Squid Game-inspired 3D simulation built from scratch with C++ an
     <strong>▶ Click here to watch the full gameplay & technical showcase on YouTube</strong>
   </a>
 </p>
+
+> This is an independent educational project. It is not affiliated with, endorsed by, or sponsored by Netflix or the creators of *Squid Game*.
+
+## Overview
+
+<p align="center">
+  <img src="docs/report/source/figures/rlgl_wide.jpg" alt="Wide overview of the Red Light, Green Light arena with the doll and contestants" title="Squid Game: OpenGL Trials game overview" width="900">
+</p>
+
+<p align="center"><em>Game overview - the doll, contestants, arena lighting, and environment models rendered in real time.</em></p>
 
 ## Highlights
 
