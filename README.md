@@ -12,10 +12,8 @@ An interactive, Squid Game-inspired 3D simulation built from scratch with C++ an
 
 ## Feature tour
 
-<video src="docs/media/feature-tour.mp4" title="Squid Game: OpenGL Trials feature tour" autoplay muted loop controls playsinline width="900">
-  Your browser cannot play the video. <a href="docs/media/feature-tour.mp4">Open the feature tour video</a>.
-</video>
-<p align="center"><em>The feature tour starts muted automatically; use the controls to pause, seek, or enable sound.</em></p>
+[![Watch the Squid Game: OpenGL Trials feature tour](docs/report/source/figures/rlgl_wide.jpg)](docs/media/feature-tour.mp4 "Open the feature tour video")
+<p align="center"><em>Click the preview above to open and play the full feature tour video.</em></p>
 
 ## Highlights
 
